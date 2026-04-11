@@ -125,16 +125,21 @@
 }
 
 .pro-user-card h2 {
-  font-family: 'Inter', sans-serif;
-  font-size: 1.2rem;
-  color: var(--ui-slate);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.5rem;
+  /* Increased size */
+  color: #1a1a1a;
+  /* Darker black */
   margin: 0;
+  font-weight: 800;
 }
 
 .pro-user-meta {
-  color: var(--ui-gray);
-  font-size: 0.85rem;
+  color: #c71585;
+  /* Changed to pink for better visibility/brand */
+  font-size: 0.9rem;
   margin-top: 8px;
+  font-weight: 500;
 }
 
 /* --- SIDE NAV --- */
@@ -196,7 +201,7 @@
 }
 
 .header-title h3 {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 1rem;
   letter-spacing: 1px;
   margin: 0;
@@ -299,13 +304,21 @@
 .pro-form-card input,
 .pro-form-card textarea {
   width: 100%;
-  background: var(--ui-bg);
-  border: 1px solid var(--ui-border);
+  background: #ffffff;
+  /* White background for inputs */
+  border: 1px solid #e2e8f0;
   padding: 14px;
   border-radius: 12px;
   margin-bottom: 16px;
   font-family: inherit;
   transition: 0.2s;
+  color: #1a1a1a;
+  /* Explicit dark text */
+  font-weight: 500;
+}
+
+.pro-form-card input::placeholder {
+  color: #94a3b8;
 }
 
 .pro-form-card input:focus {

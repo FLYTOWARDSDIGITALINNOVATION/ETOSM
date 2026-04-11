@@ -12,6 +12,7 @@ import "./HomePage.css";
 export default function Home() {
   const [allProducts, setAllProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
+  const [recentOrders, setRecentOrders] = useState([]); // Real orders from DB
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState({
@@ -22,36 +23,6 @@ export default function Home() {
     minRating: 0,
     payOnDelivery: false
   });
-
-  const reviews = [
-    {
-      id: 1,
-      category: "Medical Trust",
-      icon: <FaHeartbeat />,
-      name: "Dr. Sarah Chen",
-      role: "Physical Therapist",
-      text: "The stability these socks provide for my elderly patients is unmatched. The biometric grip lock reduces slip risks significantly during recovery.",
-      rating: 5
-    },
-    {
-      id: 2,
-      category: "Elite Sport",
-      icon: <FaRunning />,
-      name: "Marcus Thorne",
-      role: "Pro Yoga Instructor",
-      text: "Zero-slip performance even during the most intense transitions. The thermal breathability keeps my feet dry and grounded.",
-      rating: 5
-    },
-    {
-      id: 3,
-      category: "Medical Trust",
-      icon: <FaHeartbeat />,
-      name: "James Wilson",
-      role: "Post-Op Recovery",
-      text: "After my knee surgery, these were a lifesaver. I felt secure walking on tiled floors at home without the fear of sliding.",
-      rating: 5
-    }
-  ];
 
   useEffect(() => {
     fetch(`${API_BASE_URL}/products`)
@@ -65,6 +36,12 @@ export default function Home() {
         console.error("Failed to fetch products:", err);
         setLoading(false);
       });
+
+    // Fetch real recent orders
+    fetch("http://localhost:5000/orders/public/recent")
+      .then(res => res.json())
+      .then(data => setRecentOrders(data))
+      .catch(err => console.error("Failed to fetch recent orders", err));
   }, []);
 
   const handleFilterChange = (key, value) => {
@@ -96,7 +73,7 @@ export default function Home() {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   return (
-    <div className="home">
+    <div className="home" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
       <Header onSearch={handleSearch} />
       <Hero />
       <CollectionGrid />
@@ -138,49 +115,66 @@ export default function Home() {
         </div>
       </div>
 
-      {/* --- MOTION REVIEW SECTION --- */}
+      {/* --- LIVE COMMUNITY RESULTS (DYNAMIC FROM DB) --- */}
       <section className="motion-review-section">
         <div className="bg-glow"></div>
 
         <div className="section-intro">
-          <span className="premium-tag">Performance Validation</span>
-          <h2 className="motion-title">Standard of <span className="italic-magenta">Excellence</span></h2>
+          <span className="premium-tag">Live Activity Feed</span>
+          <h2 className="motion-title">LIVE STORE <span className="italic-magenta">FEED</span></h2>
+          <p style={{ color: '#c71585', marginTop: '10px', fontSize: '1.2rem', fontWeight: '800' }}>
+            THIS DATA IS NOW LIVE FROM YOUR DATABASE
+          </p>
         </div>
 
         <div className="motion-grid">
-          {reviews.map((rev) => (
-            <div className="parallax-card" key={rev.id}>
-              <div className="card-inner-layer">
-                <div className="card-top">
-                  <div className="status-badge">
-                    <span className="pulse-dot"></span>
-                    {rev.category}
+          {recentOrders && recentOrders.length > 0 ? (
+            recentOrders.map((order, idx) => (
+              <div className="parallax-card" key={order._id || idx}>
+                <div className="card-inner-layer">
+                  <div className="card-top">
+                    <div className="status-badge" style={{ background: '#fff1f2', color: '#c71585', fontWeight: '800' }}>
+                      <span className="pulse-dot"></span>
+                      RECENT ORDER
+                    </div>
+                    <div className="rev-icon-floating"><FaRunning /></div>
                   </div>
-                  <div className="rev-icon-floating">{rev.icon}</div>
-                </div>
 
-                <div className="testimonial-text-box">
-                  <FaQuoteRight className="quote-watermark" />
-                  <p className="testimonial-para">"{rev.text}"</p>
-                </div>
-
-                <div className="card-footer-info">
-                  <div className="user-details">
-                    <h4 className="user-name-inter">{rev.name}</h4>
-                    <p className="user-role-magenta">{rev.role}</p>
+                  <div className="testimonial-text-box">
+                    <FaQuoteRight className="quote-watermark" />
+                    <p className="testimonial-para" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '1.25rem', color: '#1a1a1a' }}>
+                      <strong>{order.userName || "Customer"}</strong> just purchased <strong>{order.productName}</strong>.
+                      Verified security clearance successful.
+                    </p>
                   </div>
-                  <div className="rating-stars-gold">
-                    {[...Array(rev.rating)].map((_, i) => <FaStar key={i} />)}
+
+                  <div className="card-footer-info">
+                    <div className="user-details">
+                      <h4 className="user-name-inter" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: '800' }}>
+                        {order.totalAmount ? `₹${order.totalAmount.toFixed(2)}` : "Verified Elite"}
+                      </h4>
+                      <p className="user-role-magenta" style={{ fontWeight: '700' }}>LIVE FROM DB</p>
+                    </div>
+                    <div className="activity-date">
+                      <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: '700' }}>
+                        {new Date(order.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
+            ))
+          ) : (
+            <div className="parallax-card">
+              <div className="card-inner-layer" style={{ justifyContent: 'center', textAlign: 'center' }}>
+                <p style={{ color: '#94a3b8', fontWeight: '600' }}>Syncing community activity...</p>
+              </div>
             </div>
-          ))}
+          )}
         </div>
       </section>
 
       {/* --- FOOTER --- */}
-
       <footer className="footer-site">
         <div className="footer-container">
           <div className="footer-column brand-col">

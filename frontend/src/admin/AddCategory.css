@@ -1,53 +1,187 @@
-/* Page container */
-.add-category-page {
-  max-width: 800px;
-  margin: 40px auto;
-  padding: 30px;
-  background: linear-gradient(135deg, #ffe6f2, #ffd4e5);
-  /* light pink */
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(199, 21, 133, 0.15);
-  font-family: "Poppins", sans-serif;
+/* Category Management */
+.add-category-container {
+  max-width: 1000px;
 }
 
-:root {
-  --primary-color: #c71585;
-}
-
-/* Back button */
-.back-btn {
-  background: transparent;
-  border: none;
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--primary-color);
-  cursor: pointer;
-  margin-bottom: 20px;
-}
-
-.back-btn:hover {
-  text-decoration: underline;
-}
-
-/* Main title */
-.add-category-page h2 {
-  text-align: center;
-  color: var(--primary-dark);
-  margin-bottom: 25px;
-}
-
-/* Form container */
-.category-form {
-  display: flex;
-  gap: 12px;
+.form-header {
   margin-bottom: 30px;
 }
 
-/* Input */
+.form-header h1 {
+  margin: 0 0 8px 0;
+  color: #1e293b;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.form-header p {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+/* Form Section */
+.category-form-section {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 24px;
+}
+
+.category-form {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
 .category-form input {
-  flex: 1;
-  padding: 12px 14px;
-  border-radius: 10px;
+  padding: 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: all 0.3s ease;
+}
+
+.category-form input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.btn-add {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+}
+
+.btn-add:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* Category List Section */
+.category-list-section {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.category-list-section h2 {
+  margin: 0 0 16px 0;
+  color: #1e293b;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* Category List */
+.category-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.category-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.category-item:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.category-item span {
+  color: #1e293b;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.category-item .actions {
+  display: flex;
+  gap: 8px;
+}
+
+.edit-btn,
+.delete-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.edit-btn {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+.edit-btn:hover {
+  background: rgba(59, 130, 246, 0.2);
+}
+
+.delete-btn {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.delete-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+.empty-message {
+  text-align: center;
+  color: #94a3b8;
+  font-size: 14px;
+  padding: 20px;
+  margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .category-form-section {
+    grid-template-columns: 1fr;
+  }
+
+  .category-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .category-item .actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
   border: 1px solid #ddd;
   font-size: 15px;
   outline: none;

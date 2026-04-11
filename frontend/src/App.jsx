@@ -28,46 +28,35 @@ function App() {
   return (
     <WishlistProvider>
       <CartProvider>
-        <Router>
+        <Router basename="/ecom">
           <FloatingChat />
           <Routes>
-            {/* Home Route - First page user sees */}
-            <Route path="/" element={<HomePage />} /> {/* Default to Home */}
-            <Route path="/auth" element={<AuthPage />} /> {/* Auth page */}
-            <Route path="/admin/edit-product/:id" element={<EditProductPage />} />
-
-            <Route path="/contact" element={<Contact />} /> {/* Contact Page */}
-            {/* Shop Routes */}
+            <Route path="/" element={<HomePage />} />
+            <Route path="/auth" element={<AuthPage />} />
             <Route path="/home" element={<HomePage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/wishlist" element={<WishlistPage />} />
             <Route path="/cart" element={<CartPage />} />
             <Route path="/checkout" element={<Checkout />} />
-            <Route path="/orders" element={<OrdersPage />} /> {/* ✅ Orders Route */}
-            <Route path="/order-success" element={<OrderSuccess />} /> {/* ✅ Success Page */}
+            <Route path="/orders" element={<OrdersPage />} />
+            <Route path="/order-success" element={<OrderSuccess />} />
             <Route path="/product/:id" element={<ProductDetailPage />} />
-            <Route path="/customer-service" element={<CustomerService />} />
+            <Route path="/category/:category" element={<CategoryProducts />} />
+            <Route path="/profile" element={<Profile />} />
 
-            {/* Admin Route (Optional if you have it) */}
-            {/* Admin Route */}
+            {/* Admin */}
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/add-category" element={<AddCategory />} />
             <Route path="/admin/add-product" element={<AddProduct />} />
             <Route path="/admin/remove-product" element={<RemoveProductPage />} />
-            
             <Route path="/admin/orders" element={<AdminOrdersPage />} />
             <Route path="/admin/support" element={<AdminSupportPage />} />
-
-            {/* Category Products Route */}
-            <Route path="/category/:category" element={<CategoryProducts />} />
-
-            <Route path="/profile" element={<Profile />} />
-
           </Routes>
         </Router>
       </CartProvider>
     </WishlistProvider>
   );
 }
+
 
 export default App;

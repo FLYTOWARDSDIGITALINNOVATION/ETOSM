@@ -1,6 +1,8 @@
 import API_BASE_URL from '../apiConfig';
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Plus, Trash2 } from "lucide-react";
+import AdminLayout from "./AdminLayout";
 import "./AddCategory.css";
 
 const ADMIN_EMAIL = "admin@gmail.com";
@@ -73,51 +75,56 @@ const AddCategory = () => {
   };
 
   return (
-    <div className="add-category-page">
+    <AdminLayout>
+      <div className="add-category-container">
+        <div className="form-header">
+          <h1>Manage Categories</h1>
+          <p>Add or edit product categories</p>
+        </div>
 
-      {/* Back Arrow */}
-      <button className="back-btn" onClick={() => navigate(-1)}>
-        ← Back
-      </button>
+        <div className="category-form-section">
+          <div className="category-form">
+            <input
+              type="text"
+              placeholder="Category name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+            <button onClick={handleSubmit} className="btn-add">
+              <Plus size={18} /> {editId ? "Update" : "Add"} Category
+            </button>
+          </div>
 
-      <h2>Add Category</h2>
+          <div className="category-list-section">
+            <h2>Existing Categories</h2>
 
-      {/* Add / Edit Form */}
-      <div className="category-form">
-        <input
-          type="text"
-          placeholder="Category name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-        <button onClick={handleSubmit}>
-          {editId ? "Update" : "Add"}
-        </button>
+            <ul className="category-list">
+              {categories.length > 0 ? (
+                categories.map((cat) => (
+                  <li key={cat._id} className="category-item">
+                    <span>{cat.name}</span>
+
+                    <div className="actions">
+                      <button className="edit-btn" onClick={() => handleEdit(cat)}>
+                        Edit
+                      </button>
+                      <button
+                        className="delete-btn"
+                        onClick={() => handleDelete(cat._id)}
+                      >
+                        <Trash2 size={16} /> Delete
+                      </button>
+                    </div>
+                  </li>
+                ))
+              ) : (
+                <p className="empty-message">No categories yet</p>
+              )}
+            </ul>
+          </div>
+        </div>
       </div>
-
-      {/* Category List */}
-      <h3 className="list-title">Category Lists</h3>
-
-      <ul className="category-list">
-        {categories.map((cat) => (
-          <li key={cat._id} className="category-item">
-            <span>{cat.name}</span>
-
-            <div className="actions">
-              <button className="edit-btn" onClick={() => handleEdit(cat)}>
-                Edit
-              </button>
-              <button
-                className="delete-btn"
-                onClick={() => handleDelete(cat._id)}
-              >
-                Delete
-              </button>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </div>
+    </AdminLayout>
   );
 };
 

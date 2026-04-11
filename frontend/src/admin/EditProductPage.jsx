@@ -19,22 +19,32 @@ const EditProductPage = () => {
     price: "",
     description: "",
     discountPercent: 0,
+    salesPrice: "",
     discountStart: "",
     discountEnd: "",
+    image: "",
   });
+  const [imageFile, setImageFile] = useState(null);
+  const [preview, setPreview] = useState(null);
+
   useEffect(() => {
     fetch(`${API_BASE_URL}/categories`)
       .then(res => res.json())
       .then(data => setCategories(data))
       .catch(err => console.error("Failed to fetch categories", err));
   }, []);
-  
+
   useEffect(() => {
     fetch(`${API_BASE_URL}/products/${id}`)
       .then(res => res.json())
       .then(data => {
+        const salesPriceValue = data.price && data.discountPercent
+          ? (data.price - (data.price * data.discountPercent / 100)).toFixed(2)
+          : data.price;
+
         setForm({
           ...data,
+          salesPrice: salesPriceValue,
           discountStart: data.discountStart ? data.discountStart.slice(0, 16) : "",
           discountEnd: data.discountEnd ? data.discountEnd.slice(0, 16) : "",
         });
@@ -45,30 +55,43 @@ const EditProductPage = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Send only required fields
-    const payload = isDiscountTab
-      ? {
-          discountPercent: form.discountPercent,
-          discountStart: form.discountStart,
-          discountEnd: form.discountEnd,
-        }
-      : {
-          name: form.name,
-          category: form.category,
-          price: form.price,
-          description: form.description,
-        };
+    const formData = new FormData();
+    if (isDiscountTab) {
+      formData.append("salesPrice", form.salesPrice);
+      formData.append("price", form.price);
+      formData.append("discountStart", form.discountStart);
+      formData.append("discountEnd", form.discountEnd);
+    } else {
+      formData.append("name", form.name);
+      formData.append("category", form.category);
+      formData.append("price", form.price);
+      formData.append("description", form.description);
+      if (imageFile) {
+        formData.append("image", imageFile);
+      }
+    }
 
     const res = await fetch(`${API_BASE_URL}/admin/product/${id}`, {
       method: "PUT",
       headers: {
-        "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`,
       },
-      body: JSON.stringify(payload),
+      body: formData,
     });
 
     if (res.ok) {
@@ -76,116 +99,110 @@ const EditProductPage = () => {
       navigate("/admin/remove-product");
     }
   };
-  const discountedPrice =
-  form.price && form.discountPercent
-    ? (
-        form.price -
-        (form.price * form.discountPercent) / 100
-      ).toFixed(2)
-    : "";
 
   return (
     <div className="edit-container">
-        <h1 className ="heading">{isDiscountTab ? "Manage Discount" : "Edit Product"}</h1>
-        <button     className="back-btn"    onClick={() => navigate(-1)}> ← Back </button>
-
-      
+      <h1 className="heading">{isDiscountTab ? "Manage Discount" : "Edit Product"}</h1>
+      <button className="back-btn" onClick={() => navigate(-1)}> ← Back </button>
 
       <form className="edit-form" onSubmit={handleSubmit}>
-      {!isDiscountTab && (
-  <>
-    <label>Product Name</label>
-    <input
-      name="name"
-      value={form.name}
-      onChange={handleChange}
-      required
-    />
+        {!isDiscountTab && (
+          <>
+            <label>Product Name</label>
+            <input
+              name="name"
+              value={form.name}
+              onChange={handleChange}
+              required
+            />
 
-    <label>Category</label>
-    <select
-      name="category"
-      value={form.category}
-      onChange={handleChange}
-      required
-    >
-      <option value="">Select Category</option>
-      {categories.map((cat) => (
-        <option key={cat._id} value={cat.name}>
-          {cat.name}
-        </option>
-      ))}
-    </select>
+            <label>Category</label>
+            <select
+              name="category"
+              value={form.category}
+              onChange={handleChange}
+              required
+            >
+              <option value="">Select Category</option>
+              {categories.map((cat) => (
+                <option key={cat._id} value={cat.name}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
 
-    <label>Price</label>
-    <input
-      type="number"
-      name="price"
-      value={form.price}
-      onChange={handleChange}
-      required
-    />
+            <label>Price</label>
+            <input
+              type="number"
+              name="price"
+              value={form.price}
+              onChange={handleChange}
+              required
+            />
 
-    <label>Description</label>
-    <textarea
-      name="description"
-      value={form.description}
-      onChange={handleChange}
-    />
-  </>
-)}
+            <label>Product Image</label>
+            <div className="image-edit-section">
+              {preview ? (
+                <img src={preview} alt="New Preview" className="edit-preview" />
+              ) : form.image ? (
+                <img src={`http://localhost:5000${form.image}`} alt="Current" className="edit-preview" />
+              ) : null}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="file-input"
+              />
+            </div>
 
-{isDiscountTab && (
-  <>
-    {/* Original Price */}
-    <label>Original Price</label>
-    <input
-      type="number"
-      value={form.price}
-      disabled
-    />
+            <label>Description</label>
+            <textarea
+              name="description"
+              value={form.description}
+              onChange={handleChange}
+              rows="5"
+            />
+          </>
+        )}
 
-    {/* Discount Percentage */}
-    <label>Discount Percentage (%)</label>
-    <input
-      type="number"
-      name="discountPercent"
-      value={form.discountPercent}
-      onChange={handleChange}
-      min="0"
-      max="100"
-    />
+        {isDiscountTab && (
+          <>
+            <label>Original Price</label>
+            <input
+              type="number"
+              value={form.price}
+              disabled
+            />
 
-    {/* Discounted Price */}
-    <label>Discounted Price</label>
-    <input
-      type="number"
-      value={discountedPrice}
-      disabled
-    />
+            <label>Sales Price (Direct Amount)</label>
+            <input
+              type="number"
+              name="salesPrice"
+              value={form.salesPrice}
+              onChange={handleChange}
+              placeholder="Enter final sales price"
+              required
+            />
 
-    {/* Discount Start */}
-    <label>Discount Start</label>
-    <input
-      type="datetime-local"
-      name="discountStart"
-      value={form.discountStart}
-      onChange={handleChange}
-    />
+            <label>Discount Start</label>
+            <input
+              type="datetime-local"
+              name="discountStart"
+              value={form.discountStart}
+              onChange={handleChange}
+            />
 
-    {/* Discount End */}
-    <label>Discount End</label>
-    <input
-      type="datetime-local"
-      name="discountEnd"
-      value={form.discountEnd}
-      onChange={handleChange}
-    />
-  </>
-)}
+            <label>Discount End</label>
+            <input
+              type="datetime-local"
+              name="discountEnd"
+              value={form.discountEnd}
+              onChange={handleChange}
+            />
+          </>
+        )}
 
-
-        <button type="submit" className="save-btn">Save</button>
+        <button type="submit" className="save-btn">Save Changes</button>
       </form>
     </div>
   );

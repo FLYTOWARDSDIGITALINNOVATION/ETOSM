@@ -235,7 +235,7 @@
   font-size: 1.4rem;
   font-weight: 500;
   color: var(--boutique-pink);
-  font-family: 'Inter', sans-serif;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   -webkit-text-fill-color: var(--boutique-pink);
   /* Override gradient text */
   opacity: 0.8;

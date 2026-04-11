@@ -2,6 +2,7 @@ import API_BASE_URL from '../apiConfig';
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Package, Clock, Eye, X, MapPin, CreditCard, ShoppingBag } from "lucide-react";
+import AdminLayout from "./AdminLayout";
 import "./AdminOrdersPage.css";
 
 const STATUS_OPTIONS = [
@@ -89,13 +90,11 @@ const AdminOrdersPage = () => {
   };
 
   return (
-    <div className="admin-orders-page">
-      <div className="ao-container">
-        <div className="ao-header">
-          <button className="back-btn" onClick={() => navigate("/admin")}>
-            <ArrowLeft size={20} /> Back
-          </button>
-          <h2>Placed Orders</h2>
+    <AdminLayout>
+      <div className="orders-container">
+        <div className="page-header">
+          <h1>Orders Management</h1>
+          <p>View and manage all customer orders</p>
         </div>
 
         {/* 🔄 LOADING */}
@@ -118,8 +117,8 @@ const AdminOrdersPage = () => {
         {!loading && orders.length > 0 && (
           <>
             <div className="filter-bar">
-              <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
-              <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} />
+              <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} placeholder="From Date" />
+              <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} placeholder="To Date" />
               <button className="filter-btn" onClick={fetchOrders}>
                 Filter
               </button>
@@ -129,7 +128,7 @@ const AdminOrdersPage = () => {
               <table className="orders-table">
                 <thead>
                   <tr>
-                    <th>ID</th>
+                    <th>Order ID</th>
                     <th>Customer</th>
                     <th>Product</th>
                     <th>Qty</th>
@@ -142,16 +141,16 @@ const AdminOrdersPage = () => {
                 <tbody>
                   {orders.map((o) => (
                     <tr key={o._id}>
-                      <td>#{o._id?.slice(-6) || 'N/A'}</td>
+                      <td className="order-id">#{o._id?.slice(-6) || 'N/A'}</td>
                       <td>
-                        <b>{o.userName || 'Unknown'}</b>
+                        <strong>{o.userName || 'New Customer'}</strong>
                         <br />
                         <small>{o.userEmail || 'No Email'}</small>
                       </td>
                       <td>{o.productName || 'Unknown Product'}</td>
                       <td>{o.quantity || 0}</td>
-                      <td>₹{o.price || 0}</td>
-                      <td>{o.createdAt ? new Date(o.createdAt).toLocaleString() : 'N/A'}</td>
+                      <td className="price">₹{o.totalAmount?.toFixed(2) || o.price || '0.00'}</td>
+                      <td>{o.createdAt ? new Date(o.createdAt).toLocaleDateString() : 'N/A'}</td>
                       <td>
                         <select
                           value={o.status || "Ordered"}
@@ -164,7 +163,7 @@ const AdminOrdersPage = () => {
                         </select>
                       </td>
                       <td>
-                        <button className="details-btn" onClick={() => setSelectedOrder(o)}>
+                        <button className="details-btn" onClick={() => setSelectedOrder(o)} title="View Details">
                           <Eye size={16} />
                         </button>
                       </td>
@@ -175,7 +174,7 @@ const AdminOrdersPage = () => {
             </div>
           </>
         )}
-      </div >
+      </div>
 
       {/* 🔍 ORDER DETAILS MODAL */}
       {
@@ -184,7 +183,7 @@ const AdminOrdersPage = () => {
             <div className="order-modal">
               <div className="modal-header">
                 <h3>Order Details</h3>
-                <button onClick={() => setSelectedOrder(null)}><X size={20} /></button>
+                <button className="close-btn" onClick={() => setSelectedOrder(null)}><X size={20} /></button>
               </div>
 
               <div className="modal-content">
@@ -204,7 +203,7 @@ const AdminOrdersPage = () => {
                   <div className="payment-box">
                     <p><strong>Method:</strong> {selectedOrder.paymentMethod?.toUpperCase()}</p>
                     <div className="price-breakdown">
-                      <div className="price-row"><span>Unit Price:</span> <span>₹{selectedOrder.price / selectedOrder.quantity}</span></div>
+                      <div className="price-row"><span>Unit Price:</span> <span>₹{(selectedOrder.price / selectedOrder.quantity).toFixed(2)}</span></div>
                       <div className="price-row"><span>Quantity:</span> <span>x{selectedOrder.quantity}</span></div>
                       <div className="price-row"><span>Product Total:</span> <span>₹{selectedOrder.price}</span></div>
                       <div className="price-row"><span>Shipping:</span> <span>₹{selectedOrder.shippingCost || 0}</span></div>
@@ -228,7 +227,7 @@ const AdminOrdersPage = () => {
           </div>
         )
       }
-    </div >
+    </AdminLayout>
   );
 };
 

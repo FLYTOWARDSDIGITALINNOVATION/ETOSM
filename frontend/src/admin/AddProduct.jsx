@@ -1,6 +1,8 @@
 import API_BASE_URL from '../apiConfig';
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Plus, Image as ImageIcon } from "lucide-react";
+import AdminLayout from "./AdminLayout";
 import "./AddProduct.css";
 
 const AddProduct = () => {
@@ -12,7 +14,8 @@ const AddProduct = () => {
     description: "",
   });
   const [image, setImage] = useState(null);
-  const [galleryImages, setGalleryImages] = useState([]); // ✅ New state
+  const [galleryImages, setGalleryImages] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const adminEmail = "admin@gmail.com";
   const navigate = useNavigate();
@@ -24,97 +27,200 @@ const AddProduct = () => {
   }, []);
 
   const handleSubmit = async () => {
+    if (!form.name || !form.category || !form.price || !image) {
+      alert("Please fill in all required fields");
+      return;
+    }
+
     const formData = new FormData();
     formData.append("name", form.name);
     formData.append("category", form.category);
     formData.append("price", form.price);
     formData.append("description", form.description);
     formData.append("email", adminEmail);
-    formData.append("image", image); // 🔥 IMPORTANT
+    formData.append("image", image);
 
-    // Append Gallery Images
     for (let i = 0; i < galleryImages.length; i++) {
       formData.append("galleryImages", galleryImages[i]);
     }
 
     const token = localStorage.getItem("token");
+    setLoading(true);
 
-    const res = await fetch(`${API_BASE_URL}/admin/product`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`
-      },
-      body: formData,
-    });
+    try {
+      const res = await fetch(`${API_BASE_URL}/admin/product`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
 
-    if (res.ok) {
-      alert("Product Added Successfully!");
-      navigate(-1);
-    } else {
-      const data = await res.json();
-      alert(data.message || "Failed to add product");
+      if (res.ok) {
+        alert("Product Added Successfully!");
+        navigate("/admin");
+      } else {
+        const data = await res.json();
+        alert(data.message || "Failed to add product");
+      }
+    } catch (error) {
+      alert("Error adding product: " + error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="add-product-page">
+    <AdminLayout>
+      <div className="add-product-container">
+        <div className="form-header">
+          <h1>Add New Product</h1>
+          <p>Create a new product for your store</p>
+        </div>
 
-      {/* Back Button */}
-      <button className="back-btn" onClick={() => navigate(-1)}>
-        ← Back
-      </button>
+        <div className="form-card">
+          <div className="form-section">
+            <h3>Product Information</h3>
+            
+            <div className="form-group">
+              <label>Product Name *</label>
+              <input
+                type="text"
+                placeholder="Enter product name"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+              />
+            </div>
 
-      <h2>Add Product</h2>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Category *</label>
+                <select
+                  value={form.category}
+                  onChange={(e) => setForm({ ...form, category: e.target.value })}
+                >
+                  <option value="">Select category</option>
+                  {categories.map((c) => (
+                    <option key={c._id} value={c.name}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-      <div className="product-form">
+              <div className="form-group">
+                <label>Price *</label>
+                <input
+                  type="number"
+                  placeholder="0.00"
+                  value={form.price}
+                  onChange={(e) => setForm({ ...form, price: e.target.value })}
+                />
+              </div>
+            </div>
 
-        <input
-          placeholder="Product name"
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
-        />
+            <div className="form-group">
+              <label>Description</label>
+              <textarea
+                placeholder="Enter product description"
+                rows="4"
+                value={form.description}
+                onChange={(e) =>
+                  setForm({ ...form, description: e.target.value })
+                }
+              />
+            </div>
+          </div>
 
-        <select
-          onChange={(e) => setForm({ ...form, category: e.target.value })}
-        >
-          <option value="">Select category</option>
-          {categories.map((c) => (
-            <option key={c._id} value={c.name}>{c.name}</option>
-          ))}
-        </select>
+          <div className="form-section">
+            <h3>Product Images</h3>
 
-        <input
-          type="number"
-          placeholder="Price"
-          onChange={(e) => setForm({ ...form, price: e.target.value })}
-        />
+            <div className="form-group">
+              <label>Main Image *</label>
+              <div
+                className="file-input-wrapper"
+                onClick={() =>
+                  document.getElementById("main-image").click()
+                }
+              >
+                {image ? (
+                  <div className="image-preview">
+                    <ImageIcon size={24} />
+                    <span>{image.name}</span>
+                  </div>
+                ) : (
+                  <div className="file-input-placeholder">
+                    <ImageIcon size={32} />
+                    <p>Click to upload main product image</p>
+                  </div>
+                )}
+              </div>
+              <input
+                id="main-image"
+                type="file"
+                accept="image/*"
+                onChange={(e) => setImage(e.target.files[0])}
+                style={{ display: "none" }}
+              />
+            </div>
 
-        {/* Image Upload */}
-        <label className="upload-label">Upload Product Image</label>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => setImage(e.target.files[0])}
-        />
+            <div className="form-group">
+              <label>Gallery Images</label>
+              <div
+                className="file-input-wrapper"
+                onClick={() =>
+                  document.getElementById("gallery-images").click()
+                }
+              >
+                <div className="file-input-placeholder">
+                  <ImageIcon size={32} />
+                  <p>Click to upload gallery images</p>
+                  {galleryImages.length > 0 && (
+                    <p className="file-count">
+                      {galleryImages.length} image(s) selected
+                    </p>
+                  )}
+                </div>
+              </div>
+              <input
+                id="gallery-images"
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => setGalleryImages(e.target.files)}
+                style={{ display: "none" }}
+              />
+            </div>
+          </div>
 
-        {/* Gallery Images Upload */}
-        <label className="upload-label">Upload Additional Images (Gallery)</label>
-        <input
-          type="file"
-          accept="image/*"
-          multiple
-          onChange={(e) => setGalleryImages(e.target.files)}
-        />
-
-        <textarea
-          placeholder="Description"
-          onChange={(e) =>
-            setForm({ ...form, description: e.target.value })
-          }
-        />
-
-        <button onClick={handleSubmit}>Add Product</button>
+          <div className="form-actions">
+            <button
+              className="btn-cancel"
+              onClick={() => navigate(-1)}
+              disabled={loading}
+            >
+              Cancel
+            </button>
+            <button
+              className="btn-submit"
+              onClick={handleSubmit}
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <span className="spinner-small"></span>
+                  Adding...
+                </>
+              ) : (
+                <>
+                  <Plus size={18} /> Add Product
+                </>
+              )}
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
+    </AdminLayout>
   );
 };
 

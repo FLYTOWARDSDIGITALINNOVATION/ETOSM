@@ -2,7 +2,7 @@ import API_BASE_URL from '../apiConfig';
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Trash2, ArrowLeft, Search, Edit } from "lucide-react";
-
+import AdminLayout from "./AdminLayout";
 import "./RemoveProductPage.css";
 
 const RemoveProductPage = () => {
@@ -64,78 +64,74 @@ const RemoveProductPage = () => {
     );
 
     return (
-        <div className="remove-product-page">
-            <div className="rp-container">
-                <div className="rp-header">
-                    <button className="back-btn" onClick={() => navigate("/admin")}>
-                        <ArrowLeft size={20} /> Back to Dashboard
-                    </button>
-                    <h2>Manage Inventory</h2>
+        <AdminLayout>
+            <div className="manage-products-container">
+                <div className="page-header">
+                    <h1>Manage Products</h1>
+                    <p>Edit, discount, or delete products from your catalog</p>
                 </div>
 
-                <div className="rp-search-bar">
+                <div className="search-section">
                     <Search size={20} className="search-icon" />
                     <input
                         type="text"
-                        placeholder="Search products to remove..."
+                        placeholder="Search products..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
+                        className="search-input"
                     />
                 </div>
 
                 {loading ? (
-                    <p>Loading products...</p>
+                    <div className="loading">Loading products...</div>
                 ) : (
-                    <div className="rp-list">
+                    <div className="products-grid">
                         {filteredProducts.length === 0 ? (
                             <p className="no-results">No products found.</p>
                         ) : (
                             filteredProducts.map((product) => (
-                                <div key={product._id} className="rp-item">
-                                    <div className="rp-item-info">
+                                <div key={product._id} className="product-card">
+                                    <div className="product-image">
                                         <img
                                             src={`${API_BASE_URL}${product.image}`}
                                             alt={product.name}
-                                            onError={(e) => (e.target.src = "https://via.placeholder.com/50")}
+                                            onError={(e) => (e.target.src = "https://via.placeholder.com/100")}
                                         />
-                                        <div>
-                                            <h3>{product.name}</h3>
-                                            <p>₹{product.price}</p>
-                                        </div>
                                     </div>
-                                    <div className="rp-actions">
-                                        <div className="rp-actions">
-                                            <button
-                                                className="rp-edit-btn"
-                                                onClick={() => navigate(`/admin/edit-product/${product._id}`)}
-                                            >
-                                                <Edit size={18} /> Edit
-                                            </button>
-
-                                            <button
-                                                className="rp-discount-btn"
-                                                onClick={() => navigate(`/admin/edit-product/${product._id}?tab=discount`)}
-                                            >
-                                                💸 Discount
-                                            </button>
-
-                                            <button
-                                                className="rp-delete-btn"
-                                                onClick={() => handleDelete(product._id)}
-                                            >
-                                                <Trash2 size={18} /> Delete
-                                            </button>
-                                        </div>
-
+                                    <div className="product-info">
+                                        <h3>{product.name}</h3>
+                                        <p className="price">₹{product.price}</p>
+                                        <p className="category">{product.category}</p>
                                     </div>
+                                    <div className="product-actions">
+                                        <button
+                                            className="btn-edit"
+                                            onClick={() => navigate(`/admin/edit-product/${product._id}`)}
+                                        >
+                                            <Edit size={16} /> Edit
+                                        </button>
 
+                                        <button
+                                            className="btn-discount"
+                                            onClick={() => navigate(`/admin/edit-product/${product._id}?tab=discount`)}
+                                        >
+                                            💸 Discount
+                                        </button>
+
+                                        <button
+                                            className="btn-delete"
+                                            onClick={() => handleDelete(product._id)}
+                                        >
+                                            <Trash2 size={16} /> Delete
+                                        </button>
+                                    </div>
                                 </div>
                             ))
                         )}
                     </div>
                 )}
             </div>
-        </div>
+        </AdminLayout>
     );
 };
 
