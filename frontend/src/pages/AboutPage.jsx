@@ -4,6 +4,10 @@ import { FaArrowRight, FaFingerprint, FaSnowflake, FaGlobe } from 'react-icons/f
 import Header from '../components/Header';
 import './AboutPage.css';
 
+// Assets
+import tennisGrip from '../assets/grip_tennis.jpg';
+import yogaTealGrip from '../assets/grip_yoga_teal.jpg';
+
 const AboutPage = () => {
   const navigate = useNavigate();
 
@@ -19,9 +23,9 @@ const AboutPage = () => {
         <div className="hero-left">
           <div className="reveal-box">
             <span className="tagline">The Highgrip Ethos</span>
-            <h1 className="split-h1">SAFETY, <br/><span className="outline">REDEFINED.</span></h1>
+            <h1 className="split-h1">SAFETY, <br /><span className="outline">REDEFINED.</span></h1>
             <p className="hero-para">
-              We don't just make socks. We engineer stability for the modern mover. 
+              We don't just make socks. We engineer stability for the modern mover.
               A worldwide fusion of performance tech and aesthetic luxury.
             </p>
             <div className="btn-group">
@@ -33,7 +37,7 @@ const AboutPage = () => {
         </div>
         <div className="hero-right">
           <div className="hero-img-stack">
-            <img src="/sockss.png" alt="Highgrip Product" className="img-main" />
+            <img src={tennisGrip} alt="Highgrip Tennis Performance" className="img-main" />
             <div className="accent-square"></div>
           </div>
         </div>
@@ -86,10 +90,10 @@ const AboutPage = () => {
           <div className="depth-text">
             <h2 className="depth-title">WHY MOVE WITH US?</h2>
             <p className="depth-intro">
-              Because your safety and comfort shouldn’t be compromised. Highgrip socks are designed to give 
+              Because your safety and comfort shouldn’t be compromised. Highgrip socks are designed to give
               you unbeatable traction, all-day comfort, and versatile style—no matter where life takes you.
             </p>
-            
+
             <div className="depth-row">
               <div className="depth-col">
                 <span className="num">01</span>
@@ -113,9 +117,9 @@ const AboutPage = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="depth-image-box">
-            <img src="/highgrip.png" alt="Yoga Performance" className="depth-img" />
+            <img src={yogaTealGrip} alt="Highgrip Studio Excellence" className="depth-img" />
           </div>
         </div>
       </section>

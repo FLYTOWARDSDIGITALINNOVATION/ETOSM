@@ -3,34 +3,52 @@ import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import "./Hero.css";
 
 // Assets
-import hero1 from "../assets/hero1.png";
-import hero2 from "../assets/hero2.png";
-import hero3 from "../assets/hero3.png";
+import yogaTeal from "../assets/grip_yoga_teal.jpg";
+import gymPushup from "../assets/grip_gym.jpg";
+import tennisCourt from "../assets/grip_tennis.jpg";
+import footballField from "../assets/grip_football.jpg";
+import trackRunning from "../assets/grip_running.jpg";
 
 const slides = [
   {
     id: "01",
-    tag: "PRO PERFORMANCE",
-    title: "Enjoy the Ultimate",
-    highlight: "Studio Experience",
-    desc: "Redefining balance and stability with medical-grade biometric traction technology.",
-    img: hero1,
+    tag: "STUDIO BALANCE",
+    title: "Master Your",
+    highlight: "Inner Stability",
+    desc: "Precision-engineered grip for the most demanding yoga and studio practices.",
+    img: yogaTeal,
   },
   {
     id: "02",
-    tag: "PEDIATRIC SAFETY",
-    title: "Safe Adventures for",
-    highlight: "Little Feet",
-    desc: "The world's most trusted non-slip technology for growing explorers.",
-    img: hero2,
+    tag: "PRO PERFORMANCE",
+    title: "Push Beyond",
+    highlight: "Your Limits",
+    desc: "Medical-grade traction technology that supports every explosive movement.",
+    img: gymPushup,
   },
   {
     id: "03",
-    tag: "STABILITY+",
-    title: "Confident Steps with",
-    highlight: "Medical Precision",
-    desc: "Engineered for rehabilitation and daily safety in every movement.",
-    img: hero3,
+    tag: "COURT AGILITY",
+    title: "Unmatched",
+    highlight: "Side-to-Side Control",
+    desc: "Dominate the court with specialized grip locks for tennis and indoor sports.",
+    img: tennisCourt,
+  },
+  {
+    id: "04",
+    tag: "FIELD READY",
+    title: "Explosive Power",
+    highlight: "On Every Surface",
+    desc: "Stay grounded and agile during high-intensity field maneuvers and match play.",
+    img: footballField,
+  },
+  {
+    id: "05",
+    tag: "ENDURANCE TRACK",
+    title: "Go Further",
+    highlight: "With Confidence",
+    desc: "Superior breathability and non-slip security for your longest runs and sessions.",
+    img: trackRunning,
   }
 ];
 
