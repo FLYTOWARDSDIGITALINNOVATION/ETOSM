@@ -3,7 +3,7 @@ import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import "./Hero.css";
 
 // Assets
-import yogaTeal from "../assets/grip_yoga_teal.jpg";
+import yogaTeal from "../assets/hero_blue_socks.jpg";
 import gymPushup from "../assets/grip_gym.jpg";
 import tennisCourt from "../assets/grip_tennis.jpg";
 import footballField from "../assets/grip_football.jpg";

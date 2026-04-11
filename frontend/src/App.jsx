@@ -28,7 +28,7 @@ function App() {
   return (
     <WishlistProvider>
       <CartProvider>
-        <Router basename="/ecom">
+        <Router>
           <FloatingChat />
           <Routes>
             <Route path="/" element={<HomePage />} />

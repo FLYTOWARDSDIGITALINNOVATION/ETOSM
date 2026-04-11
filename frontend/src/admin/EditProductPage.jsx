@@ -145,7 +145,7 @@ const EditProductPage = () => {
               {preview ? (
                 <img src={preview} alt="New Preview" className="edit-preview" />
               ) : form.image ? (
-                <img src={`http://localhost:5000${form.image}`} alt="Current" className="edit-preview" />
+                <img src={`${API_BASE_URL}${form.image}`} alt="Current" className="edit-preview" />
               ) : null}
               <input
                 type="file"

@@ -2,10 +2,9 @@
 .full-hero-carousel {
   position: relative;
   width: 100%;
-  height: calc(100vh - 120px);
-  /* Adjust for header height */
-  margin-top: 120px;
-  /* Offset for fixed header */
+  height: 600px; /* Fixed height for better desktop framing */
+  aspect-ratio: 16 / 7; /* Maintains a cinematic fit */
+  margin-top: 110px; /* Aligned with current header */
   overflow: hidden;
   background: #000;
   margin-bottom: 30px;
@@ -18,9 +17,7 @@
   width: 100%;
   height: 100%;
   background-size: cover;
-  /* Changed back to cover for filling fully */
   background-position: center bottom;
-  /* Better alignment for floor-focused shots */
   background-repeat: no-repeat;
   opacity: 0;
   visibility: hidden;

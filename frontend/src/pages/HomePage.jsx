@@ -38,7 +38,7 @@ export default function Home() {
       });
 
     // Fetch real recent orders
-    fetch("http://localhost:5000/orders/public/recent")
+    fetch(`${API_BASE_URL}/orders/public/recent`)
       .then(res => res.json())
       .then(data => setRecentOrders(data))
       .catch(err => console.error("Failed to fetch recent orders", err));
