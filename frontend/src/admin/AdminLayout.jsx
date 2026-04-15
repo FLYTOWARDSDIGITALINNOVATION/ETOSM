@@ -22,7 +22,7 @@ const AdminLayout = ({ children }) => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     localStorage.removeItem("admin_dashboard_cache");
-    navigate("/", { replace: true });
+    window.location.href = "/";
   };
 
   const isActive = (path) => location.pathname === path;

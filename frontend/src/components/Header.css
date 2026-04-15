@@ -174,7 +174,7 @@
     border-radius: 50px;
     padding: 0 16px;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    width: 130px;
+    width: 200px;
     /* Base width more visible */
     height: 40px;
     overflow: hidden;
@@ -477,6 +477,25 @@
 
     .search-container {
         display: none;
+    }
+
+    .dropdown-menu {
+        position: static;
+        box-shadow: none;
+        padding: 5px 0 0 20px;
+        background: transparent;
+        transform: none;
+        opacity: 0;
+        visibility: hidden;
+        display: none;
+    }
+
+    .dropdown:hover .dropdown-menu,
+    .dropdown:focus-within .dropdown-menu {
+        display: block;
+        opacity: 1;
+        visibility: visible;
+        transform: none;
     }
 }
 

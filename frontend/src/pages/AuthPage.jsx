@@ -86,21 +86,30 @@ const AuthPage = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setError("");
+    setSuccess("");
 
-    const res = await fetch(`${API_BASE_URL}/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password })
-    });
+    try {
+      const res = await fetch(`${API_BASE_URL}/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (!res.ok) return alert(data.message);
+      if (!res.ok) {
+        setError(data.message || "Login failed");
+        return;
+      }
 
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
 
-    navigate(data.user.isAdmin ? "/admin" : "/home");
+      window.location.href = data.user.isAdmin ? "/admin" : "/home";
+    } catch (err) {
+      setError("Server not reachable");
+    }
   };
 
   return (
@@ -134,15 +143,15 @@ const AuthPage = () => {
 
           <motion.div variants={itemVariants} className="brand-stats">
             <div className="stat-item">
-              <h3>500+</h3>
+              <h3>Multiple</h3>
               <p>Shoe Designs</p>
             </div>
             <div className="stat-item">
-              <h3>100K+</h3>
+              <h3>Multiple</h3>
               <p>Happy Customers</p>
             </div>
             <div className="stat-item">
-              <h3>50+</h3>
+              <h3>Multiple</h3>
               <p>Trusted Stores</p>
             </div>
           </motion.div>

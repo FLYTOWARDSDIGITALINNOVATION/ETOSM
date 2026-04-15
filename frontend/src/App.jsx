@@ -43,6 +43,8 @@ function App() {
             <Route path="/product/:id" element={<ProductDetailPage />} />
             <Route path="/category/:category" element={<CategoryProducts />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/customer-service" element={<CustomerService />} />
+            <Route path="/contact" element={<Contact />} />
 
             {/* Admin */}
             <Route path="/admin" element={<AdminDashboard />} />
