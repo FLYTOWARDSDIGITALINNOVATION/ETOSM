@@ -81,8 +81,13 @@ const Header = ({ onSearch }) => {
             </Link>
           </li>
           <li>
-            <Link to="/customer-service" className="nav-item">
-              <span className="nav-icon-small">💬</span> FAQ
+            <Link to="/terms" className="nav-item">
+              <span className="nav-icon-small">📜</span> Terms of Service
+            </Link>
+          </li>
+          <li>
+            <Link to="/privacy" className="nav-item">
+              <span className="nav-icon-small">🔒</span> Privacy Policy
             </Link>
           </li>
           <li>

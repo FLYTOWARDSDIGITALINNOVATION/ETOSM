@@ -180,9 +180,9 @@ export default function Home() {
           <div className="footer-column brand-col">
             <h4 className="footer-col-title">HIGHGRIP</h4>
             <p className="footer-address">
-              Lakshmi Textile, Shed no 9,<br />
-              SIDCO colony, Madurai main road,<br />
-              Theni, Tamil Nadu, 625531
+              2/167, Merkukadu, Ramapuram,<br />
+              Tiruchengodu, Namakkal,<br />
+              Tamil Nadu-637202
             </p>
           </div>
 
@@ -192,7 +192,8 @@ export default function Home() {
               <li><a href="/">Home</a></li>
               <li><a href="/about">About Us</a></li>
               <li><a href="/products">Our Products</a></li>
-              <li><a href="/customer-service">FAQ</a></li>
+              <li><a href="/terms">Terms of Service</a></li>
+              <li><a href="/privacy">Privacy Policy</a></li>
               <li><a href="/contact">Contact Us</a></li>
             </ul>
           </div>
@@ -213,7 +214,9 @@ export default function Home() {
           <div className="footer-column">
             <h4 className="footer-col-title">GET IN TOUCH</h4>
             <p className="footer-contact-text">
-              If you have any enquiries, please do not hesitate to contact us.
+              If you have any enquiries, please do not hesitate to contact us.<br /><br />
+              Email: support@etosmtechnology.in<br />
+              Phone: +91 88070 80216
             </p>
           </div>
         </div>

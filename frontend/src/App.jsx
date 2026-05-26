@@ -24,6 +24,9 @@ import CustomerService from "./pages/CustomerService"; // ✅ Import Customer Se
 import Profile from "./pages/Profile";
 import AboutPage from "./pages/AboutPage";
 import Contact from "./pages/Contact";
+import TermsOfService from "./pages/TermsOfService";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+
 function App() {
   return (
     <WishlistProvider>
@@ -45,6 +48,8 @@ function App() {
             <Route path="/profile" element={<Profile />} />
             <Route path="/customer-service" element={<CustomerService />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/terms" element={<TermsOfService />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
 
             {/* Admin */}
             <Route path="/admin" element={<AdminDashboard />} />

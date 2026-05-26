@@ -21,7 +21,6 @@
   background: linear-gradient(135deg, #fffcfd 0%, #fff0f7 50%, #fdf2f8 100%);
   background-size: 300% 300%;
   animation: gradientFlow 12s ease infinite;
-  overflow-x: hidden;
   position: relative;
 }
 
@@ -29,7 +28,7 @@
 .contact-page::before,
 .contact-page::after {
   content: '';
-  position: absolute;
+  position: fixed;
   width: 60vw;
   height: 60vw;
   border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
@@ -41,14 +40,14 @@
 }
 
 .contact-page::before {
-  top: -15%;
-  left: -15%;
+  top: -10%;
+  left: -10%;
   background: linear-gradient(to right, #ffe6f5, #e0f2fe);
 }
 
 .contact-page::after {
-  bottom: -15%;
-  right: -15%;
+  bottom: -10%;
+  right: -10%;
   background: linear-gradient(to left, #fff0f5, #fae8ff);
   animation-delay: -6s;
 }
@@ -201,6 +200,7 @@
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), transparent);
   opacity: 0;
   transition: opacity 0.4s ease;
+  pointer-events: none;
 }
 
 .info-card:nth-child(1) {
@@ -247,14 +247,14 @@
   background: var(--boutique-pink);
 }
 
-.info-card svg {
+.info-card .icon-wrapper svg {
   width: 24px;
   height: 24px;
   color: var(--boutique-pink);
   transition: color 0.4s ease;
 }
 
-.info-card:hover svg {
+.info-card:hover .icon-wrapper svg {
   color: white;
 }
 
@@ -279,6 +279,12 @@
   margin-top: 10px;
 }
 
+.social-icons a {
+  display: inline-flex;
+  position: relative;
+  z-index: 10;
+}
+
 .social-icons svg {
   width: 20px;
   height: 20px;
@@ -287,8 +293,9 @@
   cursor: pointer;
 }
 
+.social-icons a:hover svg,
 .social-icons svg:hover {
-  color: var(--boutique-pink);
+  color: var(--boutique-pink) !important;
   transform: translateY(-3px) scale(1.2);
 }
 

@@ -4,8 +4,8 @@ import {
   MapPin,
   Phone,
   Mail,
-  Facebook,
   Instagram,
+  Youtube,
 } from "lucide-react";
 import "./Contact.css";
 import Header from '../components/Header';
@@ -56,9 +56,9 @@ const Contact = () => {
 
       {/* Pink Banner - Now Transparent/Animated Text */}
       <section className="contact-hero">
-        <h1>Contact Us</h1>
+        <h1>Contact us for any Questions</h1>
         <p>
-          We're here to help you find your perfect fit. Reach out to us for any inquiries about our high-grip collection.
+          We'd love to hear from you! If you have any questions, feedback, or need assistance, please feel free to reach out to us using the contact details provided. Our team is here to help and will respond as soon as possible. Thank you for getting in touch!
         </p>
       </section>
 
@@ -76,30 +76,30 @@ const Contact = () => {
               <h4>Address:</h4>
               <p>
                 <strong>Highgrip</strong><br />
-                Lakshmi Textile, Shed no 9,<br />
-                SIDCO colony, Madurai main road,<br />
-                Theni, Tamil Nadu, 625531
+                2/167, Merkukadu, Ramapuram,<br />
+                Tiruchengodu, Namakkal,<br />
+                Tamil Nadu-637202
               </p>
             </div>
           </div>
 
-          <a href="tel:+918606817667" className="info-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+          <a href="tel:+918807080216" className="info-card" style={{ textDecoration: 'none', color: 'inherit' }}>
             <div className="icon-wrapper">
               <Phone />
             </div>
             <div>
               <h4>Call Us:</h4>
-              <p>+91 86068 17667</p>
+              <p>+91 88070 80216</p>
             </div>
           </a>
 
-          <a href="mailto:info@highgripsox.com" className="info-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+          <a href="mailto:support@etosmtechnology.in" className="info-card" style={{ textDecoration: 'none', color: 'inherit' }}>
             <div className="icon-wrapper">
               <Mail />
             </div>
             <div>
               <h4>Email:</h4>
-              <p>info@highgripsox.com</p>
+              <p>support@etosmtechnology.in</p>
             </div>
           </a>
 
@@ -110,8 +110,12 @@ const Contact = () => {
             <div>
               <h4>Social:</h4>
               <div className="social-icons">
-                <Facebook />
-                <Instagram />
+                <a href="https://www.instagram.com/etosm_technology/?igshid=OGQ5ZDc2ODk2ZA%3D%3D" target="_blank" rel="noopener noreferrer">
+                  <Instagram />
+                </a>
+                <a href="https://www.youtube.com/@etosmtechnology?si=sal1NnJrMi8LEiru" target="_blank" rel="noopener noreferrer">
+                  <Youtube />
+                </a>
               </div>
             </div>
           </div>
@@ -122,7 +126,7 @@ const Contact = () => {
         <div className="contact-cta">
           <h2>Got questions or need help choosing the right grip?</h2>
           <p>We’d love to hear from you! Our team is ready to assist you.</p>
-          <a href="tel:+918606817667" className="call-us-btn">Call Us</a>
+          <a href="tel:+918807080216" className="call-us-btn">Call Us</a>
         </div>
 
       </div>
@@ -132,9 +136,9 @@ const Contact = () => {
           <div className="footer-column brand-col">
             <h4 className="footer-col-title">HIGHGRIP</h4>
             <p className="footer-address">
-              Lakshmi Textile, Shed no 9,<br />
-              SIDCO colony, Madurai main road,<br />
-              Theni, Tamil Nadu, 625531
+              2/167, Merkukadu, Ramapuram,<br />
+              Tiruchengodu, Namakkal,<br />
+              Tamil Nadu-637202
             </p>
           </div>
 
@@ -144,7 +148,8 @@ const Contact = () => {
               <li><a href="/">Home</a></li>
               <li><a href="/about">About Us</a></li>
               <li><a href="/products">Our Products</a></li>
-              <li><a href="/customer-service">FAQ</a></li>
+              <li><a href="/terms">Terms of Service</a></li>
+              <li><a href="/privacy">Privacy Policy</a></li>
               <li><a href="/contact">Contact Us</a></li>
             </ul>
           </div>
@@ -165,7 +170,9 @@ const Contact = () => {
           <div className="footer-column">
             <h4 className="footer-col-title">GET IN TOUCH</h4>
             <p className="footer-contact-text">
-              If you have any enquiries, please do not hesitate to contact us.
+              If you have any enquiries, please do not hesitate to contact us.<br /><br />
+              Email: support@etosmtechnology.in<br />
+              Phone: +91 88070 80216
             </p>
           </div>
         </div>
