@@ -5,7 +5,6 @@ import Header from '../components/Header';
 import './AboutPage.css';
 
 // Assets
-import yogaTealGrip from '../assets/grip_yoga_teal.jpg';
 
 const AboutPage = () => {
   const navigate = useNavigate();
@@ -35,7 +34,7 @@ const AboutPage = () => {
         </div>
         <div className="hero-right">
           <div className="hero-img-stack">
-            <img src="/aboutscreen.png" alt="ETOSM Technology" className="img-main" />
+            <img src="/aboutscreen.jpg" alt="ETOSM Technology" className="img-main" />
             <div className="accent-square"></div>
           </div>
         </div>
@@ -116,7 +115,7 @@ const AboutPage = () => {
           </div>
 
           <div className="depth-image-box">
-            <img src={yogaTealGrip} alt="Highgrip Studio Excellence" className="depth-img" />
+            <img src="/assets/iot.jpg" alt="ETOSM IoT Solutions" className="depth-img" />
           </div>
         </div>
       </section>
