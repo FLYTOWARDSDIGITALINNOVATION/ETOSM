@@ -1,55 +1,76 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import './CollectionGrid.css';
 
-// Assets
-import benchCasual from '../assets/grip_bench_casual.jpg';
-import comfortTech from '../assets/grip_casual.jpg';
-import studioGrip from '../assets/grip_yoga.jpg';
-import performanceAthletics from '../assets/grip_running.jpg';
+const categories = [
+  {
+    id: 1,
+    title: 'Electronics Components',
+    subtitle: 'Active & Passive',
+    icon: '⚡',
+    link: '/category/Electronics Components',
+    tag: 'COMPONENTS',
+    color: '#1a3a5c',
+  },
+  {
+    id: 2,
+    title: 'BMS',
+    subtitle: 'Hardware BMS & Smart BMS',
+    icon: '🔋',
+    link: '/category/Battery Accessories',
+    tag: 'BATTERY MANAGEMENT',
+    color: '#1b4332',
+  },
+  {
+    id: 3,
+    title: 'Lithium Battery Pack',
+    subtitle: 'Li-ion & LiFePO₄ for UPS / EV / Solar',
+    icon: '⚙️',
+    link: '/category/Battery',
+    tag: 'BATTERY PACKS',
+    color: '#3d1c02',
+  },
+  {
+    id: 4,
+    title: 'Audio',
+    subtitle: 'Bluetooth Receivers & Modules',
+    icon: '🎵',
+    link: '/category/Audio',
+    tag: 'AUDIO',
+    color: '#1e1b4b',
+  },
+];
 
 const CollectionGrid = () => {
-    return (
-        <section className="collection-grid-section container">
-            <div className="collection-header">
-                <h2 className="collection-title">EXPLORE THE LINEUP</h2>
-                <p className="collection-subtitle">Functional grip technology for every facet of your active life</p>
-            </div>
+  return (
+    <section className="etosm-categories-section">
+      <div className="etosm-categories-container">
+        <div className="etosm-categories-header">
+          <h2 className="etosm-categories-title">Explore Our Product Categories</h2>
+          <div className="etosm-title-divider"></div>
+        </div>
 
-            <div className="bento-grid">
-                {/* Large Left Image - Lifestyle */}
-                <div className="bento-item large-left">
-                    <img src={benchCasual} alt="Highgrip Lifestyle" />
-                    <div className="bento-overlay">
-                        <span className="bento-tag">Lifestyle & Daily</span>
-                    </div>
-                </div>
-
-                {/* Top Right - Comfort Tech */}
-                <div className="bento-item top-right">
-                    <img src={comfortTech} alt="Highgrip Comfort Technology" />
-                    <div className="bento-overlay">
-                        <span className="bento-category">PREMIUM<br />COMFORT TECH</span>
-                    </div>
-                </div>
-
-                {/* Mid Right - Studio Focus */}
-                <div className="bento-item mid-right">
-                    <img src={studioGrip} alt="Highgrip Studio Excellence" />
-                    <div className="bento-overlay">
-                        <span className="bento-category">STUDIO &<br />PILATES</span>
-                    </div>
-                </div>
-
-                {/* Bottom Wide - Performance Athletics */}
-                <div className="bento-item bottom-wide">
-                    <img src={performanceAthletics} alt="Highgrip Athletic Performance" />
-                    <div className="bento-overlay">
-                        <span className="bento-tag">Advanced Athletic Performance</span>
-                    </div>
-                </div>
-            </div>
-        </section>
-    );
+        <div className="etosm-categories-grid">
+          {categories.map((cat) => (
+            <Link to={cat.link} className="etosm-category-card" key={cat.id}>
+              <div className="card-tag">{cat.tag}</div>
+              <div className="card-icon">{cat.icon}</div>
+              <div className="card-content">
+                <h3 className="card-title">{cat.title}</h3>
+                <p className="card-subtitle">{cat.subtitle}</p>
+              </div>
+              <div className="card-arrow">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+              </div>
+              <div className="card-bg-accent" style={{ background: cat.color }}></div>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
 };
 
 export default CollectionGrid;

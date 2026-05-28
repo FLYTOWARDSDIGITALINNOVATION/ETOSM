@@ -3,8 +3,8 @@
 
 :root {
     --header-height: 85px;
-    --primary-color: #c2188b;
-    --primary-glow: rgba(194, 24, 139, 0.4);
+    --primary-color: #e3000f;
+    --primary-glow: rgba(227, 0, 15, 0.4);
     --text-dark: #111827;
     --transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
     --glass: rgba(255, 255, 255, 0.8);
@@ -28,7 +28,7 @@
 
 /* Announcement Bar */
 .top-bar {
-    background: linear-gradient(90deg, #c2188b, #7c2d12);
+    background: linear-gradient(90deg, #e3000f, #a80000);
     color: white;
     text-align: center;
     padding: 10px 0;
@@ -155,7 +155,7 @@
 }
 
 .dropdown-item:hover {
-    background: #fff1f2;
+    background: #fff0f0;
     color: var(--primary-color);
     padding-left: 20px;
 }
@@ -187,7 +187,7 @@
     width: 320px;
     background: white;
     border-color: var(--primary-color);
-    box-shadow: 0 10px 25px rgba(194, 24, 139, 0.1);
+    box-shadow: 0 10px 25px rgba(227, 0, 15, 0.1);
 }
 
 .search-box {
@@ -257,7 +257,7 @@
     transform: translateY(-5px);
     border-color: var(--primary-color);
     color: var(--primary-color);
-    box-shadow: 0 10px 20px rgba(194, 24, 139, 0.1);
+    box-shadow: 0 10px 20px rgba(227, 0, 15, 0.1);
 }
 
 .u-badge {
@@ -287,10 +287,10 @@
 }
 
 :root {
-    /* Refined Palette */
-    --brand-pink: #c71585;
-    --brand-pink-dark: #a01366;
-    --brand-pink-soft: #fff1f2;
+    /* ETOSM Brand Palette */
+    --brand-red: #e3000f;
+    --brand-red-dark: #b3000c;
+    --brand-red-soft: #fff0f0;
     --accent-gold: #b45309;
     --ui-slate: #0f172a;
     --ui-gray: #64748b;
@@ -360,17 +360,23 @@
 .login-pill {
     background: var(--primary-color);
     color: white;
-    border: none;
-    padding: 10px 25px;
-    border-radius: 50px;
+    border: 2px solid var(--primary-color);
+    padding: 9px 22px;
+    border-radius: 4px;
     font-weight: 700;
+    font-size: 0.85rem;
     cursor: pointer;
     box-shadow: 0 4px 15px var(--primary-glow);
     transition: var(--transition);
+    font-family: 'Inter', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .login-pill:hover {
-    transform: scale(1.05);
+    background: #b3000c;
+    border-color: #b3000c;
+    transform: translateY(-2px);
     box-shadow: 0 8px 25px var(--primary-glow);
 }
 

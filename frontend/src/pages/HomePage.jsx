@@ -73,7 +73,7 @@ export default function Home() {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   return (
-    <div className="home" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+    <div className="home" style={{ fontFamily: "'Inter', sans-serif" }}>
       <Header onSearch={handleSearch} />
       <Hero />
       <CollectionGrid />
@@ -122,7 +122,7 @@ export default function Home() {
         <div className="section-intro">
           <span className="premium-tag">Live Activity Feed</span>
           <h2 className="motion-title">LIVE STORE <span className="italic-magenta">FEED</span></h2>
-          <p style={{ color: '#c71585', marginTop: '10px', fontSize: '1.2rem', fontWeight: '800' }}>
+          <p style={{ color: '#e3000f', marginTop: '10px', fontSize: '1.1rem', fontWeight: '700' }}>
             THIS DATA IS NOW LIVE FROM YOUR DATABASE
           </p>
         </div>
@@ -133,7 +133,7 @@ export default function Home() {
               <div className="parallax-card" key={order._id || idx}>
                 <div className="card-inner-layer">
                   <div className="card-top">
-                    <div className="status-badge" style={{ background: '#fff1f2', color: '#c71585', fontWeight: '800' }}>
+                    <div className="status-badge" style={{ background: '#fff0f0', color: '#e3000f', fontWeight: '800' }}>
                       <span className="pulse-dot"></span>
                       RECENT ORDER
                     </div>
@@ -142,7 +142,7 @@ export default function Home() {
 
                   <div className="testimonial-text-box">
                     <FaQuoteRight className="quote-watermark" />
-                    <p className="testimonial-para" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '1.25rem', color: '#1a1a1a' }}>
+                    <p className="testimonial-para" style={{ fontFamily: "'Inter', sans-serif", fontSize: '1.15rem', color: '#1a1a1a' }}>
                       <strong>{order.userName || "Customer"}</strong> just purchased <strong>{order.productName}</strong>.
                       Verified security clearance successful.
                     </p>
@@ -150,7 +150,7 @@ export default function Home() {
 
                   <div className="card-footer-info">
                     <div className="user-details">
-                      <h4 className="user-name-inter" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: '800' }}>
+                      <h4 className="user-name-inter" style={{ fontFamily: "'Inter', sans-serif", fontWeight: '800' }}>
                         {order.totalAmount ? `₹${order.totalAmount.toFixed(2)}` : "Verified Elite"}
                       </h4>
                       <p className="user-role-magenta" style={{ fontWeight: '700' }}>LIVE FROM DB</p>
@@ -178,11 +178,11 @@ export default function Home() {
       <footer className="footer-site">
         <div className="footer-container">
           <div className="footer-column brand-col">
-            <h4 className="footer-col-title">HIGHGRIP</h4>
+            <h4 className="footer-col-title">ETOSM TECHNOLOGY</h4>
             <p className="footer-address">
-              2/167, Merkukadu, Ramapuram,<br />
-              Tiruchengodu, Namakkal,<br />
-              Tamil Nadu-637202
+              Indian Electronics Design &amp; Manufacturing<br />
+              Power Electronics | BMS | Audio<br />
+              Tamil Nadu, India
             </p>
           </div>
 
@@ -201,13 +201,11 @@ export default function Home() {
           <div className="footer-column">
             <h4 className="footer-col-title">PRODUCTS</h4>
             <ul className="footer-links">
-              <li><a href="/products/yoga">Yoga Socks</a></li>
-              <li><a href="/products/compression">Compression Sleeves</a></li>
-              <li><a href="/products/thigh-high">Thigh High Socks</a></li>
-              <li><a href="/products/medical">Medical Stockings</a></li>
-              <li><a href="/products/trampoline">Trampoline Socks</a></li>
-              <li><a href="/products/ankle">Ankle Grip Socks</a></li>
-              <li><a href="/products/knee-pads">Crawling Knee Pads</a></li>
+              <li><a href="/category/Electronics Components">Electronics Components</a></li>
+              <li><a href="/category/Battery Accessories">Battery Management Systems</a></li>
+              <li><a href="/category/Battery">Lithium Battery Packs</a></li>
+              <li><a href="/category/Audio">Audio Modules</a></li>
+              <li><a href="/category/SMPS">SMPS Power Supplies</a></li>
             </ul>
           </div>
 
@@ -222,7 +220,7 @@ export default function Home() {
         </div>
 
         <div className="footer-bottom">
-          <p>Copyright © 2026 by Highgripsox. All Rights Reserved.</p>
+          <p>Copyright © 2026 EToSM Technology. All Rights Reserved.</p>
         </div>
       </footer>
     </div>
