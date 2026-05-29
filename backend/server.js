@@ -93,6 +93,8 @@ const productSchema = new mongoose.Schema({
 
   averageRating: { type: Number, default: 0 },
   ratingCount: { type: Number, default: 0 },
+
+  specifications: [{ label: String, value: String }],
 });
 
 // Add indexes for dashboard query performance
@@ -466,10 +468,20 @@ app.post("/admin/product", verifyAdmin, upload.fields([{ name: 'image', maxCount
   const mainImage = req.files['image'] ? `/uploads/${req.files['image'][0].filename}` : "";
   const galleryImages = req.files['galleryImages'] ? req.files['galleryImages'].map(f => `/uploads/${f.filename}`) : [];
 
+  let specs = [];
+  if (req.body.specifications) {
+    try {
+      specs = JSON.parse(req.body.specifications);
+    } catch (e) {
+      specs = req.body.specifications;
+    }
+  }
+
   const product = await Product.create({
     ...req.body,
     image: mainImage,
-    images: galleryImages
+    images: galleryImages,
+    specifications: specs
   });
   res.json(product);
 });
@@ -558,6 +570,14 @@ app.put(
       if (!product) return res.status(404).json({ message: "Product not found" });
 
       const updateData = { ...req.body };
+
+      if (req.body.specifications) {
+        try {
+          updateData.specifications = JSON.parse(req.body.specifications);
+        } catch (e) {
+          updateData.specifications = req.body.specifications;
+        }
+      }
 
       // Handle main image update and deletion of old one
       if (req.files?.image) {

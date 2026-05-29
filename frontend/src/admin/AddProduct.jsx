@@ -15,6 +15,7 @@ const AddProduct = () => {
   });
   const [image, setImage] = useState(null);
   const [galleryImages, setGalleryImages] = useState([]);
+  const [specifications, setSpecifications] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const adminEmail = "admin@gmail.com";
@@ -39,6 +40,9 @@ const AddProduct = () => {
     formData.append("description", form.description);
     formData.append("email", adminEmail);
     formData.append("image", image);
+
+    const validSpecs = specifications.filter(spec => spec.label.trim() || spec.value.trim());
+    formData.append("specifications", JSON.stringify(validSpecs));
 
     for (let i = 0; i < galleryImages.length; i++) {
       formData.append("galleryImages", galleryImages[i]);
@@ -129,6 +133,65 @@ const AddProduct = () => {
                   setForm({ ...form, description: e.target.value })
                 }
               />
+            </div>
+
+            <div className="form-section-specs">
+              <div className="specs-header">
+                <h3>Product Specifications (Optional)</h3>
+                <button
+                  type="button"
+                  className="btn-add-spec"
+                  onClick={() => setSpecifications([...specifications, { label: "", value: "" }])}
+                >
+                  <Plus size={16} /> Add Row
+                </button>
+              </div>
+
+              {specifications.length > 0 ? (
+                <div className="specs-table-edit">
+                  <div className="spec-row-header">
+                    <span>Category / Label</span>
+                    <span>Specification / Value</span>
+                    <span>Action</span>
+                  </div>
+                  {specifications.map((spec, index) => (
+                    <div key={index} className="spec-row-edit">
+                      <input
+                        type="text"
+                        placeholder="e.g. Brand & Model, Nominal Voltage"
+                        value={spec.label}
+                        onChange={(e) => {
+                          const newSpecs = [...specifications];
+                          newSpecs[index].label = e.target.value;
+                          setSpecifications(newSpecs);
+                        }}
+                      />
+                      <input
+                        type="text"
+                        placeholder="e.g. ETOSM & ET-LFP-1286S, 12.8V"
+                        value={spec.value}
+                        onChange={(e) => {
+                          const newSpecs = [...specifications];
+                          newSpecs[index].value = e.target.value;
+                          setSpecifications(newSpecs);
+                        }}
+                      />
+                      <button
+                        type="button"
+                        className="btn-delete-spec"
+                        onClick={() => {
+                          const newSpecs = specifications.filter((_, i) => i !== index);
+                          setSpecifications(newSpecs);
+                        }}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="no-specs-text">No specifications added yet. Click "Add Row" to add technical details in a table format.</p>
+              )}
             </div>
           </div>
 

@@ -228,10 +228,6 @@ const ProductDetailPage = () => {
               )}
             </div>
 
-            <p className="detail-description" dangerouslySetInnerHTML={{
-              __html: product.description || `Elevate your style with this premium quality ${product.name.toLowerCase()}.`
-            }} />
-
             <div className="detail-rating" style={{ marginBottom: '20px' }}>
               <div className="stars">
                 {[...Array(5)].map((_, i) => (
@@ -244,6 +240,31 @@ const ProductDetailPage = () => {
               <span className="reviews">({product.ratingCount || 0} ratings)</span>
               {product.tag && <span className="detail-tag" style={{ marginLeft: '15px' }}>{product.tag}</span>}
             </div>
+
+            {product.specifications && product.specifications.length > 0 && (
+              <div className="specifications-section">
+                <table className="specifications-table">
+                  <thead>
+                    <tr>
+                      <th>Category</th>
+                      <th>Specification</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {product.specifications.map((spec, idx) => (
+                      <tr key={idx}>
+                        <td className="spec-label">{spec.label}</td>
+                        <td className="spec-value">{spec.value}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            <p className="detail-description" dangerouslySetInnerHTML={{
+              __html: product.description || `Elevate your style with this premium quality ${product.name.toLowerCase()}.`
+            }} />
 
 
             {product.features && product.features.length > 0 && (

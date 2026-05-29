@@ -1,6 +1,7 @@
 import API_BASE_URL from '../apiConfig';
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { Plus } from "lucide-react";
 import "./EditProductPage.css";
 
 const EditProductPage = () => {
@@ -26,6 +27,7 @@ const EditProductPage = () => {
   });
   const [imageFile, setImageFile] = useState(null);
   const [preview, setPreview] = useState(null);
+  const [specifications, setSpecifications] = useState([]);
 
   useEffect(() => {
     fetch(`${API_BASE_URL}/categories`)
@@ -48,6 +50,7 @@ const EditProductPage = () => {
           discountStart: data.discountStart ? data.discountStart.slice(0, 16) : "",
           discountEnd: data.discountEnd ? data.discountEnd.slice(0, 16) : "",
         });
+        setSpecifications(data.specifications || []);
       });
   }, [id]);
 
@@ -84,6 +87,8 @@ const EditProductPage = () => {
       if (imageFile) {
         formData.append("image", imageFile);
       }
+      const validSpecs = specifications.filter(spec => spec.label.trim() || spec.value.trim());
+      formData.append("specifications", JSON.stringify(validSpecs));
     }
 
     const res = await fetch(`${API_BASE_URL}/admin/product/${id}`, {
@@ -162,6 +167,65 @@ const EditProductPage = () => {
               onChange={handleChange}
               rows="5"
             />
+
+            <div className="form-section-specs">
+              <div className="specs-header">
+                <label>Product Specifications (Optional)</label>
+                <button
+                  type="button"
+                  className="btn-add-spec"
+                  onClick={() => setSpecifications([...specifications, { label: "", value: "" }])}
+                >
+                  <Plus size={16} /> Add Row
+                </button>
+              </div>
+
+              {specifications.length > 0 ? (
+                <div className="specs-table-edit">
+                  <div className="spec-row-header">
+                    <span>Category / Label</span>
+                    <span>Specification / Value</span>
+                    <span>Action</span>
+                  </div>
+                  {specifications.map((spec, index) => (
+                    <div key={index} className="spec-row-edit">
+                      <input
+                        type="text"
+                        placeholder="e.g. Brand & Model, Nominal Voltage"
+                        value={spec.label}
+                        onChange={(e) => {
+                          const newSpecs = [...specifications];
+                          newSpecs[index].label = e.target.value;
+                          setSpecifications(newSpecs);
+                        }}
+                      />
+                      <input
+                        type="text"
+                        placeholder="e.g. ETOSM & ET-LFP-1286S, 12.8V"
+                        value={spec.value}
+                        onChange={(e) => {
+                          const newSpecs = [...specifications];
+                          newSpecs[index].value = e.target.value;
+                          setSpecifications(newSpecs);
+                        }}
+                      />
+                      <button
+                        type="button"
+                        className="btn-delete-spec"
+                        onClick={() => {
+                          const newSpecs = specifications.filter((_, i) => i !== index);
+                          setSpecifications(newSpecs);
+                        }}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="no-specs-text">No specifications added yet. Click "Add Row" to add technical details in a table format.</p>
+              )}
+            </div>
           </>
         )}
 
