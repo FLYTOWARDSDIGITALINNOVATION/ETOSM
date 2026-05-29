@@ -154,12 +154,12 @@
 }
 
 .btn-edit {
-  background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
+  background: rgba(227, 0, 15, 0.1);
+  color: #e3000f;
 }
 
 .btn-edit:hover {
-  background: rgba(59, 130, 246, 0.2);
+  background: rgba(227, 0, 15, 0.2);
 }
 
 .btn-discount {

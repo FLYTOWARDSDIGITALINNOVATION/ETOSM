@@ -212,8 +212,8 @@
     width: 100%;
     padding: 16px;
     background: white;
-    border: 2px solid #c2188b;
-    color: #c2188b;
+    border: 2px solid #e3000f;
+    color: #e3000f;
     border-radius: 14px;
     font-weight: 700;
     cursor: pointer;
@@ -308,7 +308,7 @@
 }
 
 .method-price.free {
-    color: #c2188b;
+    color: #e3000f;
     /* Pink color for FREE */
 }
 
@@ -332,7 +332,7 @@
 }
 
 .free {
-    color: #c2188b;
+    color: #e3000f;
     font-weight: 700;
 }
 

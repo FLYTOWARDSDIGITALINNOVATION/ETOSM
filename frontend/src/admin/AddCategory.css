@@ -48,12 +48,12 @@
 
 .category-form input:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: #e3000f;
+  box-shadow: 0 0 0 3px rgba(227, 0, 15, 0.1);
 }
 
 .btn-add {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: linear-gradient(135deg, #e3000f 0%, #b3000c 100%);
   color: white;
   border: none;
   padding: 12px;
@@ -70,7 +70,7 @@
 
 .btn-add:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 12px rgba(227, 0, 15, 0.3);
 }
 
 /* Category List Section */
@@ -140,12 +140,12 @@
 }
 
 .edit-btn {
-  background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
+  background: rgba(227, 0, 15, 0.1);
+  color: #e3000f;
 }
 
 .edit-btn:hover {
-  background: rgba(59, 130, 246, 0.2);
+  background: rgba(227, 0, 15, 0.2);
 }
 
 .delete-btn {
@@ -189,7 +189,7 @@
 
 .category-form input:focus {
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.2);
+  box-shadow: 0 0 0 3px rgba(227, 0, 15, 0.2);
 }
 
 /* Add / Update button */

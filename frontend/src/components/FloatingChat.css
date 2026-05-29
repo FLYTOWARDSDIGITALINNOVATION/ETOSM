@@ -10,7 +10,7 @@
 .fc-chat-toggle-btn {
   width: 60px;
   height: 60px;
-  background: #c71585;
+  background: #e3000f;
   color: white;
   border: none;
   border-radius: 50%;
@@ -63,7 +63,7 @@
 
 /* Chat Header */
 .fc-chat-header {
-  background: linear-gradient(135deg, #c71585, #e73c9c);
+  background: linear-gradient(135deg, #e3000f, #e73c9c);
   color: white;
   padding: 20px;
   display: flex;
@@ -149,7 +149,7 @@
 
 .fc-message-content {
   max-width: 85%;
-  background: #c71585;
+  background: #e3000f;
   color: white;
   padding: 10px 14px;
   border-radius: 12px;
@@ -171,14 +171,14 @@
 .fc-message-reply {
   max-width: 85%;
   background: #fff0f6;
-  border-left: 3px solid #c71585;
+  border-left: 3px solid #e3000f;
   padding: 10px 12px;
   border-radius: 8px;
   font-size: 12px;
 }
 
 .fc-message-reply strong {
-  color: #c71585;
+  color: #e3000f;
   display: block;
   margin-bottom: 4px;
 }
@@ -209,7 +209,7 @@
 }
 
 .fc-chat-form input:focus {
-  border-color: #c71585;
+  border-color: #e3000f;
   box-shadow: 0 0 0 3px rgba(199, 21, 133, 0.1);
 }
 
@@ -221,7 +221,7 @@
 .fc-chat-form button {
   width: 40px;
   height: 40px;
-  background: #c71585;
+  background: #e3000f;
   color: white;
   border: none;
   border-radius: 50%;

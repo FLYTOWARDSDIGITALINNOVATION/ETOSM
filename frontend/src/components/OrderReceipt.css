@@ -46,9 +46,9 @@
 }
 
 .receipt-header-actions .print-btn {
-  background: #c2188b;
+  background: #e3000f;
   color: white;
-  border-color: #c2188b;
+  border-color: #e3000f;
 }
 
 .receipt-header-actions .print-btn:hover {
@@ -74,7 +74,7 @@
 }
 
 .receipt-brand h1 {
-  color: #c2188b;
+  color: #e3000f;
   font-size: 24px;
   margin: 0;
 }
@@ -144,7 +144,7 @@
 .summary-line.total {
   font-weight: 700;
   font-size: 18px;
-  color: #c2188b;
+  color: #e3000f;
   margin-top: 8px;
 }
 

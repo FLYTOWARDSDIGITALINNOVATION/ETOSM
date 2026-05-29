@@ -11,7 +11,7 @@
 .back-btn {
   background: #fff1f2;
   border: none;
-  color: #c71585;
+  color: #e3000f;
   padding: 8px 16px;
   border-radius: 8px;
   font-weight: 600;
@@ -21,14 +21,14 @@
 }
 
 .back-btn:hover {
-  background: #c71585;
+  background: #e3000f;
   color: white;
 }
 
 .heading {
   text-align: center;
   font-family: 'Syncopate', sans-serif;
-  color: #c71585;
+  color: #e3000f;
   margin-bottom: 30px;
   letter-spacing: 2px;
 }
@@ -63,7 +63,7 @@
 .edit-form select:focus,
 .edit-form textarea:focus {
   outline: none;
-  border-color: #c71585;
+  border-color: #e3000f;
   background: white;
   box-shadow: 0 0 0 4px rgba(199, 21, 133, 0.1);
 }
@@ -97,7 +97,7 @@
 
 .save-btn {
   margin-top: 30px;
-  background: #c71585;
+  background: #e3000f;
   color: white;
   padding: 15px;
   border-radius: 12px;

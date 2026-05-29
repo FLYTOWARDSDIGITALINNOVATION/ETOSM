@@ -26,13 +26,13 @@
 
 .dashboard-header .subtitle {
   margin: 0;
-  color: #c71585;
+  color: #e3000f;
   font-size: 14px;
   font-weight: 600;
 }
 
 .refresh-btn {
-  background: #c71585;
+  background: #e3000f;
   border: none;
   color: white;
   padding: 12px 25px;
@@ -97,7 +97,7 @@
   justify-content: center;
   border-radius: 16px;
   background: #fff1f2;
-  color: #c71585;
+  color: #e3000f;
 }
 
 .stat-content h3 {
@@ -154,11 +154,11 @@
 }
 
 .action-btn svg {
-  color: #c71585;
+  color: #e3000f;
 }
 
 .action-btn:hover {
-  background: #c71585;
+  background: #e3000f;
   color: white;
   transform: scale(1.05);
   box-shadow: 0 10px 25px rgba(199, 21, 133, 0.2);
@@ -186,7 +186,7 @@
 
 .data-table th {
   background: #fff1f2;
-  color: #c71585;
+  color: #e3000f;
   padding: 15px;
   font-weight: 700;
 }
@@ -220,7 +220,7 @@
 }
 
 .price {
-  color: #c71585;
+  color: #e3000f;
   font-weight: 800;
 }
 

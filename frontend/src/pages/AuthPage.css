@@ -1,7 +1,7 @@
 :root {
   --primary-color: #ff4081;
   /* Bright Pink Accent */
-  --primary-hover: #c71585;
+  --primary-hover: #e3000f;
   /* Darker Pink for hover */
   --text-dark: #1f2937;
   /* Dark text */
@@ -36,8 +36,8 @@
   align-items: center;
   gap: 8px;
   background: #ffffff;
-  color: #c71585;
-  border: 2px solid #c71585;
+  color: #e3000f;
+  border: 2px solid #e3000f;
   padding: 10px 16px;
   border-radius: 8px;
   cursor: pointer;
@@ -47,7 +47,7 @@
 }
 
 .back-btn-auth:hover {
-  background: #c71585;
+  background: #e3000f;
   color: #fff;
   transform: translateX(-4px);
 }
@@ -79,7 +79,7 @@
 .stat-item h3 {
   font-size: 1.8rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #406dff, #c71585);
+  background: linear-gradient(135deg, #406dff, #e3000f);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   margin: 0 0 5px 0;
@@ -103,7 +103,7 @@
 .brand-name {
   font-size: 2rem;
   font-weight: 800;
-  background: linear-gradient(135deg, #c71585, #406dff);
+  background: linear-gradient(135deg, #e3000f, #406dff);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   margin: 0;
@@ -121,7 +121,7 @@
 
 .highlight-text {
   /* Gradient pink effect for Premium Footwear */
-  background: linear-gradient(135deg, #ff4081, #c71585);
+  background: linear-gradient(135deg, #ff4081, #e3000f);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -225,7 +225,7 @@
 .input-icon {
   position: absolute;
   left: 15px;
-  color: #c71585;
+  color: #e3000f;
   font-size: 1.1rem;
 }
 
@@ -304,7 +304,7 @@
   border: none;
   background: var(--white);
   /* Inactive background */
-  color: #c71585;
+  color: #e3000f;
   /* Inactive text = pink */
   border-radius: 8px;
   font-weight: 600;
@@ -314,7 +314,7 @@
 }
 
 .auth-tab.active {
-  background: #c71585;
+  background: #e3000f;
   /* Active background = pink */
   color: var(--white);
   /* Active text = white */
@@ -324,7 +324,7 @@
 .auth-tab:hover {
   background: rgba(211, 13, 79, 0.1);
   /* light pink on hover */
-  color: #c71585;
+  color: #e3000f;
 }
 
 .submit-btn {

@@ -3,7 +3,7 @@
    It looks very similar to the User Chat UI. */
 
 :root {
-  --primary-color: #c71585;
+  --primary-color: #e3000f;
 }
 
 .admin-support-page.chat-mode {
@@ -68,13 +68,13 @@
 
 .chat-item.active {
     background: #eff6ff;
-    border-left: 4px solid #3b82f6;
+    border-left: 4px solid #e3000f;
 }
 
 .chat-avatar.user-avatar {
     width: 45px;
     height: 45px;
-    background: #3b82f6;
+    background: #e3000f;
     color: white;
     border-radius: 50%;
     display: flex;
@@ -165,7 +165,7 @@
 /* Admin Sender */
 .message-bubble.admin {
     align-self: flex-end;
-    background: #3b82f6;
+    background: #e3000f;
     color: white;
     border-bottom-right-radius: 2px;
 }
@@ -213,14 +213,14 @@
 }
 
 .chat-input-area input:focus {
-    border-color: #3b82f6;
+    border-color: #e3000f;
 }
 
 .send-btn,
 .attach-btn {
     background: none;
     border: none;
-    color: #3b82f6;
+    color: #e3000f;
     font-size: 1.3rem;
     cursor: pointer;
     padding: 8px;

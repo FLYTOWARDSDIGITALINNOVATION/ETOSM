@@ -23,7 +23,7 @@
   position: absolute;
   top: 12px;
   right: 12px;
-  background: #c71585;
+  background: #e3000f;
   color: white;
   border: none;
   width: 44px;
@@ -143,7 +143,7 @@
 
 /* Add to Cart Button */
 .add-to-cart-btn {
-  background: #c71585;
+  background: #e3000f;
   color: white;
   border: none;
   padding: 10px 16px;

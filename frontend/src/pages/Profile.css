@@ -2,7 +2,7 @@
 
 :root {
   /* Refined Palette */
-  --brand-pink: #c71585;
+  --brand-pink: #e3000f;
   --brand-pink-dark: #a01366;
   --brand-pink-soft: #fff1f2;
   --accent-gold: #b45309;
@@ -135,7 +135,7 @@
 }
 
 .pro-user-meta {
-  color: #c71585;
+  color: #e3000f;
   /* Changed to pink for better visibility/brand */
   font-size: 0.9rem;
   margin-top: 8px;

@@ -16,7 +16,7 @@
 }
 
 .main-check-icon {
-    color: #c2188b;
+    color: #e3000f;
     margin-bottom: 20px;
 }
 
@@ -74,7 +74,7 @@
 }
 
 .main-check-icon {
-    color: #c2188b;
+    color: #e3000f;
     /* Apply the animation */
     animation: success-bounce 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
 }

@@ -1,7 +1,7 @@
 /* src/styles/ProductCard.css */
 
 :root {
-  --primary: #c2188b;
+  --primary: #e3000f;
   /* Matching standard pink */
   --text-dark: #111827;
   --text-muted: #6b7280;
@@ -25,7 +25,7 @@
 .card:hover {
   transform: translateY(-10px);
   box-shadow: 0 20px 40px rgba(199, 21, 133, 0.08);
-  border-color: #c71585;
+  border-color: #e3000f;
 }
 
 /* Image Section */

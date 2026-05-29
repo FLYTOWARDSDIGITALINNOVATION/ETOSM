@@ -52,7 +52,7 @@
   letter-spacing: -1px;
 }
 
-.italic-var(--primary-color) {
+.italic-primary {
   color: #e3000f;
   font-style: italic;
   font-weight: 400;
@@ -184,7 +184,7 @@
   margin-bottom: 2px;
 }
 
-.user-role-var(--primary-color) {
+.user-role-primary {
   font-family: 'Inter', sans-serif;
   font-size: 0.85rem;
   color: #e3000f;

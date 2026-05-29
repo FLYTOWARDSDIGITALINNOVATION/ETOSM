@@ -49,14 +49,14 @@
   font-family: 'Syncopate', sans-serif;
   font-size: 14px;
   font-weight: 700;
-  color: #c71585;
+  color: #e3000f;
   white-space: nowrap;
 }
 
 .toggle-btn {
   background: #fff1f2;
   border: none;
-  color: #c71585;
+  color: #e3000f;
   cursor: pointer;
   padding: 8px;
   border-radius: 8px;
@@ -93,11 +93,11 @@
 
 .nav-item:hover {
   background: #fff1f2;
-  color: #c71585;
+  color: #e3000f;
 }
 
 .nav-item.active {
-  background: #c71585;
+  background: #e3000f;
   color: white;
   box-shadow: 0 4px 15px rgba(199, 21, 133, 0.2);
 }
@@ -131,12 +131,12 @@
 }
 
 .nav-subitem:hover {
-  color: #c71585;
+  color: #e3000f;
   background: white;
 }
 
 .nav-subitem.active {
-  color: #c71585;
+  color: #e3000f;
   font-weight: 700;
   background: white;
 }

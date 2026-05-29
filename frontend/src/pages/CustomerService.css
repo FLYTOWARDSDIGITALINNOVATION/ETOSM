@@ -23,9 +23,9 @@
 
 .toggle-btn {
     padding: 12px 24px;
-    border: 2px solid #c71585;
+    border: 2px solid #e3000f;
     background: white;
-    color: #c71585;
+    color: #e3000f;
     border-radius: 30px;
     font-weight: 700;
     cursor: pointer;
@@ -36,7 +36,7 @@
 }
 
 .toggle-btn.active {
-    background: #c71585;
+    background: #e3000f;
     color: white;
 }
 
@@ -98,7 +98,7 @@
 }
 
 .faq-item.open .faq-question h3 {
-    color: #c71585;
+    color: #e3000f;
 }
 
 .faq-answer {
@@ -169,7 +169,7 @@
 
 .cs-chat-item.active {
     background: #fff0f0;
-    border-left: 4px solid #c71585;
+    border-left: 4px solid #e3000f;
 }
 
 .chat-avatar {
@@ -222,7 +222,7 @@
 /* Message Bubbles */
 .message-bubble.user {
     align-self: flex-end;
-    background: #c71585;
+    background: #e3000f;
     color: white;
 }
 
@@ -233,7 +233,7 @@
 }
 
 .new-chat-btn {
-    background: #c71585;
+    background: #e3000f;
     color: white;
     border: none;
     padding: 10px 16px;
@@ -243,7 +243,7 @@
 }
 
 .start-btn {
-    background: #c71585;
+    background: #e3000f;
     color: white;
     border: none;
     padding: 12px 24px;
@@ -260,7 +260,7 @@
 }
 
 .send-btn {
-    color: #c71585;
+    color: #e3000f;
 }
 
 /* Form Styles */

@@ -6,7 +6,7 @@
 }
 
 .admin-container h1 {
-  color: #c71585;
+  color: #e3000f;
   margin-bottom: 30px;
 }
 
@@ -20,7 +20,7 @@
   background: white;
   border-radius: 12px;
   text-decoration: none;
-  color: #c71585;
+  color: #e3000f;
   font-weight: 600;
   box-shadow: 0 8px 20px rgba(199, 21, 133, 0.15);
 }

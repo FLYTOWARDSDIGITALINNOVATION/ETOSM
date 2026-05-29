@@ -18,7 +18,7 @@
 .off-text {
   margin-left: 8px;
   font-size: 14px;
-  color: #c2188b;
+  color: #e3000f;
   /* site pink */
   font-weight: 600;
 }
@@ -34,7 +34,7 @@
   font-weight: 600;
   letter-spacing: 0.3px;
   font-size: 0.9rem;
-  color: blue;
+  color: var(--primary-color);
   cursor: pointer;
   position: relative;
   overflow: hidden;
@@ -58,10 +58,10 @@
 .back-btn:hover {
   background: #ffffff;
   /*softpurpletint*/
-  color: #4f46e5;
-  border-color: #4f46e5;
+  color: #e3000f;
+  border-color: #e3000f;
   transform: translateY(-3px);
-  box-shadow: 0 10px 20px rgba(79, 70, 229, 0.12);
+  box-shadow: 0 10px 20px rgba(227, 0, 15, 0.12);
   -webkit-transform: translateY(-3px);
   -moz-transform: translateY(-3px);
   -ms-transform: translateY(-3px);
@@ -80,7 +80,7 @@
 
 .back-btn:active {
   transform: translateY(0);
-  box-shadow: 0 6px 14px rgba(79, 70, 229, 0.08);
+  box-shadow: 0 6px 14px rgba(227, 0, 15, 0.08);
 }
 
 @media (max-width: 900px) {
@@ -172,7 +172,7 @@
 }
 
 .detail-tag {
-  background: #ff4757;
+  background: #e3000f;
   color: white;
   padding: 4px 12px;
   border-radius: 4px;
@@ -203,7 +203,7 @@
 .detail-price .price {
   font-size: 2.5rem;
   font-weight: 600;
-  color: #c71585;
+  color: #e3000f;
   /* var(--primary-color)/Purple from image */
   font-family: 'Plus Jakarta Sans', sans-serif;
 }
@@ -216,9 +216,9 @@
 }
 
 .admin-edit-small {
-  background: #ffe6f0;
-  color: #d63384;
-  border: 1px solid #ff8fb1;
+  background: #fff0f0;
+  color: #e3000f;
+  border: 1px solid #ffb8b8;
   padding: 6px 10px;
   border-radius: 8px;
   font-weight: 700;
@@ -360,7 +360,7 @@
 }
 
 .place-order-btn {
-  background: #ff4757;
+  background: #e3000f;
   color: white;
   border: none;
   padding: 15px 35px;
@@ -373,7 +373,7 @@
 }
 
 .place-order-btn:hover {
-  background: #ff6b81;
+  background: #ff4d5a;
 }
 
 .add-to-cart-outline {
@@ -396,7 +396,7 @@
   justify-content: center;
   gap: 10px;
 
-  background: #c71585;
+  background: #e3000f;
   color: #ffffff;
 
   padding: 14px 24px;
@@ -415,7 +415,7 @@
 .buy-now-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 15px 30px rgba(34, 197, 94, 0.35);
-  background: #700B4B;
+  background: #b3000c;
 }
 
 /* Active (click) */
@@ -525,7 +525,7 @@
 
 .submit-review-btn {
   width: 100%;
-  background: #c71585;
+  background: #e3000f;
   color: white;
   border: none;
   padding: 12px;
@@ -536,7 +536,7 @@
 }
 
 .submit-review-btn:hover {
-  background: #700B4B;
+  background: #b3000c;
 }
 
 .submit-review-btn:disabled {
@@ -715,7 +715,7 @@
 }
 
 .active-thumb {
-  border-color: #2E7D32;
+  border-color: #e3000f;
   /* Primary Green */
-  box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.2);
+  box-shadow: 0 0 0 2px rgba(227, 0, 15, 0.2);
 }

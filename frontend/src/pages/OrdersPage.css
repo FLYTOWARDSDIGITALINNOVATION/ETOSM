@@ -81,13 +81,13 @@
 
 .date-info.shipped {
     background: #eff6ff;
-    color: #3b82f6;
+    color: #e3000f;
     border: 1px solid #dbeafe;
 }
 
 .date-info.delivered {
     background: #fff0f0;
-    color: #c2188b;
+    color: #e3000f;
     border: 1px solid #fce7f3;
 }
 
@@ -120,13 +120,13 @@
 
 .status-shipped {
     background: #eff6ff;
-    color: #1d4ed8;
+    color: #99000a;
     border: 1px solid #dbeafe;
 }
 
 .status-delivered {
     background: #fff0f0;
-    color: #c2188b;
+    color: #e3000f;
     border: 1px solid #fce7f3;
 }
 
@@ -137,7 +137,7 @@
 }
 
 .rate-btn {
-    background: #6366f1;
+    background: #e3000f;
     color: white;
     border: none;
     padding: 10px 20px;
@@ -151,7 +151,7 @@
 }
 
 .rate-btn:hover {
-    background: #4f46e5;
+    background: #e3000f;
     transform: translateY(-1px);
 }
 
@@ -225,7 +225,7 @@
 }
 
 .review-input:focus {
-    border-color: #6366f1;
+    border-color: #e3000f;
     outline: none;
 }
 
@@ -236,7 +236,7 @@
 }
 
 .submit-btn {
-    background: #c2188b;
+    background: #e3000f;
     color: white;
     border: none;
     padding: 12px 24px;
@@ -352,28 +352,28 @@
 }
 
 .step.active .step-circle {
-    background: #6366f1;
+    background: #e3000f;
     color: white;
-    border-color: #6366f1;
+    border-color: #e3000f;
     box-shadow: 0 0 10px rgba(99, 102, 241, 0.4);
 }
 
 .step.active .step-label {
-    color: #6366f1;
+    color: #e3000f;
 }
 
 .step.completed .step-circle {
-    background: #c2188b;
+    background: #e3000f;
     color: white;
-    border-color: #c2188b;
+    border-color: #e3000f;
 }
 
 .step.completed .step-label {
-    color: #c2188b;
+    color: #e3000f;
 }
 
 .step.completed .step-line {
-    background: #c2188b;
+    background: #e3000f;
 }
 
 /* Actions & Buttons */
@@ -403,13 +403,13 @@
 
 .demo-btn.ship {
     background: #eff6ff;
-    color: #1d4ed8;
+    color: #99000a;
     border-color: #dbeafe;
 }
 
 .demo-btn.deliver {
     background: #fff0f0;
-    color: #c2188b;
+    color: #e3000f;
     border-color: #fce7f3;
 }
 
@@ -420,7 +420,7 @@
 
 .status-ordered {
     background: #eff6ff;
-    color: #1d4ed8;
+    color: #99000a;
     border: 1px solid #dbeafe;
 }
 
@@ -503,19 +503,19 @@
 .back-home-btn svg {
     font-size: 0.9rem;
     transition: transform 0.4s ease;
-    color: #6366f1;
+    color: #e3000f;
     /* Brand Purple only on the icon for focus */
 }
 
 /* Hover Effects */
 .back-home-btn:hover {
     background: #ffffff;
-    color: #4f46e5;
+    color: #e3000f;
     /* Text turns purple */
-    border-color: #4f46e5;
+    border-color: #e3000f;
     transform: translateY(-3px);
     /* Classic "lift" effect */
-    box-shadow: 0 10px 20px rgba(79, 70, 229, 0.12);
+    box-shadow: 0 10px 20px rgba(227, 0, 15, 0.12);
     /* Soft purple glow */
 }
 
@@ -527,7 +527,7 @@
 /* Subtle Active (Click) Effect */
 .back-home-btn:active {
     transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(79, 70, 229, 0.08);
+    box-shadow: 0 4px 8px rgba(227, 0, 15, 0.08);
 }
 
 /* Optional: Add a very faint underline effect on hover */
@@ -538,7 +538,7 @@
     left: 50px;
     right: 25px;
     height: 1px;
-    background: #4f46e5;
+    background: #e3000f;
     transform: scaleX(0);
     transform-origin: right;
     transition: transform 0.4s ease;
