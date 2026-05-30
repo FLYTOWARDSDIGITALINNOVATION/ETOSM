@@ -74,7 +74,7 @@
   flex-direction: column;
   gap: 15px;
   padding: 20px;
-  background: #fdf2f8;
+  background: #fff0f0;
   border-radius: 12px;
   border: 1px dashed #f9a8d4;
   align-items: center;
@@ -87,7 +87,7 @@
   border-radius: 10px;
   background: white;
   padding: 5px;
-  border: 1px solid #fbcfe8;
+  border: 1px solid #ffcccc;
 }
 
 .file-input {

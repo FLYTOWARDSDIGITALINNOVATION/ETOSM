@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { FaCloudUploadAlt, FaTimes, FaArrowLeft, FaPaperPlane, FaPlus, FaChevronDown, FaChevronUp, FaHeadset } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
+import Footer from '../components/Footer';
 import "./CustomerService.css";
 
 const CustomerService = () => {
@@ -234,58 +235,11 @@ const CustomerService = () => {
                 )}
             </main>
 
-            {/* --- FOOTER --- */}
-            <footer className="footer-site">
-                <div className="footer-container">
-                    <div className="footer-column brand-col">
-                        <h4 className="footer-col-title">HIGHGRIP</h4>
-                        <p className="footer-address">
-                            Lakshmi Textile, Shed no 9,<br />
-                            SIDCO colony, Madurai main road,<br />
-                            Theni, Tamil Nadu, 625531
-                        </p>
-                    </div>
-
-                    <div className="footer-column">
-                        <h4 className="footer-col-title">QUICK LINKS</h4>
-            <ul className="footer-links">
-              <li><a href="/">Home</a></li>
-              <li><a href="/about">About Us</a></li>
-              <li><a href="/products">Our Products</a></li>
-              <li><a href="/customer-service">FAQ</a></li>
-              <li><a href="/contact">Contact Us</a></li></ul>
-                    </div>
-
-                    <div className="footer-column">
-                        <h4 className="footer-col-title">PRODUCTS</h4>
-                        <ul className="footer-links">
-                            <li><a href="/products/yoga">Yoga Socks</a></li>
-                            <li><a href="/products/compression">Compression Sleeves</a></li>
-                            <li><a href="/products/thigh-high">Thigh High Socks</a></li>
-                            <li><a href="/products/medical">Medical Stockings</a></li>
-                            <li><a href="/products/trampoline">Trampoline Socks</a></li>
-                            <li><a href="/products/ankle">Ankle Grip Socks</a></li>
-                            <li><a href="/products/knee-pads">Crawling Knee Pads</a></li>
-                        </ul>
-                    </div>
-
-                    <div className="footer-column">
-                        <h4 className="footer-col-title">GET IN TOUCH</h4>
-                        <p className="footer-contact-text">
-                            If you have any enquiries, please do not hesitate to contact us.
-                        </p>
-                    </div>
-                </div>
-
-                <div className="footer-bottom">
-                    <p>Copyright © 2026 by Highgripsox. All Rights Reserved.</p>
-                </div>
-            </footer>
+            <Footer />
         </div>
     );
 };
 
 export default CustomerService;
-
 
 

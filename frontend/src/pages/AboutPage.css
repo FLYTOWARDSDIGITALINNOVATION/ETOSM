@@ -171,7 +171,7 @@
 
 .v-icon {
   font-size: 35px;
-  color: var(--brand-color); /* Preserves the Magenta icon */
+  color: var(--brand-color); /* Preserves the var(--primary-color) icon */
   margin-bottom: 30px;
 }
 

@@ -2,7 +2,7 @@
 .admin-layout {
   display: flex;
   min-height: 100vh;
-  background: #fdf2f8;
+  background: #fff0f0;
   /* Very light pink tint */
   font-family: "Plus Jakarta Sans", sans-serif;
 }

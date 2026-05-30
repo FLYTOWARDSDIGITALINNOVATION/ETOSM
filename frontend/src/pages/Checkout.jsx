@@ -18,7 +18,7 @@ const Checkout = () => {
 
   // Get previous addresses from localStorage
   const previousAddresses = user ? JSON.parse(localStorage.getItem(`addresses_${user.email}`)) || [] : [];
-  
+
   // State for selection logic
   const [selectedShipping, setSelectedShipping] = useState('standard');
   const [selectedPayment, setSelectedPayment] = useState('card');
@@ -140,8 +140,8 @@ const Checkout = () => {
               {previousAddresses.length > 0 && (
                 <div style={{ marginBottom: '20px', paddingBottom: '20px', borderBottom: '1px solid #eee' }}>
                   <div style={{ marginBottom: '10px' }}>
-                    <input 
-                      type="radio" 
+                    <input
+                      type="radio"
                       checked={useExistingAddress}
                       onChange={() => setUseExistingAddress(true)}
                       style={{ marginRight: '10px' }}
@@ -151,10 +151,10 @@ const Checkout = () => {
                   {useExistingAddress && (
                     <div style={{ marginLeft: '25px', marginBottom: '15px' }}>
                       {previousAddresses.map((addr, idx) => (
-                        <div key={idx} style={{ marginBottom: '10px', padding: '10px', border: '1px solid #ddd', borderRadius: '4px', cursor: 'pointer' }} 
+                        <div key={idx} style={{ marginBottom: '10px', padding: '10px', border: '1px solid #ddd', borderRadius: '4px', cursor: 'pointer' }}
                           onClick={() => handleSelectPreviousAddress(idx)}>
-                          <input 
-                            type="radio" 
+                          <input
+                            type="radio"
                             checked={selectedPreviousAddress === idx}
                             onChange={() => handleSelectPreviousAddress(idx)}
                             style={{ marginRight: '10px' }}
@@ -166,10 +166,10 @@ const Checkout = () => {
                       ))}
                     </div>
                   )}
-                  
+
                   <div style={{ marginTop: '10px' }}>
-                    <input 
-                      type="radio" 
+                    <input
+                      type="radio"
                       checked={!useExistingAddress}
                       onChange={() => setUseExistingAddress(false)}
                       style={{ marginRight: '10px' }}
@@ -185,7 +185,7 @@ const Checkout = () => {
                   <input
                     type="text"
                     name="firstName"
-                    placeholder="John"
+                    placeholder="FirstName"
                     value={shippingInfo.firstName}
                     onChange={handleShippingChange}
                     required
@@ -196,7 +196,7 @@ const Checkout = () => {
                   <input
                     type="text"
                     name="lastName"
-                    placeholder="Doe"
+                    placeholder="LastName"
                     value={shippingInfo.lastName}
                     onChange={handleShippingChange}
                   />
@@ -206,7 +206,7 @@ const Checkout = () => {
                   <input
                     type="email"
                     name="email"
-                    placeholder="john@example.com"
+                    placeholder="example@gmail.com"
                     value={shippingInfo.email}
                     onChange={handleShippingChange}
                     required
@@ -217,7 +217,7 @@ const Checkout = () => {
                   <input
                     type="tel"
                     name="phone"
-                    placeholder="+91 98765 43210"
+                    placeholder="+91 xxxxxxxxxx"
                     value={shippingInfo.phone}
                     onChange={handleShippingChange}
                     required

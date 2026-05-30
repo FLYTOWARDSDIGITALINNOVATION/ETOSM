@@ -12,6 +12,7 @@ const Header = ({ onSearch }) => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [categories, setCategories] = useState([]);
+  const [localSearch, setLocalSearch] = useState("");
 
   const navigate = useNavigate();
   const { wishlist } = useWishlist();
@@ -43,14 +44,14 @@ const Header = ({ onSearch }) => {
     <header className={`main-header ${scrolled ? "header-scrolled" : ""}`}>
       {/* 1. Global Announcement Bar */}
       <div className="top-bar">
-        <p>✨ SPECIAL OFFER: GET 20% OFF ON YOUR FIRST ORDER • USE CODE: FIRST20 ✨</p>
+        <p>⚡ ETOSM TECHNOLOGY: PREMIUM POWER ELECTRONICS, CUSTOM BMS & AUDIO SOLUTIONS ⚡</p>
       </div>
 
       <nav className="navbar container">
         {/* 2. Logo */}
         <div className="nav-left">
           <Link to="/home" className="brand-logo">
-            <img src="/logoo.png" alt="HighGrip Logo" />
+            <img src="/logo1.png" alt="HighGrip Logo" />
           </Link>
         </div>
 
@@ -90,6 +91,7 @@ const Header = ({ onSearch }) => {
               <span className="nav-icon-small">🔒</span> Privacy Policy
             </Link>
           </li>
+
           <li>
             <Link to="/contact" className="nav-item">
               <span className="nav-icon-small">📞</span> Contact Us
@@ -107,7 +109,16 @@ const Header = ({ onSearch }) => {
                 type="text"
                 className="search-input"
                 placeholder="Search products..."
-                onChange={(e) => onSearch && onSearch(e.target.value)}
+                value={localSearch}
+                onChange={(e) => {
+                  setLocalSearch(e.target.value);
+                  if (onSearch) onSearch(e.target.value);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && localSearch.trim() !== '') {
+                    navigate(`/home?search=${encodeURIComponent(localSearch.trim())}`);
+                  }
+                }}
               />
             </div>
           </div>

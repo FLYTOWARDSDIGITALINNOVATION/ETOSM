@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { FaQuoteRight, FaStar, FaHeartbeat, FaRunning, FaArrowRight } from 'react-icons/fa';
 import Header from "../components/Header";
 import SidebarFilters from "../components/SidebarFilters";
 import Hero from "../components/Hero";
 import CollectionGrid from "../components/CollectionGrid";
 import ProductCard from "../components/ProductCard";
+import Footer from "../components/Footer";
 import API_BASE_URL from "../apiConfig";
 
 import "./HomePage.css";
@@ -14,7 +16,21 @@ export default function Home() {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [recentOrders, setRecentOrders] = useState([]); // Real orders from DB
   const [loading, setLoading] = useState(true);
+  const location = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const query = params.get("search");
+    if (query) {
+      setSearchTerm(query);
+      // Optional: scroll to products section
+      setTimeout(() => {
+        const collection = document.querySelector('.collection-section');
+        if (collection) collection.scrollIntoView({ behavior: 'smooth' });
+      }, 500);
+    }
+  }, [location.search]);
   const [filters, setFilters] = useState({
     deals: [],
     delivery: [],
@@ -115,114 +131,10 @@ export default function Home() {
         </div>
       </div>
 
-      {/* --- LIVE COMMUNITY RESULTS (DYNAMIC FROM DB) --- */}
-      <section className="motion-review-section">
-        <div className="bg-glow"></div>
 
-        <div className="section-intro">
-          <span className="premium-tag">Live Activity Feed</span>
-          <h2 className="motion-title">LIVE STORE <span className="italic-magenta">FEED</span></h2>
-          <p style={{ color: '#e3000f', marginTop: '10px', fontSize: '1.1rem', fontWeight: '700' }}>
-            THIS DATA IS NOW LIVE FROM YOUR DATABASE
-          </p>
-        </div>
-
-        <div className="motion-grid">
-          {recentOrders && recentOrders.length > 0 ? (
-            recentOrders.map((order, idx) => (
-              <div className="parallax-card" key={order._id || idx}>
-                <div className="card-inner-layer">
-                  <div className="card-top">
-                    <div className="status-badge" style={{ background: '#fff0f0', color: '#e3000f', fontWeight: '800' }}>
-                      <span className="pulse-dot"></span>
-                      RECENT ORDER
-                    </div>
-                    <div className="rev-icon-floating"><FaRunning /></div>
-                  </div>
-
-                  <div className="testimonial-text-box">
-                    <FaQuoteRight className="quote-watermark" />
-                    <p className="testimonial-para" style={{ fontFamily: "'Inter', sans-serif", fontSize: '1.15rem', color: '#1a1a1a' }}>
-                      <strong>{order.userName || "Customer"}</strong> just purchased <strong>{order.productName}</strong>.
-                      Verified security clearance successful.
-                    </p>
-                  </div>
-
-                  <div className="card-footer-info">
-                    <div className="user-details">
-                      <h4 className="user-name-inter" style={{ fontFamily: "'Inter', sans-serif", fontWeight: '800' }}>
-                        {order.totalAmount ? `₹${order.totalAmount.toFixed(2)}` : "Verified Elite"}
-                      </h4>
-                      <p className="user-role-magenta" style={{ fontWeight: '700' }}>LIVE FROM DB</p>
-                    </div>
-                    <div className="activity-date">
-                      <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: '700' }}>
-                        {new Date(order.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="parallax-card">
-              <div className="card-inner-layer" style={{ justifyContent: 'center', textAlign: 'center' }}>
-                <p style={{ color: '#94a3b8', fontWeight: '600' }}>Syncing community activity...</p>
-              </div>
-            </div>
-          )}
-        </div>
-      </section>
 
       {/* --- FOOTER --- */}
-      <footer className="footer-site">
-        <div className="footer-container">
-          <div className="footer-column brand-col">
-            <h4 className="footer-col-title">ETOSM TECHNOLOGY</h4>
-            <p className="footer-address">
-              Indian Electronics Design &amp; Manufacturing<br />
-              Power Electronics | BMS | Audio<br />
-              Tamil Nadu, India
-            </p>
-          </div>
-
-          <div className="footer-column">
-            <h4 className="footer-col-title">QUICK LINKS</h4>
-            <ul className="footer-links">
-              <li><a href="/">Home</a></li>
-              <li><a href="/about">About Us</a></li>
-              <li><a href="/products">Our Products</a></li>
-              <li><a href="/terms">Terms of Service</a></li>
-              <li><a href="/privacy">Privacy Policy</a></li>
-              <li><a href="/contact">Contact Us</a></li>
-            </ul>
-          </div>
-
-          <div className="footer-column">
-            <h4 className="footer-col-title">PRODUCTS</h4>
-            <ul className="footer-links">
-              <li><a href="/category/Electronics Components">Electronics Components</a></li>
-              <li><a href="/category/Battery Accessories">Battery Management Systems</a></li>
-              <li><a href="/category/Battery">Lithium Battery Packs</a></li>
-              <li><a href="/category/Audio">Audio Modules</a></li>
-              <li><a href="/category/SMPS">SMPS Power Supplies</a></li>
-            </ul>
-          </div>
-
-          <div className="footer-column">
-            <h4 className="footer-col-title">GET IN TOUCH</h4>
-            <p className="footer-contact-text">
-              If you have any enquiries, please do not hesitate to contact us.<br /><br />
-              Email: support@etosmtechnology.in<br />
-              Phone: +91 88070 80216
-            </p>
-          </div>
-        </div>
-
-        <div className="footer-bottom">
-          <p>Copyright © 2026 EToSM Technology. All Rights Reserved.</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

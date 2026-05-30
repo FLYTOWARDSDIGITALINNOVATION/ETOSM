@@ -68,7 +68,7 @@ const AdminLayout = ({ children }) => {
         <div className="sidebar-header">
           <div className="logo-section">
             <img
-              src="/logoo.png"
+              src="/logo1.png"
               alt="Logo"
               className="sidebar-logo"
               onClick={() => navigate("/")}

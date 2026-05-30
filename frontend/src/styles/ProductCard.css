@@ -210,3 +210,29 @@
   border-color: var(--primary);
   box-shadow: 0 8px 20px rgba(199, 21, 133, 0.2);
 }
+
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+  .image-box img {
+    padding: 5px; /* Maximize image size */
+  }
+  
+  .product-title {
+    -webkit-line-clamp: 2; /* Show up to 2 lines for title */
+    font-size: 0.95rem;
+  }
+
+  .overlay-actions {
+    display: none; /* Hide quick view on mobile, users can tap image instead */
+  }
+
+  .card-info {
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .add-cart-btn {
+    padding: 10px;
+    font-size: 0.9rem;
+  }
+}

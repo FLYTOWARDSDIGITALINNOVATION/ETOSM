@@ -18,7 +18,7 @@
   color: var(--text-main);
   padding-top: 100px;
   min-height: 100vh;
-  background: linear-gradient(135deg, #fffcfd 0%, #fff0f7 50%, #fdf2f8 100%);
+  background: linear-gradient(135deg, #fffcfd 0%, #fff0f7 50%, #fff0f0 100%);
   background-size: 300% 300%;
   animation: gradientFlow 12s ease infinite;
   position: relative;

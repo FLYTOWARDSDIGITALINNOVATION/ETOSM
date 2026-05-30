@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import Header from '../components/Header';
+import Footer from '../components/Footer';
 import './TermsOfService.css';
 
 const TermsOfService = () => {
@@ -63,6 +64,7 @@ const TermsOfService = () => {
           <p>Any questions regarding the Terms of Service, please contact us at <a href="mailto:info@etosmtechnology.in">info@etosmtechnology.in</a>.</p>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

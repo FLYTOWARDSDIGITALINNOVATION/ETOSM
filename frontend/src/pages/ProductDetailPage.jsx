@@ -244,23 +244,7 @@ const ProductDetailPage = () => {
               <span className="reviews">({product.ratingCount || 0} ratings)</span>
               {product.tag && <span className="detail-tag" style={{ marginLeft: '15px' }}>{product.tag}</span>}
             </div>
-            <div className="selection-group">
-              <div className="size-header">
-                <h4>Available Sizes</h4>
-                <span className="selected-size-label">{selectedSize === 'S' ? 'Small' : selectedSize === 'M' ? 'Medium' : selectedSize === 'L' ? 'Large' : 'Extra Large'}</span>
-              </div>
-              <div className="size-options">
-                {sizes.map((size) => (
-                  <button
-                    key={size}
-                    className={`size-btn circle-btn ${selectedSize === size ? "active" : ""}`}
-                    onClick={() => setSelectedSize(size)}
-                  >
-                    {size}
-                  </button>
-                ))}
-              </div>
-            </div>
+
 
             {product.features && product.features.length > 0 && (
               <div className="features-accordion">

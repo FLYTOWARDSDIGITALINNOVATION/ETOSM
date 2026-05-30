@@ -86,7 +86,7 @@
 }
 
 .date-info.delivered {
-    background: #fdf2f8;
+    background: #fff0f0;
     color: #c2188b;
     border: 1px solid #fce7f3;
 }
@@ -125,7 +125,7 @@
 }
 
 .status-delivered {
-    background: #fdf2f8;
+    background: #fff0f0;
     color: #c2188b;
     border: 1px solid #fce7f3;
 }
@@ -408,7 +408,7 @@
 }
 
 .demo-btn.deliver {
-    background: #fdf2f8;
+    background: #fff0f0;
     color: #c2188b;
     border-color: #fce7f3;
 }

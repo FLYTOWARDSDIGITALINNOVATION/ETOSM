@@ -52,7 +52,7 @@
   letter-spacing: -1px;
 }
 
-.italic-magenta {
+.italic-var(--primary-color) {
   color: #e3000f;
   font-style: italic;
   font-weight: 400;
@@ -184,7 +184,7 @@
   margin-bottom: 2px;
 }
 
-.user-role-magenta {
+.user-role-var(--primary-color) {
   font-family: 'Inter', sans-serif;
   font-size: 0.85rem;
   color: #e3000f;

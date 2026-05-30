@@ -221,7 +221,7 @@
 }
 
 .preview-slip-btn:hover:not(:disabled) {
-    background: #fdf2f8;
+    background: #fff0f0;
 }
 
 .preview-slip-btn:disabled {

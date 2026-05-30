@@ -117,7 +117,7 @@
 }
 
 .checkbox-icon {
-  color: #ec4899;
+  color: var(--primary-color);
   /* Pink check color from screenshot */
   font-weight: bold;
 }

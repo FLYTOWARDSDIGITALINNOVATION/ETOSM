@@ -1,6 +1,6 @@
 /* src/pages/CustomerService.css */
 .customer-service-container {
-    background: #fdf2f8;
+    background: #fff0f0;
     /* Light pink background */
     min-height: 100vh;
     padding-top: 130px;
@@ -164,18 +164,18 @@
 }
 
 .cs-chat-item:hover {
-    background: #fdf2f8;
+    background: #fff0f0;
 }
 
 .cs-chat-item.active {
-    background: #fdf2f8;
+    background: #fff0f0;
     border-left: 4px solid #c71585;
 }
 
 .chat-avatar {
     width: 40px;
     height: 40px;
-    background: #fbcfe8;
+    background: #ffcccc;
     border-radius: 50%;
     display: flex;
     align-items: center;

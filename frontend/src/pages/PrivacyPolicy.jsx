@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import Header from '../components/Header';
+import Footer from '../components/Footer';
 import './TermsOfService.css';
 
 const PrivacyPolicy = () => {
@@ -117,6 +118,7 @@ const PrivacyPolicy = () => {
           <p>If you feel that EToSM Technology (etosmtechnology.in) is violating this Privacy Statement, please contact us on <a href="mailto:info@etosmtechnology.in">info@etosmtechnology.in</a></p>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

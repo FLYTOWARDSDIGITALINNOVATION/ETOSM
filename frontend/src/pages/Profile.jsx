@@ -41,7 +41,7 @@ const Profile = () => {
     return (
       <div className="pro-empty-state">
         <h2>Please login to view your profile</h2>
-        <button className="pro-add-btn" onClick={() => navigate("/login")}>Go to Login</button>
+        <button className="pro-add-btn" onClick={() => navigate("/auth")}>Go to Login</button>
       </div>
     );
   }

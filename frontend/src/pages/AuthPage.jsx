@@ -128,31 +128,31 @@ const AuthPage = () => {
         >
           <motion.div variants={itemVariants} className="brand-logo-container">
             <div className="brand-icon" style={{ background: "none", boxShadow: "none" }}>
-              <img src="/logoo.png" alt="HIGHGRIP Shoes" style={{ width: "100%", borderRadius: "14px" }} />
+              <img src="/logo1.png" alt="ETOSM Technology" style={{ width: "100%", borderRadius: "14px" }} />
             </div>
           </motion.div>
 
           <motion.h2 variants={itemVariants} className="brand-headline">
-            Step Into <br />
-            <span className="highlight-text">Premium Footwear</span>
+            Power Your <br />
+            <span className="highlight-text">Electronics Innovation</span>
           </motion.h2>
 
           <motion.p variants={itemVariants} className="brand-subtext">
-            Performance-driven shoes crafted for comfort, grip, and everyday confidence.
+            High-quality components, BMS, and power supplies for your engineering needs.
           </motion.p>
 
           <motion.div variants={itemVariants} className="brand-stats">
             <div className="stat-item">
-              <h3>Multiple</h3>
-              <p>Shoe Designs</p>
+              <h3>Quality</h3>
+              <p>Electronics</p>
             </div>
             <div className="stat-item">
-              <h3>Multiple</h3>
-              <p>Happy Customers</p>
+              <h3>Secure</h3>
+              <p>Transactions</p>
             </div>
             <div className="stat-item">
-              <h3>Multiple</h3>
-              <p>Trusted Stores</p>
+              <h3>Fast</h3>
+              <p>Delivery</p>
             </div>
           </motion.div>
         </motion.div>
@@ -185,8 +185,8 @@ const AuthPage = () => {
                 className="form-container"
               >
                 <motion.div variants={itemVariants}>
-                  <h2>Welcome Back 👟</h2>
-                  <p className="form-subtitle">Login to explore HIGHGRIP shoes</p>
+                  <h2>Welcome Back ⚡</h2>
+                  <p className="form-subtitle">Login to explore ETOSM Technology</p>
                 </motion.div>
 
                 <form onSubmit={handleLogin}>
@@ -247,8 +247,8 @@ const AuthPage = () => {
                 className="form-container"
               >
                 <motion.div variants={itemVariants}>
-                  <h2>Create HIGHGRIP Account</h2>
-                  <p className="form-subtitle">Join us & walk with confidence</p>
+                  <h2>Create ETOSM Account</h2>
+                  <p className="form-subtitle">Join us & build the future</p>
                 </motion.div>
 
                 <form onSubmit={handleSignup}>
@@ -307,7 +307,7 @@ const AuthPage = () => {
                         type="checkbox"
                         onChange={(e) => setAcceptedTerms(e.target.checked)}
                       />
-                      I agree to the HIGHGRIP Terms of Service and Privacy Policy
+                      I agree to the ETOSM Technology Terms of Service and Privacy Policy
                     </label>
                   </motion.div>
 

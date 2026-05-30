@@ -73,7 +73,7 @@
 
 .stat-card:hover {
   transform: translateY(-10px);
-  border-color: #fbcfe8;
+  border-color: #ffcccc;
   box-shadow: 0 20px 40px rgba(199, 21, 133, 0.08);
 }
 
@@ -232,7 +232,7 @@
 /* Base resets for global admin alignment */
 .admin-content {
   padding: 40px;
-  background: #fdf2f8;
+  background: #fff0f0;
   /* Very light pink tint for background */
   min-height: 100vh;
 }

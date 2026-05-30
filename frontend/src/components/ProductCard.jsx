@@ -55,7 +55,12 @@ const ProductCard = ({ product }) => {
           <FaHeart />
         </button>
 
-        <img src={`${API_BASE_URL}${product.image}`} alt={product.name} />
+        <img 
+          src={`${API_BASE_URL}${product.image}`} 
+          alt={product.name} 
+          onClick={() => navigate(`/product/${product._id}`)}
+          style={{ cursor: 'pointer' }}
+        />
 
         {showAdded && <div className="added-toast">Product added to cart</div>}
         {showWishAdded && <div className="added-toast">Added to wishlist</div>}
@@ -68,7 +73,13 @@ const ProductCard = ({ product }) => {
       </div>
 
       <div className="card-info">
-        <h4 className="product-title">{product.name}</h4>
+        <h4 
+          className="product-title"
+          onClick={() => navigate(`/product/${product._id}`)}
+          style={{ cursor: 'pointer' }}
+        >
+          {product.name}
+        </h4>
         <div className="rating-container">
           <div className="stars">
             {[...Array(5)].map((_, i) => (
