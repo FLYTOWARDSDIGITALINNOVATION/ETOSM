@@ -21,31 +21,6 @@ const SidebarFilters = ({ filters, onFilterChange, className }) => {
 
     return (
         <aside className={`sidebar-filters ${className || ""}`}>
-            {/* 1. Deals & Discounts */}
-            <div className="filter-section">
-                <h3>Deals & Discounts</h3>
-                <label className="filter-option">
-                    <input
-                        type="checkbox"
-                        checked={filters.deals?.includes("republic")}
-                        onChange={() => handleCheckboxChange("deals", "republic")}
-                    />
-                    Republic Day Deals
-                </label>
-            </div>
-
-            {/* 2. Delivery Day */}
-            <div className="filter-section">
-                <h3>Delivery Day</h3>
-                <label className="filter-option">
-                    <input
-                        type="checkbox"
-                        checked={filters.delivery?.includes("2days")}
-                        onChange={() => handleCheckboxChange("delivery", "2days")}
-                    />
-                    Get It in 2 Days
-                </label>
-            </div>
 
             {/* 3. Price */}
             <div className="filter-section">
