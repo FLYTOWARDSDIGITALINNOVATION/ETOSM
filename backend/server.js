@@ -25,6 +25,10 @@ app.use((req, res, next) => {
 });
 
 /* ================= MONGODB ================= */
+// Force Node.js to use Google/Cloudflare DNS (fixes querySrv ECONNREFUSED on Windows)
+const dns = require("dns");
+dns.setServers(["8.8.8.8", "1.1.1.1"]);
+
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB Connected"))
@@ -624,16 +628,13 @@ app.put(
 
 // PRODUCTS
 app.get("/products", async (req, res) => res.json(await Product.find()));
-app.get("/products/:id", async (req, res) =>
-  res.json(await Product.findById(req.params.id))
-);
-// PRODUCTS BY CATEGORY
 app.get("/products/category/:category", async (req, res) => {
   try {
     const category = req.params.category;
 
+    // Use a case-insensitive partial/regex match so 'Battery' matches 'BATTERY PACKS'
     const products = await Product.find({
-      category: { $regex: new RegExp(`^${category}$`, "i") } // case-insensitive
+      category: { $regex: new RegExp(category, "i") }
     });
 
     res.json(products);
@@ -642,6 +643,9 @@ app.get("/products/category/:category", async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+app.get("/products/:id", async (req, res) =>
+  res.json(await Product.findById(req.params.id))
+);
 
 // ORDERS
 app.post("/orders", async (req, res) => {

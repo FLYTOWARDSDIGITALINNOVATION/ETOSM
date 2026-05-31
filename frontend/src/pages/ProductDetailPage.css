@@ -235,12 +235,11 @@
   font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 1.1rem;
   font-weight: 400;
+  white-space: pre-line;
 }
 
 .detail-description.collapsed {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
+  max-height: 4.8em; /* 3 lines of text (3 * 1.6 line-height) */
   overflow: hidden;
 }
 

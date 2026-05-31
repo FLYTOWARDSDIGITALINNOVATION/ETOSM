@@ -263,9 +263,12 @@ const ProductDetailPage = () => {
               </div>
             )}
 
-            <p className={`detail-description ${!showFullDescription ? "collapsed" : ""}`} dangerouslySetInnerHTML={{
-              __html: product.description || `Elevate your style with this premium quality ${product.name.toLowerCase()}.`
-            }} />
+            <p
+              className={`detail-description ${!showFullDescription ? "collapsed" : ""}`}
+              style={{ whiteSpace: 'pre-line' }}
+            >
+              {product.description || `Elevate your style with this premium quality ${product.name.toLowerCase()}.`}
+            </p>
             {product.description && (
               <button className="read-more-btn" onClick={() => setShowFullDescription(!showFullDescription)}>
                 {showFullDescription ? 'Show less' : 'Read more'}

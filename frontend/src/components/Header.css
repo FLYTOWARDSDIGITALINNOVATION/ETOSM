@@ -71,17 +71,10 @@
 /* Navigation Links */
 .nav-links {
     display: flex;
-    gap: 15px;
+    gap: 20px;
     list-style: none;
     margin: 0 20px;
     padding: 0;
-    overflow-x: auto;
-    white-space: nowrap;
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none; /* IE/Edge */
-}
-.nav-links::-webkit-scrollbar {
-    display: none; /* Chrome, Safari, Opera */
 }
 
 .nav-item {
