@@ -1,9 +1,8 @@
 #!/bin/bash
 # ============================================================
 # ETOSM VPS Deployment Script
-# Frontend on port 3006 (PM2 serve), Backend on port 5007 (PM2)
-# Frontend: http://31.97.237.122:3006
-# Backend:  http://31.97.237.122:5007
+# Frontend on port 3008, Backend on port 5007 (PM2)
+# Public port: http://31.97.237.122:3006 (Proxied by Nginx)
 #
 # Run this ON the VPS as root:
 #   cd /var/www/projects/etosm && bash deploy.sh
@@ -17,9 +16,8 @@ FRONTEND_DIR="$PROJECT_DIR/frontend"
 
 echo "=========================================="
 echo "      ETOSM — Starting Deployment"
-echo "  Frontend : http://31.97.237.122:3006"
-echo "  Backend  : http://31.97.237.122:5007"
-echo "  (Both running in PM2 FORK mode)"
+echo "  Public URL : http://31.97.237.122:3006"
+echo "  (Nginx routes port 3006 to PM2)"
 echo "=========================================="
 
 # ── 1. Install Node.js 20 if not present ───────────────────
@@ -67,14 +65,26 @@ pm2 start ecosystem.config.js --env production
 pm2 save
 pm2 startup systemd -u root --hp /root 2>/dev/null || true
 
+# ── 6. Configure Nginx Reverse Proxy ──────────────────────
+echo "[6] Configuring Nginx reverse proxy on port 3006..."
+cp "$PROJECT_DIR/nginx.etosm.conf" /etc/nginx/sites-available/etosm
+ln -sf /etc/nginx/sites-available/etosm /etc/nginx/sites-enabled/etosm
+
+echo "    Testing Nginx configuration..."
+nginx -t
+
+echo "    Reloading Nginx..."
+systemctl reload nginx
+
 echo ""
 echo "=========================================="
 echo " ✅ ETOSM is LIVE!"
 echo " "
-echo "   🌐 Frontend URL : http://31.97.237.122:3006"
-echo "   🌐 Backend URL  : http://31.97.237.122:5007"
+echo "   🌐 URL : http://31.97.237.122:3006"
 echo " "
-echo "   Both frontend and backend are running under PM2 in FORK mode!"
+echo "   Both processes are running in PM2 FORK mode:"
+echo "     • etosm-frontend (internal port 3008)"
+echo "     • etosm-backend  (internal port 5007)"
 echo " "
 echo "   Useful commands:"
 echo "     pm2 status              → Check status of all projects"

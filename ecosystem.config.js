@@ -1,10 +1,8 @@
 // PM2 Ecosystem Config — ETOSM Project
-// Frontend: http://31.97.237.122:3006
-// Backend:  http://31.97.237.122:5007
+// Only runs the backend Node.js server. Nginx serves the React frontend build directly.
 
 module.exports = {
   apps: [
-    // ── Backend ──────────────────────────────────
     {
       name: 'etosm-backend',
       script: 'server.js',
@@ -27,8 +25,6 @@ module.exports = {
         JWT_SECRET: 'Etosm_secret_key_2026',
       },
     },
-
-    // ── Frontend (static build via PM2 built-in server) ──
     {
       name: 'etosm-frontend',
       script: 'serve',
@@ -39,13 +35,13 @@ module.exports = {
       watch: false,
       env: {
         PM2_SERVE_PATH: './build',
-        PM2_SERVE_PORT: 3006,
+        PM2_SERVE_PORT: 3008,
         PM2_SERVE_SPA: 'true',
         PM2_SERVE_HOMEPAGE: '/index.html',
       },
       env_production: {
         PM2_SERVE_PATH: './build',
-        PM2_SERVE_PORT: 3006,
+        PM2_SERVE_PORT: 3008,
         PM2_SERVE_SPA: 'true',
         PM2_SERVE_HOMEPAGE: '/index.html',
       },
