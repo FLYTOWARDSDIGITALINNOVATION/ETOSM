@@ -185,6 +185,8 @@
   grid-template-columns: 1.2fr 0.8fr;
   gap: 80px;
   align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .depth-title {
@@ -216,7 +218,6 @@
   transform: translateY(-5px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
 }
-
 .depth-image-box {
   position: relative;
   overflow: hidden;

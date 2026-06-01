@@ -116,7 +116,7 @@ const AboutPage = () => {
           </div>
 
           <div className="depth-image-box">
-            <img src="/assets/iot.jpg" alt="ETOSM IoT Solutions" className="depth-img" />
+            <img src="/about_why_choose.png" alt="ETOSM IoT Solutions" className="depth-img" />
           </div>
         </div>
       </section>
