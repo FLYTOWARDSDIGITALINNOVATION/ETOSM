@@ -16,7 +16,7 @@ FRONTEND_DIR="$PROJECT_DIR/frontend"
 
 echo "=========================================="
 echo "      ETOSM — Starting Deployment"
-echo "  Frontend URL : http://31.97.237.122/"
+echo "  Frontend URL : http://31.97.237.122:3006"
 echo "  Backend Port : 5007 (Proxied via /api)"
 echo "=========================================="
 
@@ -78,8 +78,11 @@ if [ -f "$PROJECT_DIR/nginx.etosm.conf" ]; then
   # Enable the site by creating a symlink
   ln -sf /etc/nginx/sites-available/etosm /etc/nginx/sites-enabled/etosm
   
-  # Remove default Nginx site configuration to avoid port 80 conflicts
-  rm -f /etc/nginx/sites-enabled/default
+  # Restore default Nginx site config if deleted, to prevent affecting port 80 sites like payroll
+  if [ ! -f /etc/nginx/sites-enabled/default ] && [ -f /etc/nginx/sites-available/default ]; then
+    ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
+    echo "    Restored default Nginx site configuration."
+  fi
   
   # Test config and reload Nginx
   echo "    Testing Nginx configuration..."
@@ -97,7 +100,7 @@ echo ""
 echo "=========================================="
 echo " ✅ ETOSM is LIVE!"
 echo " "
-echo "   🌐 URL : http://31.97.237.122"
+echo "   🌐 URL : http://31.97.237.122:3006"
 echo " "
 echo "   Useful commands:"
 echo "     pm2 status              → Check backend status"
