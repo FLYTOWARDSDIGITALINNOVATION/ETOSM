@@ -9,6 +9,7 @@ import { useCart } from "../context/CartContext";
 import "./ProductDetailPage.css";
 
 const ProductDetailPage = () => {
+  const [showFullDescription, setShowFullDescription] = useState(false);
   const { id } = useParams();
   const navigate = useNavigate();
   const { addToCart } = useCart();
@@ -262,9 +263,14 @@ const ProductDetailPage = () => {
               </div>
             )}
 
-            <p className="detail-description" dangerouslySetInnerHTML={{
+            <p className={`detail-description ${!showFullDescription ? "collapsed" : ""}`} dangerouslySetInnerHTML={{
               __html: product.description || `Elevate your style with this premium quality ${product.name.toLowerCase()}.`
             }} />
+            {product.description && (
+              <button className="read-more-btn" onClick={() => setShowFullDescription(!showFullDescription)}>
+                {showFullDescription ? 'Show less' : 'Read more'}
+              </button>
+            )}
 
 
             {product.features && product.features.length > 0 && (
