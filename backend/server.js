@@ -808,16 +808,7 @@ app.post("/cart/update-qty", async (req, res) => {
   }
 });
 
-/* ================= SERVE REACT FRONTEND ================= */
-// In production, serve the React static build from the backend
-const buildPath = path.join(__dirname, '../frontend/build');
-if (fs.existsSync(buildPath)) {
-  app.use(express.static(buildPath));
-  // React Router SPA fallback — return index.html for all non-API routes
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(buildPath, 'index.html'));
-  });
-}
+
 
 /* ================= SERVER ================= */
 const PORT = process.env.PORT || 5007;
