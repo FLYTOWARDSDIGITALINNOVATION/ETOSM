@@ -123,10 +123,10 @@ const Contact = () => {
 
         </div>
 
-        {/* RIGHT BLUE CARD */}
+        {/* RIGHT CTA CARD */}
         <div className="contact-cta">
-          <h2>Got questions or need help choosing the right grip?</h2>
-          <p>We’d love to hear from you! Our team is ready to assist you.</p>
+          <h2>Got questions or need help choosing the right battery or electronics component?</h2>
+          <p>We'd love to hear from you! Our technical team is ready to assist with your BMS, lithium battery pack, or electronics queries.</p>
           <a href="tel:+918807080216" className="call-us-btn">Call Us</a>
         </div>
 
@@ -136,12 +136,12 @@ const Contact = () => {
 
       {showLoginModal && (
         <div className="login-modal-overlay" onClick={() => setShowLoginModal(false)}>
-          <div className="login-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 420, width: '90%', background: '#fff0f6', border: '2px solid #ff8fb1', borderRadius: 12, padding: 20, textAlign: 'center' }}>
-            <h3 style={{ marginTop: 0, color: '#d63384' }}>Please login to send a message</h3>
-            <p style={{ color: '#6b7280' }}>You need to be signed in to contact us.</p>
+          <div className="login-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 420, width: '90%', background: '#fff5f5', border: '2px solid #ffb8b8', borderRadius: 12, padding: 20, textAlign: 'center' }}>
+            <h3 style={{ marginTop: 0, color: '#e3000f' }}>Please login to send a message</h3>
+            <p style={{ color: '#4a5568' }}>You need to be signed in to contact us.</p>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginTop: 16 }}>
-              <button onClick={() => { setShowLoginModal(false); navigate('/auth'); }} style={{ background: '#ff66a3', color: 'white', border: 'none', padding: '10px 14px', borderRadius: 8 }}>Login</button>
-              <button onClick={() => setShowLoginModal(false)} style={{ background: 'transparent', border: '1px solid #ff8fb1', color: '#d63384', padding: '10px 14px', borderRadius: 8 }}>Cancel</button>
+              <button onClick={() => { setShowLoginModal(false); navigate('/auth'); }} style={{ background: '#e3000f', color: 'white', border: 'none', padding: '10px 14px', borderRadius: 8, fontWeight: 600, cursor: 'pointer' }}>Login</button>
+              <button onClick={() => setShowLoginModal(false)} style={{ background: 'transparent', border: '1px solid #ffb8b8', color: '#e3000f', padding: '10px 14px', borderRadius: 8, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
             </div>
           </div>
         </div>

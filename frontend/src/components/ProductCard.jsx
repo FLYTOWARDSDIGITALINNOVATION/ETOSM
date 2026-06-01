@@ -56,10 +56,11 @@ const ProductCard = ({ product }) => {
         </button>
 
         <img 
-          src={`${API_BASE_URL}${product.image}`} 
+          src={product.image ? `${API_BASE_URL}${product.image}` : "https://via.placeholder.com/300x300?text=No+Image"}
           alt={product.name} 
           onClick={() => navigate(`/product/${product._id}`)}
           style={{ cursor: 'pointer' }}
+          onError={(e) => { e.target.onerror = null; e.target.src = "https://via.placeholder.com/300x300?text=No+Image"; }}
         />
 
         {showAdded && <div className="added-toast">Product added to cart</div>}

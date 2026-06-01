@@ -632,9 +632,9 @@ app.get("/products/category/:category", async (req, res) => {
   try {
     const category = req.params.category;
 
-    // Use a case-insensitive partial/regex match so 'Battery' matches 'BATTERY PACKS'
+    // Use exact case-insensitive match so 'Battery' does NOT match 'Battery Accessories'
     const products = await Product.find({
-      category: { $regex: new RegExp(category, "i") }
+      category: { $regex: new RegExp(`^${category}$`, "i") }
     });
 
     res.json(products);
