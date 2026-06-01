@@ -62,19 +62,50 @@ pm2 start ecosystem.config.js --env production
 pm2 save
 pm2 startup systemd -u root --hp /root 2>/dev/null || true
 
-# ── 6. Configure Nginx ─────────────────────────────────────
+# ── 6. Configure Nginx & Firewall ─────────────────────────
 echo "[6] Configuring Nginx..."
 cp "$PROJECT_DIR/nginx.etosm.conf" /etc/nginx/sites-available/etosm
 ln -sf /etc/nginx/sites-available/etosm /etc/nginx/sites-enabled/etosm
+
+# Ensure Nginx is enabled and restarted to apply changes cleanly
 nginx -t
-systemctl reload nginx
+systemctl enable nginx
+systemctl restart nginx
+
+# ── 7. Configure Firewall (UFW) ───────────────────────────
+echo "[7] Checking Firewall (UFW)..."
+if command -v ufw &> /dev/null && ufw status | grep -q "Status: active"; then
+  echo "    UFW is active. Allowing port 3006..."
+  ufw allow 3006/tcp
+  ufw reload
+else
+  echo "    UFW is not active or not installed. Skipping firewall rules."
+fi
+
+# ── 8. Local Verification ─────────────────────────────────
+echo "[8] Verifying setup locally..."
+echo "    Checking if backend is listening on 5007..."
+curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:5007/products || echo "Backend check failed!"
+echo ""
+
+echo "    Checking if Nginx is listening on 3006..."
+LOCAL_HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3006/ || echo "000")
+if [ "$LOCAL_HTTP_CODE" = "200" ] || [ "$LOCAL_HTTP_CODE" = "304" ]; then
+  echo "    SUCCESS: Nginx is successfully serving the frontend locally on port 3006!"
+else
+  echo "    WARNING: Local Nginx check returned HTTP code $LOCAL_HTTP_CODE"
+fi
 
 echo ""
 echo "=========================================="
 echo " ETOSM is LIVE!"
 echo " URL: http://31.97.237.122:3006"
 echo " "
-echo " PM2 (backend only, fork mode):"
+echo " Troubleshooting & Info:"
+echo " 1. If Nginx check above succeeded but you still get a timeout"
+echo "    externally, you must open port 3006 in your cloud provider's"
+echo "    firewall/security groups (e.g. DigitalOcean, AWS, GCP, etc.)."
+echo " 2. PM2 (backend only, fork mode):"
 echo "   pm2 status"
 echo "   pm2 logs etosm-backend"
 echo "   pm2 restart etosm-backend"
