@@ -1,8 +1,9 @@
 #!/bin/bash
 # ============================================================
 # ETOSM VPS Deployment Script
-# Backend serves BOTH frontend and API on port 5007
-# Single link: http://31.97.237.122:5007
+# Frontend on port 3006 (PM2 serve), Backend on port 5007 (PM2)
+# Frontend: http://31.97.237.122:3006
+# Backend:  http://31.97.237.122:5007
 #
 # Run this ON the VPS as root:
 #   cd /var/www/projects/etosm && bash deploy.sh
@@ -16,8 +17,9 @@ FRONTEND_DIR="$PROJECT_DIR/frontend"
 
 echo "=========================================="
 echo "      ETOSM — Starting Deployment"
-echo "  URL : http://31.97.237.122:5007"
-echo "  (Backend serves frontend + API together)"
+echo "  Frontend : http://31.97.237.122:3006"
+echo "  Backend  : http://31.97.237.122:5007"
+echo "  (Both running in PM2 FORK mode)"
 echo "=========================================="
 
 # ── 1. Install Node.js 20 if not present ───────────────────
@@ -54,8 +56,8 @@ if [ -f "$BACKEND_DIR/.env.production" ]; then
 fi
 echo "    Backend dependencies installed."
 
-# ── 5. Start/Restart backend with PM2 ─────────────────────
-echo "[5] Starting backend with PM2..."
+# ── 5. Start/Restart processes with PM2 ─────────────────────
+echo "[5] Starting etosm-backend and etosm-frontend with PM2..."
 cd "$PROJECT_DIR"
 
 pm2 delete etosm-backend  2>/dev/null || true
@@ -69,10 +71,14 @@ echo ""
 echo "=========================================="
 echo " ✅ ETOSM is LIVE!"
 echo " "
-echo "   🌐 URL : http://31.97.237.122:5007"
+echo "   🌐 Frontend URL : http://31.97.237.122:3006"
+echo "   🌐 Backend URL  : http://31.97.237.122:5007"
+echo " "
+echo "   Both frontend and backend are running under PM2 in FORK mode!"
 echo " "
 echo "   Useful commands:"
-echo "     pm2 status              → Check status"
-echo "     pm2 logs etosm-backend  → Live logs"
-echo "     pm2 restart etosm-backend → Restart"
+echo "     pm2 status              → Check status of all projects"
+echo "     pm2 logs etosm-frontend → Live logs for Frontend"
+echo "     pm2 logs etosm-backend  → Live logs for Backend"
+echo "     pm2 restart etosm-frontend etosm-backend → Restart both"
 echo "=========================================="
