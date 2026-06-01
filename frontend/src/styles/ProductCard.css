@@ -218,6 +218,13 @@
   }
   
   .product-title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  -webkit-line-clamp: 2; /* Show up to 2 lines for title */
+  line-clamp: 2;
+  font-size: 0.95rem;
+}
     -webkit-line-clamp: 2; /* Show up to 2 lines for title */
     font-size: 0.95rem;
   }
