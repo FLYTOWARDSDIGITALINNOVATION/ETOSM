@@ -14,7 +14,7 @@ app.use(cors({
   origin: [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "http://31.97.237.122",
+    "http://31.97.237.122:5007",
   ],
   credentials: true,
 }));
@@ -808,6 +808,17 @@ app.post("/cart/update-qty", async (req, res) => {
   }
 });
 
+/* ================= SERVE REACT FRONTEND ================= */
+// In production, serve the React static build from the backend
+const buildPath = path.join(__dirname, '../frontend/build');
+if (fs.existsSync(buildPath)) {
+  app.use(express.static(buildPath));
+  // React Router SPA fallback — return index.html for all non-API routes
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(buildPath, 'index.html'));
+  });
+}
+
 /* ================= SERVER ================= */
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, "0.0.0.0", () => console.log(`Server running on port ${PORT}`));
+const PORT = process.env.PORT || 5007;
+app.listen(PORT, "0.0.0.0", () => console.log(`ETOSM Server running on port ${PORT}`));
