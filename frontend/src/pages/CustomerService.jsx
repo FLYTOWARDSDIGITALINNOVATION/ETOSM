@@ -22,9 +22,9 @@ const CustomerService = () => {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
 
     const faqs = [
-        { q: "What makes Highgrip socks non-skid?", a: "Our socks feature specially designed rubber grips on the sole that provide excellent traction on smooth surfaces, helping prevent slips and falls." },
-        { q: "Who can wear Highgrip socks?", a: "Highgrip socks are designed for everyone! From toddlers taking their first steps to seniors looking for extra stability, our socks offer comfort and safety for all ages." },
-        { q: "Are Highgrip socks machine washable?", a: "Yes, they are! We recommend washing them in cold water on a gentle cycle and air drying to maintain the integrity of the rubber grips." },
+        { q: "What makes Etosm socks non-skid?", a: "Our socks feature specially designed rubber grips on the sole that provide excellent traction on smooth surfaces, helping prevent slips and falls." },
+        { q: "Who can wear Etosm socks?", a: "Etosm socks are designed for everyone! From toddlers taking their first steps to seniors looking for extra stability, our socks offer comfort and safety for all ages." },
+        { q: "Are Etosm socks machine washable?", a: "Yes, they are! We recommend washing them in cold water on a gentle cycle and air drying to maintain the integrity of the rubber grips." },
         { q: "Do you offer different sizes?", a: "Absolutely. We offer a wide range of sizes for babies, kids, and adults. Please check our size chart for the perfect fit." },
         { q: "What are the rubber grips made of?", a: "The grips are made from high-quality, non-toxic silicone that is durable and provides long-lasting traction." },
         { q: "Are your socks suitable for hospital or medical use?", a: "Yes, many customers use our socks in hospitals or for medical recovery because of their superior grip and comfort." },

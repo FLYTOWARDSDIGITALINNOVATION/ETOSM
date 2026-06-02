@@ -51,7 +51,7 @@ const Header = ({ onSearch }) => {
         {/* 2. Logo */}
         <div className="nav-left">
           <Link to="/home" className="brand-logo">
-            <img src="/logo1.png" alt="HighGrip Logo" />
+            <img src="/logo1.png" alt="Etosm Logo" />
           </Link>
         </div>
 

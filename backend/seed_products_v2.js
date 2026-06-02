@@ -38,7 +38,7 @@ const products = [
         name: "Compression Sleeves",
         category: "Compression Sleeves",
         price: 799,
-        description: "Stay energized with Highgrip Compression Sleeves for arms and legs — offering all-day comfort and graduated compression to boost circulation, reduce fatigue, and speed up recovery.<br><br><b>Move Freely. Recover Faster. Perform Stronger.</b>",
+        description: "Stay energized with Etosm Compression Sleeves for arms and legs — offering all-day comfort and graduated compression to boost circulation, reduce fatigue, and speed up recovery.<br><br><b>Move Freely. Recover Faster. Perform Stronger.</b>",
         image: "/uploads/compression_sleeves_new.jpg",
         images: ["/uploads/compression_sleeves_new.jpg"],
         features: [
@@ -81,7 +81,7 @@ const products = [
         name: "Trampoline Socks",
         category: "Trampoline Socks",
         price: 799,
-        description: "Stay grounded mid-air with Highgrip Trampoline Socks—designed with ultra-grip soles for superior traction and stability.<br><br><b>Customization Available</b><br>• Branded logos<br>• Custom grip designs<br>• Color options<br><br><b>Leap with confidence. Land with Highgrip.</b>",
+        description: "Stay grounded mid-air with Etosm Trampoline Socks—designed with ultra-grip soles for superior traction and stability.<br><br><b>Customization Available</b><br>• Branded logos<br>• Custom grip designs<br>• Color options<br><br><b>Leap with confidence. Land with Etosm.</b>",
         image: "/uploads/trampoline_socks.jpg",
         images: ["/uploads/trampoline_socks.jpg"],
         features: [
@@ -98,7 +98,7 @@ const products = [
         discountPercent: 10,
         discountStart: new Date("2024-01-01"),
         discountEnd: new Date("2026-12-31"),
-        description: "Engineered for traction, comfort, and customization, Highgrip Ankle Socks are built to perform.<br><br><b>Make It Yours</b><br>Add your logo, text, or design directly on the grip. Perfect for teams, studios, or branded merchandise.<br><br><b>Move with confidence. Stand out in style — with Highgrip.</b>",
+        description: "Engineered for traction, comfort, and customization, Etosm Ankle Socks are built to perform.<br><br><b>Make It Yours</b><br>Add your logo, text, or design directly on the grip. Perfect for teams, studios, or branded merchandise.<br><br><b>Move with confidence. Stand out in style — with Etosm.</b>",
         image: "/uploads/ankle_grip_socks.jpg",
         images: ["/uploads/ankle_grip_socks.jpg"],
         features: [
@@ -112,7 +112,7 @@ const products = [
         name: "Crawling Knee Pads",
         category: "Crawling Knee Pads",
         price: 799,
-        description: "Support your baby's first steps and crawls with soft, breathable knee pads designed for safety and comfort. Explore safely. Grow confidently — with Highgrip Baby Knee Pads.",
+        description: "Support your baby's first steps and crawls with soft, breathable knee pads designed for safety and comfort. Explore safely. Grow confidently — with Etosm Baby Knee Pads.",
         image: "/uploads/knee_pads.jpg",
         images: ["/uploads/knee_pads.jpg"],
         features: [

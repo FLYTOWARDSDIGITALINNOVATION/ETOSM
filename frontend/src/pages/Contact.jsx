@@ -76,7 +76,7 @@ const Contact = () => {
             <div>
               <h4>Address:</h4>
               <p>
-                <strong>Highgrip</strong><br />
+                <strong>Etosm</strong><br />
                 2/167, Merkukadu, Ramapuram,<br />
                 Tiruchengodu, Namakkal,<br />
                 Tamil Nadu-637202
