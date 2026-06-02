@@ -1,7 +1,7 @@
 import API_BASE_URL from '../apiConfig';
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { FaSearch, FaUser, FaHeart, FaShoppingCart, FaBars, FaTimes, FaChevronDown } from "react-icons/fa";
+import { FaSearch, FaUser, FaHeart, FaShoppingCart, FaBars, FaTimes, FaChevronDown, FaHome, FaBox, FaInfoCircle, FaFileContract, FaShieldAlt, FaEnvelope } from "react-icons/fa";
 import "./Header.css";
 
 import { useWishlist } from "../context/WishlistContext";
@@ -59,12 +59,12 @@ const Header = ({ onSearch }) => {
         <ul className={`nav-links ${isMobileMenuOpen ? "active" : ""}`}>
           <li>
             <Link to="/home" className="nav-item">
-              <span className="nav-icon-small">🏠</span> Home
+              <FaHome className="nav-icon-small" /> Home
             </Link>
           </li>
           <li className="dropdown">
             <span className="nav-item">
-              <span className="nav-icon-small">🛡️</span> Products <FaChevronDown className="dropdown-caret" />
+              <FaBox className="nav-icon-small" /> Products <FaChevronDown className="dropdown-caret" />
             </span>
             <ul className="dropdown-menu">
               {Array.isArray(categories) && categories.map(cat => (
@@ -78,23 +78,23 @@ const Header = ({ onSearch }) => {
           </li>
           <li>
             <Link to="/about" className="nav-item">
-              <span className="nav-icon-small">📖</span> About
+              <FaInfoCircle className="nav-icon-small" /> About
             </Link>
           </li>
           <li>
             <Link to="/terms" className="nav-item">
-              <span className="nav-icon-small">📜</span> Terms of Service
+              <FaFileContract className="nav-icon-small" /> Terms of Service
             </Link>
           </li>
           <li>
             <Link to="/privacy" className="nav-item">
-              <span className="nav-icon-small">🔒</span> Privacy Policy
+              <FaShieldAlt className="nav-icon-small" /> Privacy Policy
             </Link>
           </li>
 
           <li>
             <Link to="/contact" className="nav-item">
-              <span className="nav-icon-small">📞</span> Contact Us
+              <FaEnvelope className="nav-icon-small" /> Contact Us
             </Link>
           </li>
         </ul>
