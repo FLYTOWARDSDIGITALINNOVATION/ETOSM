@@ -1,7 +1,7 @@
 import API_BASE_URL from '../apiConfig';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { CheckCircle, Truck, ArrowRight, Star } from 'lucide-react';
+import { CheckCircle, Truck, ArrowRight, Star, MessageSquare, X } from 'lucide-react';
 import './OrderSuccess.css';
 
 const OrderSuccess = () => {
@@ -13,51 +13,48 @@ const OrderSuccess = () => {
   const purchasedItems = location.state?.purchasedItems || [];
   const itemToRate = purchasedItems.length > 0 ? purchasedItems[0] : null;
 
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [rating, setRating] = useState(0);
-  const [comment, setComment] = useState("");
+  const [comment, setComment] = useState('');
   const [hover, setHover] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [hasRated, setHasRated] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
-  const user = JSON.parse(localStorage.getItem("user"));
+  const user = JSON.parse(localStorage.getItem('user'));
 
   const handleSubmitReview = async () => {
     if (rating === 0) {
-      alert("Please select a star rating to continue.");
+      alert('Please select at least one star.');
       return;
     }
 
     if (!itemToRate || !user) {
-      // Fallback if no item or user, just let them proceed
-      setHasRated(true);
+      setSubmitted(true);
       return;
     }
 
     setIsSubmitting(true);
-
-    // Using FormData to match existing backend endpoint
     const formData = new FormData();
-    formData.append("productId", itemToRate._id || itemToRate.id);
-    formData.append("userEmail", user.email);
-    formData.append("userName", user.name);
-    formData.append("rating", rating);
-    formData.append("comment", comment);
+    formData.append('productId', itemToRate._id || itemToRate.id);
+    formData.append('userEmail', user.email);
+    formData.append('userName', user.name);
+    formData.append('rating', rating);
+    formData.append('comment', comment);
 
     try {
       const res = await fetch(`${API_BASE_URL}/reviews`, {
-        method: "POST",
+        method: 'POST',
         body: formData,
       });
 
       if (res.ok) {
-        setHasRated(true); // Unlock the "Continue Shopping" button
-        alert("Thank you for your feedback!");
+        setSubmitted(true);
       } else {
-        alert("Failed to submit review. Please try again.");
+        alert('Failed to submit feedback. Please try again.');
       }
     } catch (err) {
       console.error(err);
-      alert("Error submitting review");
+      alert('Error submitting feedback.');
     } finally {
       setIsSubmitting(false);
     }
@@ -67,37 +64,76 @@ const OrderSuccess = () => {
     <div className="success-page">
       <div className="success-card">
 
-        {/* Success Header */}
-        {!hasRated && (
-          <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-            <div className="check-container">
-              <div className="check-bg-pulse"></div>
-              <CheckCircle size={80} className="main-check-icon" />
-            </div>
-            <h1 className="success-title">Order Placed!</h1>
-            <p className="success-subtitle">Order #{orderNumber}</p>
+        {/* ── Success Header ── */}
+        <div className="os-header">
+          <div className="check-container">
+            <div className="check-bg-pulse"></div>
+            <CheckCircle size={80} className="main-check-icon" />
           </div>
-        )}
+          <h1 className="success-title">Order Placed!</h1>
+          <p className="success-subtitle">Order #{orderNumber}</p>
+          <p className="success-note">
+            We'll send you a confirmation shortly. Your order is being prepared.
+          </p>
+        </div>
 
-        {/* MANDATORY RATING SECTION */}
-        {!hasRated && itemToRate ? (
-          <div className="mandatory-rating-section" style={{ marginTop: '20px', padding: '20px', background: '#f9fafb', borderRadius: '12px', border: '1px solid #e5e7eb' }}>
-            <h3 style={{ fontSize: '1.2rem', color: '#1f2937', marginBottom: '10px', textAlign: 'center' }}>
-              How was your experience?
-            </h3>
-            <p style={{ textAlign: 'center', color: '#6b7280', marginBottom: '20px', fontSize: '0.9rem' }}>
-              Please rate <strong>{itemToRate.name}</strong> to continue shopping.
-            </p>
+        {/* ── Truck Animation ── */}
+        <div className="animation-box">
+          <div className="moving-vehicle">
+            <Truck size={40} className="truck-icon" />
+            <div className="speed-lines">
+              <span></span><span></span><span></span>
+            </div>
+          </div>
+        </div>
 
-            {/* Stars */}
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '20px' }}>
+        {/* ── Action Buttons ── */}
+        <div className="os-actions">
+          <button className="os-btn-primary" onClick={() => navigate('/home')}>
+            Continue Shopping <ArrowRight size={18} />
+          </button>
+
+          {/* Optional feedback button — only shown if there's an item to rate */}
+          {itemToRate && !submitted && (
+            <button
+              className="os-btn-feedback"
+              onClick={() => setShowFeedbackModal(true)}
+            >
+              <MessageSquare size={16} />
+              Give Feedback (Optional)
+            </button>
+          )}
+
+          {submitted && (
+            <p className="os-thanks-text">✓ Thank you for your feedback!</p>
+          )}
+        </div>
+      </div>
+
+      {/* ── Optional Feedback Modal ── */}
+      {showFeedbackModal && (
+        <div className="os-modal-overlay" onClick={() => setShowFeedbackModal(false)}>
+          <div className="os-modal" onClick={e => e.stopPropagation()}>
+            <button className="os-modal-close" onClick={() => setShowFeedbackModal(false)}>
+              <X size={20} />
+            </button>
+
+            <h3 className="os-modal-title">How was your experience?</h3>
+            {itemToRate && (
+              <p className="os-modal-product">
+                Reviewing: <strong>{itemToRate.name}</strong>
+              </p>
+            )}
+
+            {/* Star Rating */}
+            <div className="os-stars">
               {[1, 2, 3, 4, 5].map((star) => (
                 <Star
                   key={star}
-                  size={32}
-                  fill={star <= (hover || rating) ? "#fbbf24" : "none"}
-                  color={star <= (hover || rating) ? "#fbbf24" : "#d1d5db"}
-                  style={{ cursor: 'pointer', transition: 'all 0.2s' }}
+                  size={36}
+                  fill={star <= (hover || rating) ? '#fbbf24' : 'none'}
+                  color={star <= (hover || rating) ? '#fbbf24' : '#d1d5db'}
+                  style={{ cursor: 'pointer', transition: 'all 0.15s' }}
                   onMouseEnter={() => setHover(star)}
                   onMouseLeave={() => setHover(null)}
                   onClick={() => setRating(star)}
@@ -107,67 +143,36 @@ const OrderSuccess = () => {
 
             {/* Comment */}
             <textarea
-              placeholder="Write a quick review..."
+              className="os-textarea"
+              placeholder="Write a quick comment (optional)..."
               value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #d1d5db', minHeight: '80px', marginBottom: '15px' }}
+              onChange={e => setComment(e.target.value)}
             />
 
-            {/* Submit Button */}
-            <button
-              onClick={handleSubmitReview}
-              disabled={isSubmitting}
-              style={{
-                width: '100%',
-                padding: '12px',
-                background: '#c2188b',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontWeight: 'bold',
-                cursor: isSubmitting ? 'not-allowed' : 'pointer',
-                opacity: isSubmitting ? 0.7 : 1
-              }}
-            >
-              {isSubmitting ? "Submitting..." : "Submit & Continue"}
-            </button>
-          </div>
-        ) : (
-          /* Normal Success View (Shown ONLY after rating or if no item to rate) */
-          <>
-            {hasRated && (
-              <div style={{ textAlign: 'center', animation: 'fadeIn 0.5s' }}>
-                <div className="check-container">
-                  <CheckCircle size={80} className="main-check-icon" style={{ color: '#c2188b' }} />
-                </div>
-                <h2 style={{ color: '#c2188b', marginBottom: '10px' }}>All set!</h2>
-                <p style={{ color: '#6b7280', marginBottom: '30px' }}>Thanks for your rating.</p>
-              </div>
-            )}
-
-            <div className="animation-box">
-              <div className="road">
-                <div className="moving-vehicle">
-                  <Truck size={40} className="truck-icon" />
-                  <div className="speed-lines">
-                    <span></span><span></span><span></span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="success-actions">
-              <button className="btn-primary" onClick={() => navigate('/home')}>
-                Continue Shopping <ArrowRight size={18} />
+            {/* Modal Actions */}
+            <div className="os-modal-actions">
+              <button
+                className="os-modal-skip"
+                onClick={() => setShowFeedbackModal(false)}
+              >
+                Skip
+              </button>
+              <button
+                className="os-modal-submit"
+                onClick={async () => {
+                  await handleSubmitReview();
+                  if (rating > 0) setShowFeedbackModal(false);
+                }}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Submitting...' : 'Submit Feedback'}
               </button>
             </div>
-          </>
-        )}
-      </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 export default OrderSuccess;
-
-
