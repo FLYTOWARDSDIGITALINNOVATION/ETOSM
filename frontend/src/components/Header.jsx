@@ -147,7 +147,6 @@ const Header = ({ onSearch }) => {
                   <div className="user-mini-menu">
                     <p className="welcome-username">Hi, {user.name ? user.name.split(' ')[0] : 'User'}</p>
                     <Link to="/orders">My Orders</Link>
-                    <Link to="/profile">Settings</Link>
                     <button onClick={handleLogout} className="logout-btn">Sign Out</button>
                   </div>
                 </div>
