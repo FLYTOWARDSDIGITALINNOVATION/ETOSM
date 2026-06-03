@@ -221,6 +221,23 @@
   .form-section {
     padding: 16px;
   }
+
+  .spec-row-header, .spec-row-edit {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding-bottom: 15px;
+    border-bottom: 1px dashed #cbd5e1;
+    margin-bottom: 10px;
+  }
+  
+  .spec-row-header {
+    display: none; /* Hide table headers on mobile */
+  }
+
+  .btn-delete-spec {
+    width: 100%;
+    margin-top: 5px;
+  }
 }
 
 /* Specifications Styling */

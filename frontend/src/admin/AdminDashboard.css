@@ -236,3 +236,38 @@
   /* Very light pink tint for background */
   min-height: 100vh;
 }
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .admin-content {
+    padding: 20px 15px;
+  }
+
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+    padding: 20px;
+  }
+
+  .dashboard-header h1 {
+    font-size: 22px;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .actions-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .recent-section {
+    padding: 20px;
+    overflow-x: auto;
+  }
+
+  .data-table {
+    min-width: 600px; /* To allow scrolling on small screens */
+  }
+}

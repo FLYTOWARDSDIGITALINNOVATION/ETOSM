@@ -138,6 +138,19 @@ const AdminLayout = ({ children }) => {
         </div>
       </aside>
 
+      {/* Mobile Toggle Button */}
+      <button
+        className="mobile-toggle-btn"
+        onClick={() => setSidebarOpen(true)}
+      >
+        <Menu size={24} color="white" />
+      </button>
+
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)}></div>
+      )}
+
       {/* Main Content */}
       <main className={`admin-main ${sidebarOpen ? "sidebar-open" : "sidebar-closed"}`}>
         <div className="admin-content">{children}</div>
