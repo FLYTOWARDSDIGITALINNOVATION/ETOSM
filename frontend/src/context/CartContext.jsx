@@ -51,12 +51,13 @@ export const CartProvider = ({ children }) => {
 
   const addToCart = async (product) => {
     const pid = product._id || product.id;
-    const newCartItem = { ...product, productId: pid, qty: 1 };
+    const addedQty = product.qty || 1;
+    const newCartItem = { ...product, productId: pid, qty: addedQty };
 
     setCart(prev => {
       const exists = prev.find(p => p.productId === pid);
       if (exists) {
-        return prev.map(p => p.productId === pid ? { ...p, qty: p.qty + 1 } : p);
+        return prev.map(p => p.productId === pid ? { ...p, qty: p.qty + addedQty } : p);
       }
       return [...prev, newCartItem];
     });
@@ -72,7 +73,7 @@ export const CartProvider = ({ children }) => {
             name: product.name,
             price: product.price,
             img: product.image || product.img,
-            qty: 1,
+            qty: addedQty,
             variation: product.size
           })
         });

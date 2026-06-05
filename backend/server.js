@@ -7,6 +7,8 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const jwt = require("jsonwebtoken");
+const Razorpay = require("razorpay");
+const crypto = require("crypto");
 require("dotenv").config();
 
 const app = express();
@@ -810,6 +812,59 @@ app.post("/cart/update-qty", async (req, res) => {
   }
 });
 
+
+
+/* ================= RAZORPAY PAYMENT ================= */
+
+// Initialize Razorpay
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID || 'YOUR_RAZORPAY_KEY_ID',
+  key_secret: process.env.RAZORPAY_KEY_SECRET || 'YOUR_RAZORPAY_KEY_SECRET',
+});
+
+// CREATE ORDER
+app.post("/payment/razorpay/order", async (req, res) => {
+  try {
+    const { amount, currency = "INR" } = req.body;
+
+    const options = {
+      amount: Math.round(amount * 100), // Amount in paise, forced to integer
+      currency,
+      receipt: `receipt_${Date.now()}`,
+    };
+
+    const order = await razorpay.orders.create(options);
+    res.json(order);
+  } catch (err) {
+    console.error("Razorpay Order Error:", err);
+    res.status(500).json({ message: "Failed to create Razorpay order" });
+  }
+});
+
+// VERIFY PAYMENT
+app.post("/payment/razorpay/verify", async (req, res) => {
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+
+    const secret = process.env.RAZORPAY_KEY_SECRET || 'YOUR_RAZORPAY_KEY_SECRET';
+    const body = razorpay_order_id + "|" + razorpay_payment_id;
+
+    const expectedSignature = crypto
+      .createHmac("sha256", secret)
+      .update(body.toString())
+      .digest("hex");
+
+    if (expectedSignature === razorpay_signature) {
+      // Signature is valid
+      res.json({ success: true, message: "Payment verified successfully" });
+    } else {
+      res.status(400).json({ success: false, message: "Invalid signature" });
+    }
+  } catch (err) {
+    console.error("Razorpay Verify Error:", err);
+    res.status(500).json({ success: false, message: "Payment verification failed" });
+  }
+});
 
 
 /* ================= SERVER ================= */

@@ -134,7 +134,7 @@ const Header = ({ onSearch }) => {
             <Link to="/cart" className="utility-btn cart">
               <FaShoppingCart />
               {cart.length > 0 && (
-                <span className="u-badge">{cart.reduce((sum, i) => sum + i.qty, 0)}</span>
+                <span className="u-badge">{cart.length}</span>
               )}
             </Link>
 

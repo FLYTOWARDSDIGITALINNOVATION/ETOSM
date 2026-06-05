@@ -6,6 +6,20 @@ import { useNavigate, useLocation } from "react-router-dom";
 import OrderReceipt from '../components/OrderReceipt';
 import './Checkout.css';
 
+const loadRazorpay = () => {
+  return new Promise((resolve) => {
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.onload = () => {
+      resolve(true);
+    };
+    script.onerror = () => {
+      resolve(false);
+    };
+    document.body.appendChild(script);
+  });
+};
+
 const Checkout = () => {
   const { cart, clearCart } = useCart();
   const navigate = useNavigate();
@@ -21,7 +35,7 @@ const Checkout = () => {
 
   // State for selection logic
   const [selectedShipping, setSelectedShipping] = useState('standard');
-  const [selectedPayment, setSelectedPayment] = useState('card');
+  const [selectedPayment, setSelectedPayment] = useState('razorpay');
   const [showReceipt, setShowReceipt] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [useExistingAddress, setUseExistingAddress] = useState(previousAddresses.length > 0);
@@ -62,7 +76,6 @@ const Checkout = () => {
 
   const handlePlaceOrder = async () => {
     if (!user) {
-      // show centered pink login modal
       setShowLoginModal(true);
       return;
     }
@@ -72,44 +85,117 @@ const Checkout = () => {
       return;
     }
 
-    try {
-      // Save address for future use
-      const addresses = previousAddresses;
-      const addressExists = addresses.some(addr => addr.address === shippingInfo.address);
-      if (!addressExists) {
-        addresses.push(shippingInfo);
-        localStorage.setItem(`addresses_${user.email}`, JSON.stringify(addresses));
+    // Save address for future use
+    const addresses = previousAddresses;
+    const addressExists = addresses.some(addr => addr.address === shippingInfo.address);
+    if (!addressExists) {
+      addresses.push(shippingInfo);
+      localStorage.setItem(`addresses_${user.email}`, JSON.stringify(addresses));
+    }
+
+    const placeDatabaseOrder = async () => {
+      try {
+        const orderPromises = checkoutItems.map(item =>
+          fetch(`${API_BASE_URL}/orders`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              productName: item.name,
+              productId: item._id || item.id,
+              quantity: item.qty,
+              price: item.price * item.qty,
+              userEmail: user.email,
+              userName: user.name,
+              phone: shippingInfo.phone,
+              shippingAddress: shippingInfo,
+              shippingMethod: selectedShipping,
+              paymentMethod: selectedPayment,
+              shippingCost: shippingCost,
+              tax: item.qty * (item.price * 0.08),
+              totalAmount: (item.price * item.qty) + (item.qty * (item.price * 0.08)) + (shippingCost / checkoutItems.length),
+              variation: item.variation || item.size
+            })
+          })
+        );
+
+        await Promise.all(orderPromises);
+        if (clearCart && !buyNowItem) clearCart();
+        navigate('/order-success', { state: { purchasedItems: checkoutItems } });
+      } catch (error) {
+        console.error("Order failed:", error);
+        alert("Failed to place order. Please try again.");
+      }
+    };
+
+    if (selectedPayment === 'razorpay') {
+      const res = await loadRazorpay();
+      if (!res) {
+        alert("Razorpay SDK failed to load. Are you online?");
+        return;
       }
 
-      const orderPromises = checkoutItems.map(item =>
-        fetch(`${API_BASE_URL}/orders`, {
+      try {
+        // 1. Create order on backend
+        const orderRes = await fetch(`${API_BASE_URL}/payment/razorpay/order`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            productName: item.name,
-            productId: item._id || item.id,
-            quantity: item.qty,
-            price: item.price * item.qty,
-            userEmail: user.email,
-            userName: user.name,
-            phone: shippingInfo.phone,
-            shippingAddress: shippingInfo,
-            shippingMethod: selectedShipping,
-            paymentMethod: selectedPayment,
-            shippingCost: shippingCost,
-            tax: item.qty * (item.price * 0.08),
-            totalAmount: (item.price * item.qty) + (item.qty * (item.price * 0.08)) + (shippingCost / checkoutItems.length),
-            variation: item.variation || item.size
-          })
-        })
-      );
+          body: JSON.stringify({ amount: total })
+        });
+        const orderData = await orderRes.json();
 
-      await Promise.all(orderPromises);
-      if (clearCart && !buyNowItem) clearCart();
-      navigate('/order-success', { state: { purchasedItems: checkoutItems } });
-    } catch (error) {
-      console.error("Order failed:", error);
-      alert("Failed to place order. Please try again.");
+        if (!orderData || !orderData.id) {
+          alert("Server error. Please try again.");
+          return;
+        }
+
+        // 2. Open Razorpay Checkout Modal
+        const options = {
+          key: 'rzp_test_SxqSdTVSMDLJfd', // Public Key ID
+          amount: orderData.amount,
+          currency: orderData.currency,
+          name: "ETOSM Technology",
+          description: "Test Transaction",
+          image: "/logo1.png",
+          order_id: orderData.id,
+          handler: async function (response) {
+            // 3. Verify Payment
+            const verifyRes = await fetch(`${API_BASE_URL}/payment/razorpay/verify`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              })
+            });
+            const verifyData = await verifyRes.json();
+
+            if (verifyData.success) {
+              await placeDatabaseOrder();
+            } else {
+              alert("Payment Verification Failed!");
+            }
+          },
+          prefill: {
+            name: `${shippingInfo.firstName} ${shippingInfo.lastName}`,
+            email: shippingInfo.email,
+            contact: shippingInfo.phone
+          },
+          theme: {
+            color: "#c71585"
+          }
+        };
+
+        const paymentObject = new window.Razorpay(options);
+        paymentObject.open();
+
+      } catch (error) {
+        console.error("Payment Error:", error);
+        alert("Something went wrong with the payment gateway.");
+      }
+    } else {
+      // COD flow
+      await placeDatabaseOrder();
     }
   };
 
@@ -296,84 +382,29 @@ const Checkout = () => {
               </div>
               <div className="payment-selection-container">
 
-                {/* 1. Credit Card */}
-                <label className={`method-option ${selectedPayment === 'card' ? 'active' : ''}`}>
+                {/* 1. Pay Online (Razorpay) */}
+                <label className={`method-option ${selectedPayment === 'razorpay' ? 'active' : ''}`}>
                   <input
                     type="radio"
                     name="payment"
-                    onChange={() => setSelectedPayment('card')}
-                    checked={selectedPayment === 'card'}
+                    onChange={() => setSelectedPayment('razorpay')}
+                    checked={selectedPayment === 'razorpay'}
                   />
                   <span className="custom-radio"></span>
-                  <div className="method-details"><span className="method-title">Credit / Debit Card</span></div>
+                  <div className="method-details">
+                    <span className="method-title">Pay Online (UPI, Cards, Netbanking)</span>
+                    <p className="method-desc" style={{ fontSize: '12px', color: '#64748b', margin: '2px 0 0 0' }}>
+                      Secure payments via Razorpay.
+                    </p>
+                  </div>
                   <div className="card-icons">
                     <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa" />
                     <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" />
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Google_Pay_Logo.svg" alt="GPay" style={{ height: '16px', marginLeft: '5px' }} />
                   </div>
                 </label>
 
-                {selectedPayment === 'card' && (
-                  <div className="payment-form">
-                    <div className="field full">
-                      <label>Card Number</label>
-                      <input type="text" placeholder="1234 5678 9012 3456" />
-                    </div>
-                    <div className="input-grid">
-                      <div className="field">
-                        <label>Expiry Date</label>
-                        <input type="text" placeholder="MM/YY" />
-                      </div>
-                      <div className="field">
-                        <label>CVV</label>
-                        <input type="text" placeholder="123" />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* 2. Google Pay */}
-                <label className={`method-option ${selectedPayment === 'gpay' ? 'active' : ''}`}>
-                  <input
-                    type="radio"
-                    name="payment"
-                    onChange={() => setSelectedPayment('gpay')}
-                    checked={selectedPayment === 'gpay'}
-                  />
-                  <span className="custom-radio"></span>
-                  <div className="method-details"><span className="method-title">Google Pay (UPI)</span></div>
-                  <div className="card-icons">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Google_Pay_Logo.svg" alt="GPay" style={{ height: '16px' }} />
-                  </div>
-                </label>
-
-                {/* 3. Apple Pay */}
-                <label className={`method-option ${selectedPayment === 'apple' ? 'active' : ''}`}>
-                  <input
-                    type="radio"
-                    name="payment"
-                    onChange={() => setSelectedPayment('apple')}
-                    checked={selectedPayment === 'apple'}
-                  />
-                  <span className="custom-radio"></span>
-                  <div className="method-details"><span className="method-title">Apple Pay</span></div>
-                  <div className="card-icons">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/b/b0/Apple_Pay_logo.svg" alt="Apple Pay" style={{ height: '18px' }} />
-                  </div>
-                </label>
-
-                {/* 4. PayPal */}
-                <label className={`method-option ${selectedPayment === 'paypal' ? 'active' : ''}`}>
-                  <input
-                    type="radio"
-                    name="payment"
-                    onChange={() => setSelectedPayment('paypal')}
-                    checked={selectedPayment === 'paypal'}
-                  />
-                  <span className="custom-radio"></span>
-                  <div className="method-details"><span className="method-title">PayPal</span></div>
-                </label>
-
-                {/* 5. Cash on Delivery */}
+                {/* 2. Cash on Delivery */}
                 <label className={`method-option ${selectedPayment === 'cod' ? 'active' : ''}`}>
                   <input
                     type="radio"
