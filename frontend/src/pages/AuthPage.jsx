@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FaGoogle,
-  FaFacebookF,
   FaEnvelope,
   FaLock,
   FaUser,
@@ -377,9 +376,6 @@ const AuthPage = () => {
             <div className="social-buttons">
               <button className="social-btn google" onClick={() => loginWithGoogle()}>
                 <FaGoogle /> Google
-              </button>
-              <button className="social-btn facebook" onClick={() => setError("Facebook login not implemented yet")}>
-                <FaFacebookF /> Facebook
               </button>
             </div>
           </motion.div>
