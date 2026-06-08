@@ -221,7 +221,7 @@ const ProductDetailPage = () => {
                   <span className="old-price">₹{product.price}</span>
                   <span className="price">
                     ₹{discountedPrice}
-                    <span className="off-text"> ({product.discountPercent}% OFF)</span>
+                    <span className="off-text"> ({Number(product.discountPercent).toFixed(1)}% OFF)</span>
                   </span>
                 </>
               ) : (
