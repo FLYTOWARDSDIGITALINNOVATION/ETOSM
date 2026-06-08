@@ -13,6 +13,7 @@ import {
 } from 'react-icons/fa';
 import './AuthPage.css';
 import { useNavigate } from "react-router-dom";
+import { GoogleOAuthProvider, useGoogleLogin } from '@react-oauth/google';
 
 const AuthPage = () => {
   const [name, setName] = useState("");
@@ -111,6 +112,41 @@ const AuthPage = () => {
       setError("Server not reachable");
     }
   };
+
+  const loginWithGoogle = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        // Since useGoogleLogin gives an access token, we can just fetch the user info from google
+        const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+        });
+        const userInfo = await userInfoRes.json();
+        
+        // Now that we have the email, name, we can hit our backend or just use a custom route
+        // We'll create a custom google-login route that takes email and name
+        const res = await fetch(`${API_BASE_URL}/google-login-custom`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: userInfo.email, name: userInfo.name })
+        });
+        
+        const data = await res.json();
+        if (!res.ok) {
+          setError(data.message || "Google Login failed");
+          return;
+        }
+
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+        window.location.href = data.user.isAdmin ? "/admin" : "/home";
+      } catch (err) {
+        setError("Google Login failed");
+      }
+    },
+    onError: () => {
+      setError("Google Login Failed");
+    }
+  });
 
   return (
     <div className="auth-container">
@@ -339,10 +375,10 @@ const AuthPage = () => {
               <span>Or continue with</span>
             </div>
             <div className="social-buttons">
-              <button className="social-btn google">
+              <button className="social-btn google" onClick={() => loginWithGoogle()}>
                 <FaGoogle /> Google
               </button>
-              <button className="social-btn facebook">
+              <button className="social-btn facebook" onClick={() => setError("Facebook login not implemented yet")}>
                 <FaFacebookF /> Facebook
               </button>
             </div>
@@ -353,7 +389,13 @@ const AuthPage = () => {
   );
 };
 
-export default AuthPage;
+const AuthPageWrapper = () => (
+  <GoogleOAuthProvider clientId="872496483778-e4ik5krnoa5sag4irt77fm5bf837r47p.apps.googleusercontent.com">
+    <AuthPage />
+  </GoogleOAuthProvider>
+);
+
+export default AuthPageWrapper;
 
 
 

@@ -9,7 +9,10 @@ const fs = require("fs");
 const jwt = require("jsonwebtoken");
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
+const { OAuth2Client } = require("google-auth-library");
 require("dotenv").config();
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID");
 
 const app = express();
 app.use(cors({
@@ -405,6 +408,42 @@ app.post("/login", async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ message: "Server error during login" });
+  }
+});
+
+// GOOGLE LOGIN
+app.post("/google-login-custom", async (req, res) => {
+  try {
+    const { email, name } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    let user = await User.findOne({ email });
+    if (!user) {
+      // Create user if they don't exist
+      user = await User.create({ name, email, password: "" });
+    }
+
+    const jwtToken = jwt.sign(
+      { id: user._id, isAdmin: user.isAdmin },
+      process.env.JWT_SECRET || "SECRET_KEY",
+      { expiresIn: "1d" }
+    );
+
+    res.json({
+      token: jwtToken,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        isAdmin: user.isAdmin,
+      },
+    });
+  } catch (error) {
+    console.error("Google Login Error:", error);
+    res.status(500).json({ message: "Server Error during Google Login" });
   }
 });
 
