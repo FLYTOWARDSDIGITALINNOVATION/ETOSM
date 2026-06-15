@@ -2,8 +2,9 @@ import API_BASE_URL from '../apiConfig';
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
-import { FaStar, FaShoppingCart, FaArrowLeft, FaCloud, FaExpand, FaPalette, FaBolt, FaHeartbeat } from "react-icons/fa";
+import { FaStar, FaShoppingCart, FaArrowLeft, FaCloud, FaExpand, FaPalette, FaBolt, FaHeartbeat, FaFilePdf } from "react-icons/fa";
 import { MdSecurity, MdAir, MdCompress, MdLocalLaundryService, MdCheckCircle } from "react-icons/md";
+import { jsPDF } from "jspdf";
 
 import { useCart } from "../context/CartContext";
 import "./ProductDetailPage.css";
@@ -18,6 +19,7 @@ const ProductDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [currentImage, setCurrentImage] = useState("");
   const [allImages, setAllImages] = useState([]);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
   // Fetch product from API
   useEffect(() => {
@@ -111,6 +113,249 @@ const ProductDetailPage = () => {
       console.error("Failed to submit review:", err);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!product) return;
+
+    setIsDownloadingPdf(true);
+    try {
+      const doc = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4"
+      });
+
+      // Color Palette
+      const primaryColor = [26, 58, 92]; // #1a3a5c (Sleek dark blue)
+      const textColor = [51, 51, 51]; // #333333
+      const lightGray = [150, 150, 150];
+      const tableHeaderBg = [240, 244, 248];
+
+      let y = 20;
+
+      // Header Branding
+      doc.setFillColor(...primaryColor);
+      doc.rect(20, y, 170, 15, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("Helvetica", "bold");
+      doc.setFontSize(14);
+      doc.text("ETOSM TECHNOLOGY — TECHNICAL SPECIFICATION SHEET", 25, y + 9.5);
+
+      y += 25;
+
+      // Product Title
+      doc.setTextColor(...textColor);
+      doc.setFont("Helvetica", "bold");
+      doc.setFontSize(20);
+      const titleLines = doc.splitTextToSize(product.name, 170);
+      doc.text(titleLines, 20, y);
+      y += (titleLines.length * 7) + 2;
+
+      // Category
+      doc.setTextColor(...lightGray);
+      doc.setFont("Helvetica", "oblique");
+      doc.setFontSize(10);
+      doc.text(`Category: ${product.category}`, 20, y);
+      y += 8;
+
+      // Price details
+      const now = new Date();
+      const isDiscountActive =
+        product.discountPercent > 0 &&
+        product.discountStart &&
+        product.discountEnd &&
+        now >= new Date(product.discountStart) &&
+        now <= new Date(product.discountEnd);
+
+      doc.setFont("Helvetica", "bold");
+      doc.setFontSize(12);
+      if (isDiscountActive) {
+        const discountedPrice = (product.price * (1 - product.discountPercent / 100)).toFixed(2);
+        doc.setTextColor(...textColor);
+        doc.text(`Price: INR ${discountedPrice}`, 20, y);
+        doc.setFont("Helvetica", "normal");
+        doc.setTextColor(...lightGray);
+        doc.text(` (Original Price: INR ${product.price} | ${product.discountPercent}% OFF)`, 65, y);
+      } else {
+        doc.setTextColor(...textColor);
+        doc.text(`Price: INR ${product.price}`, 20, y);
+      }
+      y += 12;
+
+      // Horizontal Line separator
+      doc.setDrawColor(220, 220, 220);
+      doc.setLineWidth(0.5);
+      doc.line(20, y, 190, y);
+      y += 10;
+
+      // Helper to check page overflow and add new page
+      const checkPageOverflow = (neededHeight) => {
+        if (y + neededHeight > 275) {
+          doc.addPage();
+          y = 20; // reset y to top margin on new page
+        }
+      };
+
+      // Add Product Image if available
+      if (product.image) {
+        try {
+          const imageUrl = `${API_BASE_URL}${product.image}`;
+          const img = await new Promise((resolve, reject) => {
+            const imageEl = new Image();
+            imageEl.crossOrigin = "anonymous";
+            imageEl.onload = () => resolve(imageEl);
+            imageEl.onerror = (err) => reject(err);
+            imageEl.src = imageUrl;
+          });
+
+          // Determine dimensions and fit inside a 50mm square bounding box
+          let imgW = img.width;
+          let imgH = img.height;
+          const maxBox = 50;
+          const ratio = Math.min(maxBox / imgW, maxBox / imgH);
+          imgW = imgW * ratio;
+          imgH = imgH * ratio;
+
+          const boxSize = 54;
+          const xOffset = 20 + (boxSize - imgW) / 2;
+          const yOffset = y + (boxSize - imgH) / 2;
+
+          // Draw a light grey bounding box for the product image
+          doc.setDrawColor(220, 220, 220);
+          doc.rect(20, y, boxSize, boxSize, "S");
+
+          // Determine format
+          const ext = product.image.split('.').pop().toLowerCase();
+          const format = ext === 'png' ? 'PNG' : 'JPEG';
+
+          // Add image to PDF
+          doc.addImage(img, format, xOffset, yOffset, imgW, imgH);
+          y += boxSize + 10;
+        } catch (imgError) {
+          console.error("Failed to load product image for PDF:", imgError);
+          // Gracefully continue without image
+        }
+      }
+
+      // Description Section
+      if (product.description) {
+        checkPageOverflow(30);
+        doc.setTextColor(...primaryColor);
+        doc.setFont("Helvetica", "bold");
+        doc.setFontSize(12);
+        doc.text("Product Overview", 20, y);
+        y += 6;
+
+        doc.setTextColor(...textColor);
+        doc.setFont("Helvetica", "normal");
+        doc.setFontSize(10);
+        const cleanedDesc = product.description
+          .replace(/<br\s*\/?>/gi, "\n")
+          .replace(/<[^>]*>/g, ""); // strip any html tags
+        
+        const descLines = doc.splitTextToSize(cleanedDesc, 170);
+        for (let line of descLines) {
+          checkPageOverflow(6);
+          doc.text(line, 20, y);
+          y += 5;
+        }
+        y += 5;
+      }
+
+      // Specifications Section
+      if (product.specifications && product.specifications.length > 0) {
+        checkPageOverflow(30);
+        doc.setTextColor(...primaryColor);
+        doc.setFont("Helvetica", "bold");
+        doc.setFontSize(12);
+        doc.text("Technical Specifications", 20, y);
+        y += 8;
+
+        // Draw table headers
+        doc.setFillColor(...tableHeaderBg);
+        doc.rect(20, y, 170, 7, "F");
+        doc.setDrawColor(200, 200, 200);
+        doc.rect(20, y, 170, 7, "S");
+        
+        doc.setTextColor(...textColor);
+        doc.setFont("Helvetica", "bold");
+        doc.setFontSize(9);
+        doc.text("Specification Parameter", 24, y + 4.5);
+        doc.text("Value", 105, y + 4.5);
+        doc.line(100, y, 100, y + 7);
+        y += 7;
+
+        // Draw table body
+        doc.setFont("Helvetica", "normal");
+        for (let spec of product.specifications) {
+          const cellLines = doc.splitTextToSize(spec.value || "", 80);
+          const cellHeight = Math.max(7, cellLines.length * 5 + 2);
+          
+          checkPageOverflow(cellHeight);
+
+          // Draw cells border
+          doc.setDrawColor(220, 220, 220);
+          doc.rect(20, y, 170, cellHeight, "S");
+          doc.line(100, y, 100, y + cellHeight);
+
+          // Render parameter name
+          doc.text(spec.label || "", 24, y + 4.5);
+          // Render wrapped value
+          doc.text(cellLines, 104, y + 4.5);
+          
+          y += cellHeight;
+        }
+        y += 10;
+      }
+
+      // Features Section
+      if (product.features && product.features.length > 0) {
+        checkPageOverflow(30);
+        doc.setTextColor(...primaryColor);
+        doc.setFont("Helvetica", "bold");
+        doc.setFontSize(12);
+        doc.text("Key Features & Benefits", 20, y);
+        y += 8;
+
+        doc.setTextColor(...textColor);
+        doc.setFont("Helvetica", "normal");
+        doc.setFontSize(10);
+        for (let feature of product.features) {
+          const featureLines = doc.splitTextToSize(feature, 160);
+          const itemHeight = featureLines.length * 5;
+          checkPageOverflow(itemHeight + 2);
+          doc.text("•", 20, y);
+          doc.text(featureLines, 25, y);
+          y += itemHeight + 1;
+        }
+        y += 10;
+      }
+
+      // Add Footer to all pages
+      const pageCount = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setDrawColor(220, 220, 220);
+        doc.setLineWidth(0.3);
+        doc.line(20, 280, 190, 280);
+
+        doc.setTextColor(...lightGray);
+        doc.setFont("Helvetica", "normal");
+        doc.setFontSize(8);
+        doc.text("ETOSM Technology | Email: support@etosmtechnology.in | Phone: +91 88070 80216", 20, 285);
+        doc.text(`Page ${i} of ${pageCount}`, 175, 285);
+      }
+
+      // Trigger Download
+      const filename = `${product.slug || "product"}-spec-sheet.pdf`;
+      doc.save(filename);
+    } catch (error) {
+      console.error("PDF generation failed:", error);
+      alert("Failed to generate PDF. Please try again.");
+    } finally {
+      setIsDownloadingPdf(false);
     }
   };
 
@@ -313,6 +558,14 @@ const ProductDetailPage = () => {
                 <FaShoppingCart /> Add to Cart
               </button>
               <button className="buy-now-btn" onClick={handleBuyNow}>Buy Now</button>
+              <button 
+                className="download-pdf-btn" 
+                onClick={handleDownloadPDF} 
+                disabled={isDownloadingPdf}
+                title="Download product specification sheet"
+              >
+                <FaFilePdf /> {isDownloadingPdf ? "Downloading..." : "Download PDF"}
+              </button>
             </div>
           </div>
         </div>

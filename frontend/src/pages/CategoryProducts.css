@@ -57,3 +57,97 @@
     font-size: 1.2rem;
   }
 }
+
+/* Category Subcategories Sidebar Layout */
+.category-layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 30px;
+  align-items: start;
+  margin-top: 20px;
+}
+
+.category-sidebar {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+  position: sticky;
+  top: 100px;
+}
+
+.sidebar-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a3a5c; /* Deep tech blue theme */
+  margin-top: 0;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #f1f5f9;
+}
+
+.sidebar-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sidebar-item {
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sidebar-item:hover {
+  background: #f1f5f9;
+  color: #1a3a5c;
+}
+
+.sidebar-item.active {
+  background: #1a3a5c;
+  color: white;
+  font-weight: 600;
+}
+
+.category-main-content {
+  min-height: 400px;
+}
+
+.no-products-message {
+  text-align: center;
+  color: #94a3b8;
+  font-size: 16px;
+  padding: 40px 0;
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 768px) {
+  .category-layout {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .category-sidebar {
+    position: static;
+    padding: 15px;
+  }
+
+  .sidebar-list {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .sidebar-item {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+}

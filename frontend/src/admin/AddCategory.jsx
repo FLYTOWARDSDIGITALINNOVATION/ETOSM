@@ -10,6 +10,8 @@ const ADMIN_EMAIL = "admin@gmail.com";
 const AddCategory = () => {
   const [name, setName] = useState("");
   const [categories, setCategories] = useState([]);
+  const [subcategories, setSubcategories] = useState([]);
+  const [newSubcategory, setNewSubcategory] = useState("");
   const [editId, setEditId] = useState(null);
   const navigate = useNavigate();
 
@@ -24,6 +26,19 @@ const AddCategory = () => {
     fetchCategories();
   }, []);
 
+  // Add or remove subcategory tag locally
+  const handleAddSubcategory = () => {
+    const trimmed = newSubcategory.trim();
+    if (trimmed && !subcategories.includes(trimmed)) {
+      setSubcategories([...subcategories, trimmed]);
+    }
+    setNewSubcategory("");
+  };
+
+  const handleRemoveSubcategory = (subToRemove) => {
+    setSubcategories(subcategories.filter((s) => s !== subToRemove));
+  };
+
   // Add or Update category
   const handleSubmit = async () => {
     if (!name) return;
@@ -36,7 +51,7 @@ const AddCategory = () => {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`
         },
-        body: JSON.stringify({ name, email: ADMIN_EMAIL }),
+        body: JSON.stringify({ name, subcategories, email: ADMIN_EMAIL }),
       });
       setEditId(null);
     } else {
@@ -46,11 +61,13 @@ const AddCategory = () => {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`
         },
-        body: JSON.stringify({ name, email: ADMIN_EMAIL }),
+        body: JSON.stringify({ name, subcategories, email: ADMIN_EMAIL }),
       });
     }
 
     setName("");
+    setSubcategories([]);
+    setNewSubcategory("");
     fetchCategories();
   };
 
@@ -58,6 +75,7 @@ const AddCategory = () => {
   const handleEdit = (cat) => {
     setName(cat.name);
     setEditId(cat._id);
+    setSubcategories(cat.subcategories || []);
   };
 
   // Delete
@@ -79,18 +97,51 @@ const AddCategory = () => {
       <div className="add-category-container">
         <div className="form-header">
           <h1>Manage Categories</h1>
-          <p>Add or edit product categories</p>
+          <p>Add or edit product categories and their subcategories</p>
         </div>
 
         <div className="category-form-section">
           <div className="category-form">
+            <label className="form-label">Category Name</label>
             <input
               type="text"
               placeholder="Category name"
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
-            <button onClick={handleSubmit} className="btn-add">
+
+            <div className="subcategory-section">
+              <label className="form-label">Subcategories</label>
+              <div className="subcategory-input-group">
+                <input
+                  type="text"
+                  placeholder="Add a subcategory"
+                  value={newSubcategory}
+                  onChange={(e) => setNewSubcategory(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddSubcategory();
+                    }
+                  }}
+                />
+                <button type="button" onClick={handleAddSubcategory} className="btn-add-sub">
+                  Add
+                </button>
+              </div>
+              <div className="subcategory-tags">
+                {subcategories.map((sub, idx) => (
+                  <span key={idx} className="sub-tag">
+                    {sub}
+                    <button type="button" onClick={() => handleRemoveSubcategory(sub)} className="btn-remove-sub">
+                      &times;
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <button onClick={handleSubmit} className="btn-add" style={{ marginTop: "10px" }}>
               <Plus size={18} /> {editId ? "Update" : "Add"} Category
             </button>
           </div>
@@ -101,20 +152,31 @@ const AddCategory = () => {
             <ul className="category-list">
               {categories.length > 0 ? (
                 categories.map((cat) => (
-                  <li key={cat._id} className="category-item">
-                    <span>{cat.name}</span>
+                  <li key={cat._id} className="category-item" style={{ display: "flex", flexDirection: "column", alignItems: "stretch", gap: "10px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <span style={{ fontWeight: "600", fontSize: "15px" }}>{cat.name}</span>
 
-                    <div className="actions">
-                      <button className="edit-btn" onClick={() => handleEdit(cat)}>
-                        Edit
-                      </button>
-                      <button
-                        className="delete-btn"
-                        onClick={() => handleDelete(cat._id)}
-                      >
-                        <Trash2 size={16} /> Delete
-                      </button>
+                      <div className="actions">
+                        <button className="edit-btn" onClick={() => handleEdit(cat)}>
+                          Edit
+                        </button>
+                        <button
+                          className="delete-btn"
+                          onClick={() => handleDelete(cat._id)}
+                        >
+                          <Trash2 size={16} /> Delete
+                        </button>
+                      </div>
                     </div>
+                    {cat.subcategories && cat.subcategories.length > 0 && (
+                      <div className="category-sub-list-preview" style={{ display: "flex", flexWrap: "wrap", gap: "5px", borderTop: "1px solid #f1f5f9", paddingTop: "8px" }}>
+                        {cat.subcategories.map((sub, idx) => (
+                          <span key={idx} className="sub-badge" style={{ backgroundColor: "#e2e8f0", color: "#475569", fontSize: "11px", padding: "2px 8px", borderRadius: "12px", fontWeight: "500" }}>
+                            {sub}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </li>
                 ))
               ) : (

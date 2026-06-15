@@ -9,6 +9,7 @@ import {
   MessageSquare,
   LogOut,
   ChevronDown,
+  Star,
 } from "lucide-react";
 import "./AdminLayout.css";
 
@@ -57,6 +58,12 @@ const AdminLayout = ({ children }) => {
       title: "Support",
       icon: MessageSquare,
       path: "/admin/support",
+      submenu: null,
+    },
+    {
+      title: "Reviews",
+      icon: Star,
+      path: "/admin/reviews",
       submenu: null,
     },
   ];

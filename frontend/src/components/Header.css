@@ -113,7 +113,8 @@
 }
 
 .nav-icon-small {
-    display: inline-block; /* Make icons visible on desktop */
+    display: inline-block;
+    /* Make icons visible on desktop */
     font-size: 1.1rem;
 }
 

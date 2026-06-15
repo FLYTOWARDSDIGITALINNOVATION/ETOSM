@@ -10,6 +10,7 @@ const AddProduct = () => {
   const [form, setForm] = useState({
     name: "",
     category: "",
+    subcategory: "",
     price: "",
     description: "",
   });
@@ -36,6 +37,7 @@ const AddProduct = () => {
     const formData = new FormData();
     formData.append("name", form.name);
     formData.append("category", form.category);
+    formData.append("subcategory", form.subcategory || "");
     formData.append("price", form.price);
     formData.append("description", form.description);
     formData.append("email", adminEmail);
@@ -101,7 +103,7 @@ const AddProduct = () => {
                 <label>Category *</label>
                 <select
                   value={form.category}
-                  onChange={(e) => setForm({ ...form, category: e.target.value })}
+                  onChange={(e) => setForm({ ...form, category: e.target.value, subcategory: "" })}
                 >
                   <option value="">Select category</option>
                   {categories.map((c) => (
@@ -122,6 +124,23 @@ const AddProduct = () => {
                 />
               </div>
             </div>
+
+            {form.category && categories.find(c => c.name === form.category)?.subcategories?.length > 0 && (
+              <div className="form-group">
+                <label>Subcategory</label>
+                <select
+                  value={form.subcategory || ""}
+                  onChange={(e) => setForm({ ...form, subcategory: e.target.value })}
+                >
+                  <option value="">Select subcategory (optional)</option>
+                  {categories.find(c => c.name === form.category).subcategories.map((sub, idx) => (
+                    <option key={idx} value={sub}>
+                      {sub}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             <div className="form-group">
               <label>Description</label>

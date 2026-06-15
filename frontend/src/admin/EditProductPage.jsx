@@ -17,6 +17,7 @@ const EditProductPage = () => {
   const [form, setForm] = useState({
     name: "",
     category: "",
+    subcategory: "",
     price: "",
     description: "",
     discountPercent: 0,
@@ -55,7 +56,11 @@ const EditProductPage = () => {
   }, [id]);
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    if (e.target.name === "category") {
+      setForm({ ...form, category: e.target.value, subcategory: "" });
+    } else {
+      setForm({ ...form, [e.target.name]: e.target.value });
+    }
   };
 
   const handleImageChange = (e) => {
@@ -82,6 +87,7 @@ const EditProductPage = () => {
     } else {
       formData.append("name", form.name);
       formData.append("category", form.category);
+      formData.append("subcategory", form.subcategory || "");
       formData.append("price", form.price);
       formData.append("description", form.description);
       if (imageFile) {
@@ -135,6 +141,24 @@ const EditProductPage = () => {
                 </option>
               ))}
             </select>
+
+            {form.category && categories.find(c => c.name === form.category)?.subcategories?.length > 0 && (
+              <>
+                <label>Subcategory</label>
+                <select
+                  name="subcategory"
+                  value={form.subcategory || ""}
+                  onChange={handleChange}
+                >
+                  <option value="">Select Subcategory (Optional)</option>
+                  {categories.find(c => c.name === form.category).subcategories.map((sub, idx) => (
+                    <option key={idx} value={sub}>
+                      {sub}
+                    </option>
+                  ))}
+                </select>
+              </>
+            )}
 
             <label>Price</label>
             <input

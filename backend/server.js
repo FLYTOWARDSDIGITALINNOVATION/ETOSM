@@ -49,6 +49,9 @@ mongoose
   .then(async () => {
     console.log("MongoDB Connected");
     await migrateSlugs();
+    await seedGoogleReviews();
+    await seedAdminUser();
+    await seedSubcategories();
   })
   .catch((err) => console.log(err));
 
@@ -96,6 +99,7 @@ const User = mongoose.model("User", userSchema);
 // CATEGORY
 const categorySchema = new mongoose.Schema({
   name: { type: String, unique: true },
+  subcategories: { type: [String], default: [] }
 });
 const Category = mongoose.model("Category", categorySchema);
 
@@ -110,6 +114,7 @@ function generateSlug(name) {
 const productSchema = new mongoose.Schema({
   name: String,
   category: String,
+  subcategory: { type: String, default: "" },
   price: Number,
   description: String,
   image: String,
@@ -160,6 +165,118 @@ async function migrateSlugs() {
     }
   } catch (err) {
     console.error("Slug migration failed:", err);
+  }
+}
+
+async function seedGoogleReviews() {
+  try {
+    const count = await GoogleReview.countDocuments();
+    if (count === 0) {
+      await GoogleReview.create([
+        {
+          name: "Rajesh Kumar",
+          role: "EV Design Engineer",
+          rating: 5,
+          text: "Absolutely top-grade BMS! Built a custom 72V battery pack for my EV conversion using their smart BMS. The cell balancing is accurate to 2mV. Best tech store in India for energy storage components.",
+          isApproved: true
+        },
+        {
+          name: "Dr. Ananya Sen",
+          role: "Acoustic Consultant",
+          rating: 5,
+          text: "Used their 250V electrolytic capacitors for a power supply redesign in a high-fidelity valve amplifier. Extremely low ESR and stable capacitance under load. Audio clarity is amazing.",
+          isApproved: true
+        },
+        {
+          name: "Vikram Malhotra",
+          role: "Industrial IoT Lead",
+          rating: 5,
+          text: "Quick shipping and excellent customer support. We use their customized battery packs for our outdoor telemetry sensor nodes. Great thermal management and reliable battery protection.",
+          isApproved: true
+        }
+      ]);
+      console.log("Seeded initial Google reviews successfully.");
+    }
+  } catch (err) {
+    console.error("Failed to seed Google reviews:", err);
+  }
+}
+
+async function seedAdminUser() {
+  try {
+    const user = await User.findOne({ email: "admin@gmail.com" });
+    if (!user) {
+      const hashed = await bcrypt.hash("admin123", 10);
+      await User.create({
+        name: "System Admin",
+        email: "admin@gmail.com",
+        password: hashed,
+        isAdmin: true
+      });
+      console.log("Seeded admin user successfully.");
+    }
+  } catch (err) {
+    console.error("Failed to seed admin user:", err);
+  }
+}
+
+async function seedSubcategories() {
+  try {
+    // 1. Electronics Components Category
+    let elecCat = await Category.findOne({ name: "Electronics Components" });
+    if (elecCat) {
+      if (!elecCat.subcategories || elecCat.subcategories.length === 0) {
+        elecCat.subcategories = [
+          "Passive Components",
+          "Active Components",
+          "Sensor",
+          "Modules",
+          "Connectors"
+        ];
+        await elecCat.save();
+        console.log("Seeded Electronics Components subcategories.");
+      }
+    } else {
+      await Category.create({
+        name: "Electronics Components",
+        subcategories: [
+          "Passive Components",
+          "Active Components",
+          "Sensor",
+          "Modules",
+          "Connectors"
+        ]
+      });
+      console.log("Created & Seeded Electronics Components category.");
+    }
+
+    // 2. Battery Packs Category
+    let battCat = await Category.findOne({ name: "BATTERY PACKS" });
+    if (battCat) {
+      if (!battCat.subcategories || battCat.subcategories.length === 0) {
+        battCat.subcategories = [
+          "Lithium-Ion",
+          "LiFePO4",
+          "BMS Boards",
+          "Battery Accessories"
+        ];
+        await battCat.save();
+        console.log("Seeded BATTERY PACKS subcategories.");
+      }
+    } else {
+      await Category.create({
+        name: "BATTERY PACKS",
+        subcategories: [
+          "Lithium-Ion",
+          "LiFePO4",
+          "BMS Boards",
+          "Battery Accessories"
+        ]
+      });
+      console.log("Created & Seeded BATTERY PACKS category.");
+    }
+  } catch (err) {
+    console.error("Failed to seed subcategories:", err);
   }
 }
 
@@ -220,6 +337,17 @@ const reviewSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 const Review = mongoose.model("Review", reviewSchema);
+
+// GOOGLE REVIEW
+const googleReviewSchema = new mongoose.Schema({
+  name: String,
+  role: String,
+  rating: Number,
+  text: String,
+  isApproved: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now }
+});
+const GoogleReview = mongoose.model("GoogleReview", googleReviewSchema);
 
 // CUSTOMER SUPPORT
 // CUSTOMER SUPPORT CHAT
@@ -520,7 +648,17 @@ app.get("/user/:email", async (req, res) => {
 // CATEGORY
 app.post("/admin/category", verifyAdmin, async (req, res) => {
   try {
-    const category = await Category.create({ name: req.body.name });
+    const { name, subcategories } = req.body;
+    let subcategoriesArray = [];
+    if (subcategories) {
+      subcategoriesArray = Array.isArray(subcategories) 
+        ? subcategories 
+        : JSON.parse(subcategories);
+    }
+    const category = await Category.create({ 
+      name, 
+      subcategories: subcategoriesArray.map(s => s.trim()).filter(Boolean) 
+    });
     res.json(category);
   } catch (err) {
     if (err.code === 11000) {
@@ -540,9 +678,18 @@ app.get("/categories", async (req, res) => {
 
 app.put("/admin/category/:id", verifyAdmin, async (req, res) => {
   try {
+    const { name, subcategories } = req.body;
+    let updateData = {};
+    if (name) updateData.name = name;
+    if (subcategories !== undefined) {
+      const subcategoriesArray = Array.isArray(subcategories)
+        ? subcategories
+        : JSON.parse(subcategories);
+      updateData.subcategories = subcategoriesArray.map(s => s.trim()).filter(Boolean);
+    }
     const category = await Category.findByIdAndUpdate(
       req.params.id,
-      { name: req.body.name },
+      updateData,
       { new: true }
     );
     res.json(category);
@@ -849,6 +996,71 @@ app.get("/reviews/:productIdOrSlug", async (req, res) => {
     res.json(reviews);
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch reviews" });
+  }
+});
+
+/* ================= GOOGLE REVIEWS ================= */
+
+// GET APPROVED GOOGLE REVIEWS (Home Page)
+app.get("/google-reviews", async (req, res) => {
+  try {
+    const reviews = await GoogleReview.find({ isApproved: true }).sort({ createdAt: -1 });
+    res.json(reviews);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch Google reviews" });
+  }
+});
+
+// SUBMIT PENDING GOOGLE REVIEW (User)
+app.post("/google-reviews", async (req, res) => {
+  try {
+    const { name, role, rating, text } = req.body;
+    const newReview = await GoogleReview.create({
+      name,
+      role: role || "Verified Customer",
+      rating: Number(rating),
+      text,
+      isApproved: false // Requires admin approval
+    });
+    res.json({ message: "Review submitted for approval", review: newReview });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to submit Google review" });
+  }
+});
+
+// GET ALL GOOGLE REVIEWS (Admin)
+app.get("/admin/google-reviews", verifyAdmin, async (req, res) => {
+  try {
+    const reviews = await GoogleReview.find().sort({ createdAt: -1 });
+    res.json(reviews);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch reviews" });
+  }
+});
+
+// APPROVE GOOGLE REVIEW (Admin)
+app.put("/admin/google-reviews/:id/approve", verifyAdmin, async (req, res) => {
+  try {
+    const review = await GoogleReview.findByIdAndUpdate(
+      req.params.id,
+      { isApproved: true },
+      { new: true }
+    );
+    if (!review) return res.status(404).json({ message: "Review not found" });
+    res.json({ message: "Review approved successfully", review });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to approve review" });
+  }
+});
+
+// DELETE GOOGLE REVIEW (Admin)
+app.delete("/admin/google-reviews/:id", verifyAdmin, async (req, res) => {
+  try {
+    const review = await GoogleReview.findByIdAndDelete(req.params.id);
+    if (!review) return res.status(404).json({ message: "Review not found" });
+    res.json({ message: "Review deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to delete review" });
   }
 });
 
