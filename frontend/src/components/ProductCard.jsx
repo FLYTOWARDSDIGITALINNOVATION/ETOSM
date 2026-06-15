@@ -58,7 +58,7 @@ const ProductCard = ({ product }) => {
         <img 
           src={product.image ? `${API_BASE_URL}${product.image}` : "https://via.placeholder.com/300x300?text=No+Image"}
           alt={product.name} 
-          onClick={() => navigate(`/product/${product._id}`)}
+          onClick={() => navigate(`/product/${product.slug || product._id}`)}
           style={{ cursor: 'pointer' }}
           onError={(e) => { e.target.onerror = null; e.target.src = "https://via.placeholder.com/300x300?text=No+Image"; }}
         />
@@ -67,7 +67,7 @@ const ProductCard = ({ product }) => {
         {showWishAdded && <div className="added-toast">Added to wishlist</div>}
 
         <div className="overlay-actions">
-          <button className="quick-view-btn" onClick={() => navigate(`/product/${product._id}`)}>
+          <button className="quick-view-btn" onClick={() => navigate(`/product/${product.slug || product._id}`)}>
             <FaEye /> Quick View
           </button>
         </div>
@@ -76,7 +76,7 @@ const ProductCard = ({ product }) => {
       <div className="card-info">
         <h4 
           className="product-title"
-          onClick={() => navigate(`/product/${product._id}`)}
+          onClick={() => navigate(`/product/${product.slug || product._id}`)}
           style={{ cursor: 'pointer' }}
         >
           {product.name}

@@ -53,12 +53,14 @@ const ProductDetailPage = () => {
   const user = JSON.parse(localStorage.getItem("user"));
 
   useEffect(() => {
-    fetchReviews();
-  }, [id]);
+    if (product?._id) {
+      fetchReviews(product._id);
+    }
+  }, [product]);
 
-  const fetchReviews = async () => {
+  const fetchReviews = async (productId) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/reviews/${id}`);
+      const res = await fetch(`${API_BASE_URL}/reviews/${productId}`);
       const data = await res.json();
       if (Array.isArray(data)) setReviews(data);
     } catch (err) {
@@ -77,9 +79,11 @@ const ProductDetailPage = () => {
       return;
     }
 
+    if (!product?._id) return;
+
     setIsSubmitting(true);
     const formData = new FormData();
-    formData.append("productId", id);
+    formData.append("productId", product._id);
     formData.append("userEmail", user.email);
     formData.append("userName", user.name);
     formData.append("rating", userRating);
@@ -98,7 +102,7 @@ const ProductDetailPage = () => {
         setNewComment("");
         setUserRating(5);
         setUploadImages([]);
-        fetchReviews();
+        fetchReviews(product._id);
         fetch(`${API_BASE_URL}/products/${id}`)
           .then(res => res.json())
           .then(data => setProduct(data));

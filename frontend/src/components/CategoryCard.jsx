@@ -53,7 +53,7 @@ const CategoryCard = ({ product }) => {
 
                 <button
                     className="view-more-btn"
-                    onClick={() => navigate(`/product/${product._id}`)}
+                    onClick={() => navigate(`/product/${product.slug || product._id}`)}
                 >
                     View More
                 </button>

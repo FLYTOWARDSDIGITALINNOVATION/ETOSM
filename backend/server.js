@@ -46,7 +46,10 @@ dns.setServers(["8.8.8.8", "1.1.1.1"]);
 
 mongoose
   .connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB Connected"))
+  .then(async () => {
+    console.log("MongoDB Connected");
+    await migrateSlugs();
+  })
   .catch((err) => console.log(err));
 
 /* ================= IMAGE UPLOAD ================= */
@@ -96,6 +99,13 @@ const categorySchema = new mongoose.Schema({
 });
 const Category = mongoose.model("Category", categorySchema);
 
+function generateSlug(name) {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)+/g, "");
+}
+
 // PRODUCT
 const productSchema = new mongoose.Schema({
   name: String,
@@ -104,6 +114,7 @@ const productSchema = new mongoose.Schema({
   description: String,
   image: String,
   images: [String],
+  slug: { type: String, unique: true, sparse: true },
 
   // ⭐ NEW: Discount fields
   discountPercent: { type: Number, default: 0 },
@@ -118,8 +129,39 @@ const productSchema = new mongoose.Schema({
 
 // Add indexes for dashboard query performance
 productSchema.index({ discountPercent: 1, discountStart: 1, discountEnd: 1 });
+productSchema.pre("save", async function () {
+  if (this.isModified("name") || !this.slug) {
+    let baseSlug = generateSlug(this.name || "");
+    let slug = baseSlug;
+    let counter = 1;
+    while (await mongoose.models.Product.findOne({ slug, _id: { $ne: this._id } })) {
+      slug = `${baseSlug}-${counter++}`;
+    }
+    this.slug = slug;
+  }
+});
 
 const Product = mongoose.model("Product", productSchema);
+
+async function migrateSlugs() {
+  try {
+    const ProductModel = mongoose.model("Product");
+    const products = await ProductModel.find({ $or: [{ slug: { $exists: false } }, { slug: "" }, { slug: null }] });
+    for (let product of products) {
+      let baseSlug = generateSlug(product.name || "");
+      let slug = baseSlug;
+      let counter = 1;
+      while (await ProductModel.findOne({ slug })) {
+        slug = `${baseSlug}-${counter++}`;
+      }
+      product.slug = slug;
+      await product.save();
+      console.log(`Migrated product: "${product.name}" -> slug: "${slug}"`);
+    }
+  } catch (err) {
+    console.error("Slug migration failed:", err);
+  }
+}
 
 // ORDER
 const orderSchema = new mongoose.Schema({
@@ -626,6 +668,16 @@ app.put(
 
       const updateData = { ...req.body };
 
+      if (req.body.name) {
+        let baseSlug = generateSlug(req.body.name);
+        let slug = baseSlug;
+        let counter = 1;
+        while (await Product.findOne({ slug, _id: { $ne: req.params.id } })) {
+          slug = `${baseSlug}-${counter++}`;
+        }
+        updateData.slug = slug;
+      }
+
       if (req.body.specifications) {
         try {
           updateData.specifications = JSON.parse(req.body.specifications);
@@ -694,9 +746,22 @@ app.get("/products/category/:category", async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
-app.get("/products/:id", async (req, res) =>
-  res.json(await Product.findById(req.params.id))
-);
+app.get("/products/:idOrSlug", async (req, res) => {
+  try {
+    const { idOrSlug } = req.params;
+    let query;
+    if (mongoose.Types.ObjectId.isValid(idOrSlug)) {
+      query = { _id: idOrSlug };
+    } else {
+      query = { slug: idOrSlug };
+    }
+    const product = await Product.findOne(query);
+    if (!product) return res.status(404).json({ message: "Product not found" });
+    res.json(product);
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
 // ORDERS
 app.post("/orders", async (req, res) => {
@@ -769,12 +834,18 @@ app.post("/reviews", upload.array("images", 5), async (req, res) => {
 });
 
 
-app.get("/reviews/:productId", async (req, res) => {
+app.get("/reviews/:productIdOrSlug", async (req, res) => {
   try {
-    const reviews = await Review.find({
-      productId: req.params.productId,
-    }).sort({ createdAt: -1 });
-
+    const { productIdOrSlug } = req.params;
+    let productId = productIdOrSlug;
+    if (!mongoose.Types.ObjectId.isValid(productIdOrSlug)) {
+      // It's a slug, look up the product first
+      const product = await Product.findOne({ slug: productIdOrSlug });
+      if (product) {
+        productId = product._id;
+      }
+    }
+    const reviews = await Review.find({ productId }).sort({ createdAt: -1 });
     res.json(reviews);
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch reviews" });
