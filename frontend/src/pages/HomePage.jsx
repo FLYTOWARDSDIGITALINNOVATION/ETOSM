@@ -139,6 +139,42 @@ export default function Home() {
 
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
+  const renderReviewCard = (rev, uniqueKey) => (
+    <div key={uniqueKey} className="parallax-card">
+      <div className="card-inner-layer">
+        <div className="card-top">
+          <span className="status-badge">
+            <span className="pulse-dot"></span>
+            Verified Google Review
+          </span>
+          <FaGoogle className="rev-icon-floating" style={{ color: '#4285F4' }} />
+        </div>
+
+        <div className="testimonial-text-box">
+          <span className="quote-watermark">“</span>
+          <p className="testimonial-para">"{rev.text}"</p>
+        </div>
+
+        <div className="card-footer-info">
+          <div>
+            <h4 className="user-name-inter">{rev.name}</h4>
+            <span className="user-role-primary">{rev.role}</span>
+          </div>
+          <div>
+            <div className="rating-stars-gold" style={{ marginBottom: '5px' }}>
+              {[...Array(5)].map((_, i) => (
+                <FaStar key={i} style={{ color: i < rev.rating ? '#ffb800' : '#e2e8f0' }} />
+              ))}
+            </div>
+            <span style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', textAlign: 'right' }}>
+              {rev.createdAt ? new Date(rev.createdAt).toLocaleDateString() : rev.date || "Just now"}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="home" style={{ fontFamily: "'Inter', sans-serif" }}>
       <Header onSearch={handleSearch} />
@@ -208,42 +244,8 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="motion-grid">
-            {googleReviews.map((rev) => (
-              <div key={rev._id || rev.id} className="parallax-card">
-                <div className="card-inner-layer">
-                  <div className="card-top">
-                    <span className="status-badge">
-                      <span className="pulse-dot"></span>
-                      Verified Google Review
-                    </span>
-                    <FaGoogle className="rev-icon-floating" style={{ color: '#4285F4' }} />
-                  </div>
-
-                  <div className="testimonial-text-box">
-                    <span className="quote-watermark">“</span>
-                    <p className="testimonial-para">"{rev.text}"</p>
-                  </div>
-
-                  <div className="card-footer-info">
-                    <div>
-                      <h4 className="user-name-inter">{rev.name}</h4>
-                      <span className="user-role-primary">{rev.role}</span>
-                    </div>
-                    <div>
-                      <div className="rating-stars-gold" style={{ marginBottom: '5px' }}>
-                        {[...Array(5)].map((_, i) => (
-                          <FaStar key={i} style={{ color: i < rev.rating ? '#ffb800' : '#e2e8f0' }} />
-                        ))}
-                      </div>
-                      <span style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', textAlign: 'right' }}>
-                        {rev.createdAt ? new Date(rev.createdAt).toLocaleDateString() : rev.date || "Just now"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
+          <div className={`motion-grid ${googleReviews.length > 3 ? 'horizontal-scroll' : ''}`}>
+            {googleReviews.map((rev) => renderReviewCard(rev, rev._id || rev.id))}
           </div>
 
           <div className="write-review-cta" style={{ textAlign: 'center', marginTop: '50px' }}>

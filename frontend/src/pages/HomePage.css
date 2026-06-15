@@ -76,8 +76,8 @@
 .card-inner-layer {
   background: #ffffff;
   height: 100%;
-  padding: 50px;
-  border-radius: 40px;
+  padding: 30px;
+  border-radius: 24px;
   border: 1px solid #f2f2f2;
   display: flex;
   flex-direction: column;
@@ -108,7 +108,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 35px;
+  margin-bottom: 20px;
   transform: translateZ(20px);
 }
 
@@ -144,7 +144,7 @@
 /* CONTENT ELEMENTS */
 .testimonial-text-box {
   position: relative;
-  margin-bottom: 40px;
+  margin-bottom: 20px;
   transform: translateZ(30px);
 }
 
@@ -159,7 +159,7 @@
 
 .testimonial-para {
   font-family: 'Inter', sans-serif;
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   line-height: 1.6;
   color: #222;
   font-weight: 400;
@@ -789,4 +789,46 @@
 @keyframes slideUp {
   from { transform: translateY(20px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
+}
+
+/* HORIZONTAL SCROLL FOR REVIEWS */
+.motion-grid.horizontal-scroll {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important; /* Enable manual scrolling */
+  gap: 30px;
+  padding: 20px 10px 40px 10px;
+  margin: 0 -10px;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  grid-template-columns: none !important;
+  scrollbar-width: none; /* Hide scrollbar in Firefox */
+  -ms-overflow-style: none; /* Hide scrollbar in IE/Edge */
+}
+
+.motion-grid.horizontal-scroll::-webkit-scrollbar {
+  display: none !important; /* Hide scrollbar in Chrome/Safari */
+}
+
+.motion-grid.horizontal-scroll .parallax-card {
+  flex: 0 0 380px !important;
+  max-width: 90% !important;
+  height: 440px !important;
+}
+
+.motion-grid.horizontal-scroll .card-inner-layer {
+  height: 100% !important;
+}
+
+/* For mobile screen sizes */
+@media (max-width: 768px) {
+  .motion-grid.horizontal-scroll {
+    gap: 20px;
+    padding: 10px 10px 30px 10px;
+  }
+  .motion-grid.horizontal-scroll .parallax-card {
+    flex: 0 0 320px !important;
+    height: 400px !important;
+  }
 }
