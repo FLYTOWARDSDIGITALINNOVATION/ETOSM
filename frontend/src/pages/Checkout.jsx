@@ -193,9 +193,6 @@ const Checkout = () => {
         console.error("Payment Error:", error);
         alert("Something went wrong with the payment gateway.");
       }
-    } else {
-      // COD flow
-      await placeDatabaseOrder();
     }
   };
 
@@ -403,23 +400,6 @@ const Checkout = () => {
                     <img src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Google_Pay_Logo.svg" alt="GPay" style={{ height: '16px', marginLeft: '5px' }} />
                   </div>
                 </label>
-
-                {/* 2. Cash on Delivery */}
-                <label className={`method-option ${selectedPayment === 'cod' ? 'active' : ''}`}>
-                  <input
-                    type="radio"
-                    name="payment"
-                    onChange={() => setSelectedPayment('cod')}
-                    checked={selectedPayment === 'cod'}
-                  />
-                  <span className="custom-radio"></span>
-                  <div className="method-details">
-                    <span className="method-title">Cash on Delivery (COD)</span>
-                    <p className="method-desc" style={{ fontSize: '12px', color: '#64748b', margin: '2px 0 0 0' }}>
-                      Pay when you receive the package.
-                    </p>
-                  </div>
-                </label>
               </div>
             </section>
           </div>
@@ -480,7 +460,7 @@ const Checkout = () => {
                 </button>
                 <button className="place-order-btn" onClick={handlePlaceOrder}>
                   <Lock size={16} />
-                  {selectedPayment === 'cod' ? 'Confirm Order' : 'Place Order'}
+                  Place Order
                 </button>
               </div>
             </div>
