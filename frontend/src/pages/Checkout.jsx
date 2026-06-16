@@ -150,7 +150,7 @@ const Checkout = () => {
 
         // 2. Open Razorpay Checkout Modal
         const options = {
-          key: 'rzp_test_SxqSdTVSMDLJfd', // Public Key ID
+          key: 'rzp_live_T1px3FgPWmGoPr', // Public Key ID
           amount: orderData.amount,
           currency: orderData.currency,
           name: "ETOSM Technology",
