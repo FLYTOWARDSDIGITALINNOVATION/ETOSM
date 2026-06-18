@@ -57,48 +57,95 @@ const Header = ({ onSearch }) => {
         </div>
 
         {/* 3. Center: Dynamic Navigation */}
-        <ul className={`nav-links ${isMobileMenuOpen ? "active" : ""}`}>
-          <li>
-            <Link to="/home" className="nav-item">
-              <FaHome className="nav-icon-small" /> Home
-            </Link>
-          </li>
-          <li className="dropdown">
-            <span className="nav-item">
-              <FaBox className="nav-icon-small" /> Products <FaChevronDown className="dropdown-caret" />
-            </span>
-            <ul className="dropdown-menu">
-              {Array.isArray(categories) && categories.map(cat => (
-                <li key={cat._id}>
-                  <Link to={`/category/${cat.name}`} className="dropdown-item">
-                    <span className="item-dot"></span> {cat.name}
-                  </Link>
-                </li>
-              ))}
+        {isMobileMenuOpen ? (
+          <ul className="nav-links active">
+            <li>
+              <Link to="/home" className="nav-item">
+                <FaHome className="nav-icon-small" /> Home
+              </Link>
+            </li>
+            <li className="dropdown">
+              <span className="nav-item">
+                <FaBox className="nav-icon-small" /> Products <FaChevronDown className="dropdown-caret" />
+              </span>
+              <ul className="dropdown-menu">
+                {Array.isArray(categories) && categories.map(cat => (
+                  <li key={cat._id}>
+                    <Link to={`/category/${cat.name}`} className="dropdown-item">
+                      <span className="item-dot"></span> {cat.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </li>
+            <li>
+              <Link to="/about" className="nav-item">
+                <FaInfoCircle className="nav-icon-small" /> About
+              </Link>
+            </li>
+            <li>
+              <Link to="/terms" className="nav-item">
+                <FaFileContract className="nav-icon-small" /> Terms of Service
+              </Link>
+            </li>
+            <li>
+              <Link to="/privacy" className="nav-item">
+                <FaShieldAlt className="nav-icon-small" /> Privacy Policy
+              </Link>
+            </li>
+            <li>
+              <Link to="/contact" className="nav-item">
+                <FaEnvelope className="nav-icon-small" /> Contact Us
+              </Link>
+            </li>
+          </ul>
+        ) : (
+          <div className="nav-links-wrapper">
+            <ul className="nav-links-main">
+              <li>
+                <Link to="/home" className="nav-item">
+                  <FaHome className="nav-icon-small" /> Home
+                </Link>
+              </li>
+              <li className="dropdown">
+                <span className="nav-item">
+                  <FaBox className="nav-icon-small" /> Products <FaChevronDown className="dropdown-caret" />
+                </span>
+                <ul className="dropdown-menu">
+                  {Array.isArray(categories) && categories.map(cat => (
+                    <li key={cat._id}>
+                      <Link to={`/category/${cat.name}`} className="dropdown-item">
+                        <span className="item-dot"></span> {cat.name}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </li>
             </ul>
-          </li>
-          <li>
-            <Link to="/about" className="nav-item">
-              <FaInfoCircle className="nav-icon-small" /> About
-            </Link>
-          </li>
-          <li>
-            <Link to="/terms" className="nav-item">
-              <FaFileContract className="nav-icon-small" /> Terms of Service
-            </Link>
-          </li>
-          <li>
-            <Link to="/privacy" className="nav-item">
-              <FaShieldAlt className="nav-icon-small" /> Privacy Policy
-            </Link>
-          </li>
-
-          <li>
-            <Link to="/contact" className="nav-item">
-              <FaEnvelope className="nav-icon-small" /> Contact Us
-            </Link>
-          </li>
-        </ul>
+            <ul className="nav-links-scroll">
+              <li>
+                <Link to="/about" className="nav-item">
+                  <FaInfoCircle className="nav-icon-small" /> About
+                </Link>
+              </li>
+              <li>
+                <Link to="/terms" className="nav-item">
+                  <FaFileContract className="nav-icon-small" /> Terms of Service
+                </Link>
+              </li>
+              <li>
+                <Link to="/privacy" className="nav-item">
+                  <FaShieldAlt className="nav-icon-small" /> Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link to="/contact" className="nav-item">
+                  <FaEnvelope className="nav-icon-small" /> Contact Us
+                </Link>
+              </li>
+            </ul>
+          </div>
+        )}
 
         {/* 4. Right: Search & Utilities */}
         <div className="nav-right">

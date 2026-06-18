@@ -36,7 +36,7 @@ export default function Home() {
       alert("Please enter a name and comment.");
       return;
     }
-    
+
     try {
       const res = await fetch(`${API_BASE_URL}/google-reviews`, {
         method: "POST",
@@ -85,10 +85,9 @@ export default function Home() {
   const [filters, setFilters] = useState({
     deals: [],
     delivery: [],
-    maxPrice: 2000,
+    maxPrice: 20000,
     minPrice: 0,
-    minRating: 0,
-    payOnDelivery: false
+    minRating: 0
   });
 
   useEffect(() => {
@@ -227,7 +226,7 @@ export default function Home() {
               <span className="premium-tag">Google Customer Reviews</span>
               <h2 className="motion-title">Trusted by Tech <span className="italic-primary">Professionals</span></h2>
             </div>
-            
+
             {/* Google Aggregate Rating Badge */}
             <div className="google-aggregate-badge">
               <div className="google-brand-header">

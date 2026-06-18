@@ -258,8 +258,17 @@ const AuthPage = () => {
                     </div>
                   </motion.div>
 
-                  {error && <p className="error-text">{error}</p>}
-                  {success && <p className="success-text">{success}</p>}
+                  <motion.div variants={itemVariants} className="form-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                    <label className="remember-me" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem', color: '#4b5563' }}>
+                      <input type="checkbox" /> Remember me
+                    </label>
+                    <a href="#" className="forgot-password" onClick={(e) => { e.preventDefault(); navigate("/forgot-password"); }} style={{ color: '#e3000f', textDecoration: 'none', fontSize: '0.9rem', fontWeight: '600' }}>
+                      Forgot Password?
+                    </a>
+                  </motion.div>
+
+                  {error && <p className="error-text" style={{ color: 'red', fontWeight: 'bold', textAlign: 'center', margin: '10px 0' }}>{error}</p>}
+                  {success && <p className="success-text" style={{ color: '#10b981', fontWeight: 'bold', textAlign: 'center', margin: '10px 0' }}>{success}</p>}
 
                   <motion.button
                     variants={itemVariants}
@@ -346,8 +355,8 @@ const AuthPage = () => {
                     </label>
                   </motion.div>
 
-                  {error && <p className="error-text">{error}</p>}
-                  {success && <p className="success-text">{success}</p>}
+                  {error && <p className="error-text" style={{ color: 'red', fontWeight: 'bold', textAlign: 'center', margin: '10px 0' }}>{error}</p>}
+                  {success && <p className="success-text" style={{ color: '#10b981', fontWeight: 'bold', textAlign: 'center', margin: '10px 0' }}>{success}</p>}
 
                   <motion.button
                     variants={itemVariants}

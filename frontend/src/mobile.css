@@ -66,8 +66,15 @@
     gap: 12px !important;
     z-index: 2100;
     box-shadow: 5px 0 30px rgba(0,0,0,0.1);
-    overflow-y: auto;
+    overflow-x: visible !important;
+    overflow-y: auto !important;
+    white-space: normal !important;
+    flex: none !important;
     transition: left 0.4s cubic-bezier(0.8, 0, 0.2, 1);
+  }
+
+  .nav-links li {
+    flex-shrink: 1 !important;
   }
 
   .nav-links.active {
@@ -85,6 +92,30 @@
     width: 34px !important;
     height: 34px !important;
     font-size: 0.9rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .brand-logo img {
+    height: 24px !important;
+  }
+  .utility-btn {
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 0.8rem !important;
+  }
+  .login-pill {
+    padding: 5px 10px !important;
+    font-size: 0.75rem !important;
+  }
+  .navbar {
+    padding: 0 8px !important;
+  }
+  .nav-right {
+    gap: 4px !important;
+  }
+  .utility-icons {
+    gap: 4px !important;
   }
 }
 

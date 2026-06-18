@@ -18,7 +18,7 @@ const categories = [
     subtitle: 'Hardware BMS & Smart BMS',
     icon: '🔋',
     link: '/category/BATTERY MANAGEMENT',
-    tag: 'BATTERY MANAGEMENT',
+    tag: 'BATTERY MANAGEMENT SYSTEM',
     color: '#1b4332',
   },
   {
@@ -32,11 +32,11 @@ const categories = [
   },
   {
     id: 4,
-    title: 'Audio',
+    title: 'Audio System',
     subtitle: 'Bluetooth Receivers & Modules',
     icon: '🎵',
     link: '/category/Audio',
-    tag: 'AUDIO',
+    tag: 'AMPILIFIER & ACCESSORIES',
     color: '#1e1b4b',
   },
 ];
@@ -61,7 +61,7 @@ const CollectionGrid = () => {
               </div>
               <div className="card-arrow">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                  <path d="M5 12h14M12 5l7 7-7 7" />
                 </svg>
               </div>
               <div className="card-bg-accent" style={{ background: cat.color }}></div>

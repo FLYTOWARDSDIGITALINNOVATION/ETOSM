@@ -10,7 +10,36 @@ const jwt = require("jsonwebtoken");
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
 const { OAuth2Client } = require("google-auth-library");
+const nodemailer = require("nodemailer");
 require("dotenv").config();
+
+// Set up Nodemailer with Gmail (if credentials exist) or Ethereal for testing
+let transporter;
+if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+  transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS
+    }
+  });
+  console.log("Real Gmail service configured via App Password.");
+} else {
+  nodemailer.createTestAccount().then((account) => {
+    transporter = nodemailer.createTransport({
+      host: account.smtp.host,
+      port: account.smtp.port,
+      secure: account.smtp.secure,
+      auth: {
+        user: account.user,
+        pass: account.pass,
+      },
+    });
+    console.log("Fake Email service configured.");
+  }).catch(err => {
+    console.error("Failed to create Ethereal testing account", err);
+  });
+}
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID");
 
@@ -562,7 +591,7 @@ app.post("/login", async (req, res) => {
     if (!user) return res.status(401).json({ message: "Invalid credentials" });
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(401).json({ message: "Invalid credentials" });
+    if (!isMatch) return res.status(401).json({ message: "Wrong password" });
 
     const token = jwt.sign(
       { id: user._id, isAdmin: user.isAdmin },
@@ -581,6 +610,64 @@ app.post("/login", async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ message: "Server error during login" });
+  }
+});
+
+// FORGOT PASSWORD
+app.post("/forgot-password", async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || "SECRET_KEY", { expiresIn: "15m" });
+    const resetLink = `http://localhost:3000/reset-password?token=${token}`;
+
+    if (transporter) {
+      const info = await transporter.sendMail({
+        from: `"ETOSM Support" <${process.env.EMAIL_USER || "support@etosm.com"}>`,
+        to: email,
+        subject: "Password Reset Request",
+        text: `You requested a password reset. Click the link to reset your password: ${resetLink}`,
+        html: `<p>You requested a password reset.</p><p><a href="${resetLink}">Click here to reset your password</a></p>`
+      });
+      if (process.env.EMAIL_USER && !process.env.EMAIL_USER.includes('your_email_address_here')) {
+        console.log("Password reset email actually sent to: %s", email);
+      } else {
+        console.log("Password reset email sent (Test Mode): %s", nodemailer.getTestMessageUrl(info));
+      }
+      res.json({ message: "Password reset link sent to your email." });
+    } else {
+      console.log(`Fallback: Password reset link for ${email}: ${resetLink}`);
+      res.json({ message: "Password reset link logged to server console." });
+    }
+  } catch (err) {
+    res.status(500).json({ message: "Failed to process forgot password" });
+  }
+});
+
+// RESET PASSWORD
+app.post("/reset-password", async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+    if (!token || !newPassword) return res.status(400).json({ message: "Invalid request" });
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || "SECRET_KEY");
+    const user = await User.findById(decoded.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    user.password = hashed;
+    await user.save();
+
+    res.json({ message: "Password has been successfully reset." });
+  } catch (err) {
+    if (err.name === "TokenExpiredError") {
+      return res.status(400).json({ message: "Reset token has expired" });
+    }
+    res.status(500).json({ message: "Failed to reset password" });
   }
 });
 
@@ -843,6 +930,14 @@ app.put(
         }
       }
 
+      if (req.body.existingImages) {
+        try {
+          updateData.images = JSON.parse(req.body.existingImages);
+        } catch (e) {
+          updateData.images = req.body.existingImages;
+        }
+      }
+
       // Handle main image update and deletion of old one
       if (req.files?.image) {
         if (product.image) {
@@ -855,9 +950,14 @@ app.put(
       }
 
       if (req.files?.galleryImages) {
-        updateData.images = req.files.galleryImages.map(
+        const uploadedImages = req.files.galleryImages.map(
           (f) => `/uploads/${f.filename}`
         );
+        if (updateData.images && Array.isArray(updateData.images)) {
+          updateData.images = [...updateData.images, ...uploadedImages];
+        } else {
+          updateData.images = uploadedImages;
+        }
       }
 
       if (req.files?.pdf) {

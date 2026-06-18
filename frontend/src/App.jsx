@@ -1,7 +1,18 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { useEffect } from "react";
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import { WishlistProvider } from "./context/WishlistContext";
 import { CartProvider } from "./context/CartContext";
 import FloatingChat from "./components/FloatingChat";
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+}
 
 import CategoryProducts from "./pages/CategoryProducts";
 import EditProductPage from "./admin/EditProductPage";
@@ -13,6 +24,8 @@ import ProductDetailPage from "./pages/ProductDetailPage";
 import Checkout from "./pages/Checkout";
 import OrderSuccess from "./pages/OrderSuccess"; // ✅ Import Success Page
 import AuthPage from "./pages/AuthPage";         // ✅ Import Login/Signup Page
+import ForgotPasswordPage from "./pages/ForgotPasswordPage"; // ✅ Import Forgot Password
+import ResetPasswordPage from "./pages/ResetPasswordPage"; // ✅ Import Reset Password
 import AdminDashboard from "./admin/AdminDashboard"; // ✅ Import Admin Dashboard
 import AddCategory from "./admin/AddCategory";
 import AddProduct from "./admin/AddProduct";
@@ -33,10 +46,13 @@ function App() {
     <WishlistProvider>
       <CartProvider>
         <Router>
+          <ScrollToTop />
           <FloatingChat />
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/auth" element={<AuthPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/home" element={<HomePage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/wishlist" element={<WishlistPage />} />

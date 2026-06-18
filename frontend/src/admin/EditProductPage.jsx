@@ -27,8 +27,10 @@ const EditProductPage = () => {
     discountStart: "",
     discountEnd: "",
     image: "",
+    images: [],
   });
   const [imageFile, setImageFile] = useState(null);
+  const [galleryImages, setGalleryImages] = useState([]);
   const [pdfFile, setPdfFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [specifications, setSpecifications] = useState([]);
@@ -97,6 +99,14 @@ const EditProductPage = () => {
       formData.append("description", form.description);
       if (imageFile) {
         formData.append("image", imageFile);
+      }
+      
+      formData.append("existingImages", JSON.stringify(form.images || []));
+      
+      if (galleryImages && galleryImages.length > 0) {
+        for (let i = 0; i < galleryImages.length; i++) {
+          formData.append("galleryImages", galleryImages[i]);
+        }
       }
       if (pdfFile) {
         formData.append("pdf", pdfFile);
@@ -199,6 +209,68 @@ const EditProductPage = () => {
                 onChange={handleImageChange}
                 className="file-input"
               />
+            </div>
+
+            <label>Gallery Images (Optional)</label>
+            <div className="image-edit-section">
+              {form.images && form.images.length > 0 && (
+                <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', marginBottom: '10px', justifyContent: 'center' }}>
+                  {form.images.map((imgUrl, idx) => (
+                    <div key={`exist-${idx}`} style={{ position: 'relative' }}>
+                      <img src={`${API_BASE_URL}${imgUrl}`} alt={`Gallery ${idx}`} className="edit-preview" style={{ width: '100px', height: '100px', objectFit: 'cover' }} />
+                      <button 
+                        type="button" 
+                        onClick={() => {
+                          const newImages = [...form.images];
+                          newImages.splice(idx, 1);
+                          setForm({ ...form, images: newImages });
+                        }} 
+                        style={{ position: 'absolute', top: '-8px', right: '-8px', background: '#e3000f', color: 'white', border: 'none', borderRadius: '50%', width: '22px', height: '22px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 'bold' }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => {
+                  const files = Array.from(e.target.files);
+                  setGalleryImages([...galleryImages, ...files]);
+                  // Reset input value so same files can be selected again if removed
+                  e.target.value = '';
+                }}
+                className="file-input"
+              />
+              
+              {galleryImages && galleryImages.length > 0 && (
+                <div style={{ marginTop: '15px', width: '100%' }}>
+                  <p style={{ fontSize: '13px', color: '#10b981', textAlign: 'center', fontWeight: 'bold', marginBottom: '10px' }}>
+                    {galleryImages.length} new image(s) selected to add:
+                  </p>
+                  <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                    {galleryImages.map((file, idx) => (
+                      <div key={`new-${idx}`} style={{ position: 'relative' }}>
+                        <img src={URL.createObjectURL(file)} alt={`New Gallery ${idx}`} className="edit-preview" style={{ width: '100px', height: '100px', objectFit: 'cover', border: '2px solid #10b981' }} />
+                        <button 
+                          type="button" 
+                          onClick={() => {
+                            const newGallery = [...galleryImages];
+                            newGallery.splice(idx, 1);
+                            setGalleryImages(newGallery);
+                          }} 
+                          style={{ position: 'absolute', top: '-8px', right: '-8px', background: '#e3000f', color: 'white', border: 'none', borderRadius: '50%', width: '22px', height: '22px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 'bold' }}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <label>Product PDF Brochure (Optional)</label>

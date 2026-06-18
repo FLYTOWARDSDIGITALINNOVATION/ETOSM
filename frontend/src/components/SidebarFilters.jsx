@@ -25,13 +25,13 @@ const SidebarFilters = ({ filters, onFilterChange, className }) => {
             {/* 3. Price */}
             <div className="filter-section">
                 <h3>Price</h3>
-                <span className="price-display">₹205 – ₹{filters.maxPrice || 1050}+</span>
+                <span className="price-display">₹200 – ₹{filters.maxPrice || 20000}+</span>
                 <input
                     type="range"
-                    min="205"
-                    max="2000"
-                    step="50"
-                    value={filters.maxPrice || 1050}
+                    min="200"
+                    max="20000"
+                    step="100"
+                    value={filters.maxPrice || 20000}
                     onChange={handlePriceChange}
                     className="range-slider"
                 />
@@ -63,18 +63,7 @@ const SidebarFilters = ({ filters, onFilterChange, className }) => {
                 </div>
             </div>
 
-            {/* 5. Pay On Delivery */}
-            <div className="filter-section">
-                <h3>Pay On Delivery</h3>
-                <label className="filter-option">
-                    <input
-                        type="checkbox"
-                        checked={filters.payOnDelivery}
-                        onChange={(e) => onFilterChange("payOnDelivery", e.target.checked)}
-                    />
-                    Eligible for Pay On Delivery
-                </label>
-            </div>
+
         </aside>
     );
 };
