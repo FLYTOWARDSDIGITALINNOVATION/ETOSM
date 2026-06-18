@@ -12,10 +12,12 @@ const AddProduct = () => {
     category: "",
     subcategory: "",
     price: "",
+    gstPercent: "18",
     description: "",
   });
   const [image, setImage] = useState(null);
   const [galleryImages, setGalleryImages] = useState([]);
+  const [pdfFile, setPdfFile] = useState(null);
   const [specifications, setSpecifications] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -39,9 +41,13 @@ const AddProduct = () => {
     formData.append("category", form.category);
     formData.append("subcategory", form.subcategory || "");
     formData.append("price", form.price);
+    formData.append("gstPercent", form.gstPercent !== undefined && form.gstPercent !== "" ? form.gstPercent : "18");
     formData.append("description", form.description);
     formData.append("email", adminEmail);
     formData.append("image", image);
+    if (pdfFile) {
+      formData.append("pdf", pdfFile);
+    }
 
     const validSpecs = specifications.filter(spec => spec.label.trim() || spec.value.trim());
     formData.append("specifications", JSON.stringify(validSpecs));
@@ -115,12 +121,24 @@ const AddProduct = () => {
               </div>
 
               <div className="form-group">
-                <label>Price *</label>
+                <label>Price * (Excl. GST)</label>
                 <input
                   type="number"
                   placeholder="0.00"
                   value={form.price}
                   onChange={(e) => setForm({ ...form, price: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label>GST % *</label>
+                <input
+                  type="number"
+                  placeholder="18"
+                  value={form.gstPercent}
+                  onChange={(e) => setForm({ ...form, gstPercent: e.target.value })}
                 />
               </div>
             </div>
@@ -270,6 +288,35 @@ const AddProduct = () => {
                 accept="image/*"
                 multiple
                 onChange={(e) => setGalleryImages(e.target.files)}
+                style={{ display: "none" }}
+              />
+            </div>
+
+            <div className="form-group" style={{ marginTop: '20px' }}>
+              <label>Product PDF Brochure (Optional)</label>
+              <div
+                className="file-input-wrapper"
+                onClick={() =>
+                  document.getElementById("product-pdf").click()
+                }
+              >
+                {pdfFile ? (
+                  <div className="image-preview">
+                    <ImageIcon size={24} />
+                    <span>{pdfFile.name}</span>
+                  </div>
+                ) : (
+                  <div className="file-input-placeholder">
+                    <ImageIcon size={32} />
+                    <p>Click to upload product PDF specifications</p>
+                  </div>
+                )}
+              </div>
+              <input
+                id="product-pdf"
+                type="file"
+                accept=".pdf"
+                onChange={(e) => setPdfFile(e.target.files[0])}
                 style={{ display: "none" }}
               />
             </div>

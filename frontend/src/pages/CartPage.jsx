@@ -16,8 +16,10 @@ const CartPage = () => {
     0
   );
 
-
-  const tax = subtotal * 0.08;
+  const tax = cart.reduce(
+    (acc, item) => acc + (Number(item.unitPrice || item.price) * Number(item.qty) * (Number(item.gstPercent !== undefined ? item.gstPercent : 18) / 100)),
+    0
+  );
   const total = subtotal + tax;
 
   const handleCheckout = () => {
@@ -104,6 +106,7 @@ const CartPage = () => {
 
                         <span className="current-price">
                           ₹{(Number(item.unitPrice || item.price) * Number(item.qty)).toFixed(2)}
+                          <span style={{ fontSize: '11px', color: '#6b7280', marginLeft: '6px', fontWeight: 'normal' }}>(excl. {item.gstPercent !== undefined ? item.gstPercent : 18}% GST)</span>
                         </span>
 
 
@@ -125,7 +128,7 @@ const CartPage = () => {
                 </div>
 
                 <div className="summary-row">
-                  <span>Tax</span>
+                  <span>GST</span>
                   <span>₹{tax.toFixed(2)}</span>
                 </div>
 

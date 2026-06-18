@@ -74,7 +74,8 @@ export const CartProvider = ({ children }) => {
             price: product.price,
             img: product.image || product.img,
             qty: addedQty,
-            variation: product.size
+            variation: product.size,
+            gstPercent: product.gstPercent !== undefined ? product.gstPercent : 18
           })
         });
       } catch (err) {

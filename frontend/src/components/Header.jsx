@@ -37,6 +37,7 @@ const Header = ({ onSearch }) => {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    localStorage.removeItem("cart");
     window.location.href = "/";
   };
 

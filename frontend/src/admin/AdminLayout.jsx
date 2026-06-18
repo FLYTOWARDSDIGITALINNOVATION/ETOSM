@@ -23,6 +23,7 @@ const AdminLayout = ({ children }) => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     localStorage.removeItem("admin_dashboard_cache");
+    localStorage.removeItem("cart");
     window.location.href = "/";
   };
 

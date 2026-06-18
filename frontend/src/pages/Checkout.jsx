@@ -71,7 +71,10 @@ const Checkout = () => {
   const subtotal = checkoutItems.reduce((acc, item) => acc + item.price * item.qty, 0);
   const shippingCosts = { standard: 0, express: 9.99, overnight: 24.99 };
   const shippingCost = shippingCosts[selectedShipping];
-  const tax = subtotal * 0.08;
+  const tax = checkoutItems.reduce(
+    (acc, item) => acc + (Number(item.price) * Number(item.qty) * (Number(item.gstPercent !== undefined ? item.gstPercent : 18) / 100)),
+    0
+  );
   const total = subtotal + tax + shippingCost;
 
   const handlePlaceOrder = async () => {
@@ -95,8 +98,9 @@ const Checkout = () => {
 
     const placeDatabaseOrder = async () => {
       try {
-        const orderPromises = checkoutItems.map(item =>
-          fetch(`${API_BASE_URL}/orders`, {
+        const orderPromises = checkoutItems.map(item => {
+          const itemGst = item.qty * (Number(item.price) * (Number(item.gstPercent !== undefined ? item.gstPercent : 18) / 100));
+          return fetch(`${API_BASE_URL}/orders`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -111,12 +115,12 @@ const Checkout = () => {
               shippingMethod: selectedShipping,
               paymentMethod: selectedPayment,
               shippingCost: shippingCost,
-              tax: item.qty * (item.price * 0.08),
-              totalAmount: (item.price * item.qty) + (item.qty * (item.price * 0.08)) + (shippingCost / checkoutItems.length),
+              tax: itemGst,
+              totalAmount: (item.price * item.qty) + itemGst + (shippingCost / checkoutItems.length),
               variation: item.variation || item.size
             })
-          })
-        );
+          });
+        });
 
         await Promise.all(orderPromises);
         if (clearCart && !buyNowItem) clearCart();
@@ -422,7 +426,7 @@ const Checkout = () => {
                     <div className="sp-details">
                       <p className="sp-name">{item.name}</p>
                       <p className="sp-qty">Qty: {item.qty}</p>
-                      <p className="sp-price">₹{item.price.toFixed(2)}</p>
+                      <p className="sp-price">₹{item.price.toFixed(2)} <span style={{ fontSize: '10px', color: '#6b7280', fontWeight: 'normal' }}>(excl. {item.gstPercent !== undefined ? item.gstPercent : 18}% GST)</span></p>
                     </div>
                   </div>
                 ))}
@@ -439,8 +443,8 @@ const Checkout = () => {
                     {shippingCost === 0 ? "FREE" : `₹${shippingCost.toFixed(2)}`}
                   </span>
                 </div>
-                <div className="total-row">
-                  <span>Tax (8%)</span>
+                 <div className="total-row">
+                  <span>GST</span>
                   <span>₹{tax.toFixed(2)}</span>
                 </div>
                 <hr />

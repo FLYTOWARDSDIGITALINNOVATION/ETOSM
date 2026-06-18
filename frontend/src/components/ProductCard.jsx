@@ -89,15 +89,18 @@ const ProductCard = ({ product }) => {
           </div>
           <span className="rating-count">({product.ratingCount || 0})</span>
         </div>
-        <div className="price-box">
-          {discountActive ? (
-            <>
-              <span className="discounted-price">₹{discountedPrice}</span>
-              <span className="original-price">₹{product.price}</span>
-            </>
-          ) : (
-            <span className="normal-price">₹{product.price} </span>
-          )}
+        <div className="price-box" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            {discountActive ? (
+              <>
+                <span className="discounted-price">₹{discountedPrice}</span>
+                <span className="original-price">₹{product.price}</span>
+              </>
+            ) : (
+              <span className="normal-price">₹{product.price} </span>
+            )}
+          </div>
+          <span className="gst-excl-label" style={{ fontSize: '10px', color: '#6b7280', marginTop: '2px' }}>Excl. {product.gstPercent !== undefined ? product.gstPercent : 18}% GST</span>
         </div>
         <button className="add-cart-btn" onClick={handleAddToCart}>
           <FaShoppingCart /> Add to Cart

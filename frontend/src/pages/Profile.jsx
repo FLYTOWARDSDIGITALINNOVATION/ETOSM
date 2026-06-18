@@ -64,7 +64,9 @@ const Profile = () => {
 
   const logout = () => {
     localStorage.removeItem("user");
-    navigate("/");
+    localStorage.removeItem("token");
+    localStorage.removeItem("cart");
+    window.location.href = "/";
   };
 
   const handleAddAddress = async () => {

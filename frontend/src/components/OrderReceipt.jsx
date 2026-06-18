@@ -89,7 +89,7 @@ const OrderReceipt = ({ order, items, onClose }) => {
                             <span>{order.shippingCost === 0 ? "FREE" : `₹${order.shippingCost.toFixed(2)}`}</span>
                         </div>
                         <div className="summary-line">
-                            <span>Tax (8%):</span>
+                            <span>GST:</span>
                             <span>₹{order.tax?.toFixed(2)}</span>
                         </div>
                         <hr />

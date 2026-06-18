@@ -19,6 +19,8 @@ const EditProductPage = () => {
     category: "",
     subcategory: "",
     price: "",
+    gstPercent: 18,
+    pdfUrl: "",
     description: "",
     discountPercent: 0,
     salesPrice: "",
@@ -27,6 +29,7 @@ const EditProductPage = () => {
     image: "",
   });
   const [imageFile, setImageFile] = useState(null);
+  const [pdfFile, setPdfFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [specifications, setSpecifications] = useState([]);
 
@@ -47,6 +50,7 @@ const EditProductPage = () => {
 
         setForm({
           ...data,
+          gstPercent: data.gstPercent !== undefined ? data.gstPercent : 18,
           salesPrice: salesPriceValue,
           discountStart: data.discountStart ? data.discountStart.slice(0, 16) : "",
           discountEnd: data.discountEnd ? data.discountEnd.slice(0, 16) : "",
@@ -89,9 +93,13 @@ const EditProductPage = () => {
       formData.append("category", form.category);
       formData.append("subcategory", form.subcategory || "");
       formData.append("price", form.price);
+      formData.append("gstPercent", form.gstPercent !== undefined && form.gstPercent !== "" ? form.gstPercent : 18);
       formData.append("description", form.description);
       if (imageFile) {
         formData.append("image", imageFile);
+      }
+      if (pdfFile) {
+        formData.append("pdf", pdfFile);
       }
       const validSpecs = specifications.filter(spec => spec.label.trim() || spec.value.trim());
       formData.append("specifications", JSON.stringify(validSpecs));
@@ -160,11 +168,20 @@ const EditProductPage = () => {
               </>
             )}
 
-            <label>Price</label>
+            <label>Price (Excl. GST)</label>
             <input
               type="number"
               name="price"
               value={form.price}
+              onChange={handleChange}
+              required
+            />
+
+            <label>GST %</label>
+            <input
+              type="number"
+              name="gstPercent"
+              value={form.gstPercent}
               onChange={handleChange}
               required
             />
@@ -180,6 +197,21 @@ const EditProductPage = () => {
                 type="file"
                 accept="image/*"
                 onChange={handleImageChange}
+                className="file-input"
+              />
+            </div>
+
+            <label>Product PDF Brochure (Optional)</label>
+            <div className="pdf-edit-section" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '15px' }}>
+              {form.pdfUrl && (
+                <a href={`${API_BASE_URL}${form.pdfUrl}`} target="_blank" rel="noreferrer" style={{ color: '#c71585', textDecoration: 'underline', fontSize: '14px', fontWeight: '500' }}>
+                  View Current PDF Brochure
+                </a>
+              )}
+              <input
+                type="file"
+                accept=".pdf"
+                onChange={(e) => setPdfFile(e.target.files[0])}
                 className="file-input"
               />
             </div>

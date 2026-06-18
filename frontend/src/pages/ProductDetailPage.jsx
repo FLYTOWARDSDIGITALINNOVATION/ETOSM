@@ -119,6 +119,12 @@ const ProductDetailPage = () => {
   const handleDownloadPDF = async () => {
     if (!product) return;
 
+    if (product.pdfUrl) {
+      const pdfLink = product.pdfUrl.startsWith("/") ? `${API_BASE_URL}${product.pdfUrl}` : product.pdfUrl;
+      window.open(pdfLink, "_blank");
+      return;
+    }
+
     setIsDownloadingPdf(true);
     try {
       const doc = new jsPDF({
@@ -464,18 +470,21 @@ const ProductDetailPage = () => {
 
           <div className="product-info-section">
             <h1 className="detail-title">{product.name}</h1>
-            <div className="detail-price">
-              {isDiscountActive ? (
-                <>
-                  <span className="old-price">₹{product.price}</span>
-                  <span className="price">
-                    ₹{discountedPrice}
-                    <span className="off-text"> ({Number(product.discountPercent).toFixed(1)}% OFF)</span>
-                  </span>
-                </>
-              ) : (
-                <span className="price">₹{product.price}</span>
-              )}
+            <div className="detail-price" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'baseline' }}>
+                {isDiscountActive ? (
+                  <>
+                    <span className="old-price">₹{product.price}</span>
+                    <span className="price">
+                      ₹{discountedPrice}
+                      <span className="off-text"> ({Number(product.discountPercent).toFixed(1)}% OFF)</span>
+                    </span>
+                  </>
+                ) : (
+                  <span className="price">₹{product.price}</span>
+                )}
+              </div>
+              <span className="gst-excl-detail-label" style={{ fontSize: '13px', color: '#6b7280', marginTop: '4px', fontWeight: '500' }}>(Excluding {product.gstPercent !== undefined ? product.gstPercent : 18}% GST)</span>
             </div>
 
             <div className="detail-rating" style={{ marginBottom: '20px' }}>

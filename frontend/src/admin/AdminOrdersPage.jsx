@@ -1,7 +1,7 @@
 import API_BASE_URL from '../apiConfig';
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Package, Clock, Eye, X, MapPin, CreditCard, ShoppingBag } from "lucide-react";
+import { ArrowLeft, Package, Clock, Eye, X, MapPin, CreditCard, ShoppingBag, Printer } from "lucide-react";
 import AdminLayout from "./AdminLayout";
 import "./AdminOrdersPage.css";
 
@@ -183,7 +183,28 @@ const AdminOrdersPage = () => {
             <div className="order-modal">
               <div className="modal-header">
                 <h3>Order Details</h3>
-                <button className="close-btn" onClick={() => setSelectedOrder(null)}><X size={20} /></button>
+                <div className="no-print" style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                  <button 
+                    onClick={() => window.print()}
+                    style={{
+                      background: 'linear-gradient(135deg, #e3000f 0%, #b3000c 100%)',
+                      color: 'white',
+                      border: 'none',
+                      padding: '6px 12px',
+                      borderRadius: '6px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      fontSize: '13px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      boxShadow: '0 2px 4px rgba(227, 0, 15, 0.2)'
+                    }}
+                  >
+                    <Printer size={14} /> Print Slip
+                  </button>
+                  <button className="close-btn" onClick={() => setSelectedOrder(null)}><X size={20} /></button>
+                </div>
               </div>
 
               <div className="modal-content">
@@ -207,7 +228,7 @@ const AdminOrdersPage = () => {
                       <div className="price-row"><span>Quantity:</span> <span>x{selectedOrder.quantity}</span></div>
                       <div className="price-row"><span>Product Total:</span> <span>₹{selectedOrder.price}</span></div>
                       <div className="price-row"><span>Shipping:</span> <span>₹{selectedOrder.shippingCost || 0}</span></div>
-                      <div className="price-row"><span>Tax:</span> <span>₹{selectedOrder.tax?.toFixed(2) || '0.00'}</span></div>
+                      <div className="price-row"><span>GST:</span> <span>₹{selectedOrder.tax?.toFixed(2) || '0.00'}</span></div>
                       <hr />
                       <div className="price-row total"><span>Order Total:</span> <span>₹{selectedOrder.totalAmount?.toFixed(2) || selectedOrder.price}</span></div>
                     </div>

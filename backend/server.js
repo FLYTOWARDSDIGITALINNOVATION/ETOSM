@@ -120,6 +120,8 @@ const productSchema = new mongoose.Schema({
   image: String,
   images: [String],
   slug: { type: String, unique: true, sparse: true },
+  gstPercent: { type: Number, default: 18 },
+  pdfUrl: { type: String, default: "" },
 
   // ⭐ NEW: Discount fields
   discountPercent: { type: Number, default: 0 },
@@ -313,6 +315,7 @@ const cartSchema = new mongoose.Schema({
   img: String,
   qty: { type: Number, default: 1 },
   variation: String,      // ✅ Added variation (weight)
+  gstPercent: { type: Number, default: 18 },
 });
 const Cart = mongoose.model("Cart", cartSchema);
 
@@ -708,9 +711,10 @@ app.delete("/admin/category/:id", verifyAdmin, async (req, res) => {
 });
 
 // PRODUCT
-app.post("/admin/product", verifyAdmin, upload.fields([{ name: 'image', maxCount: 1 }, { name: 'galleryImages', maxCount: 5 }]), async (req, res) => {
+app.post("/admin/product", verifyAdmin, upload.fields([{ name: 'image', maxCount: 1 }, { name: 'galleryImages', maxCount: 5 }, { name: 'pdf', maxCount: 1 }]), async (req, res) => {
   const mainImage = req.files['image'] ? `/uploads/${req.files['image'][0].filename}` : "";
   const galleryImages = req.files['galleryImages'] ? req.files['galleryImages'].map(f => `/uploads/${f.filename}`) : [];
+  const pdfFile = req.files['pdf'] ? `/uploads/${req.files['pdf'][0].filename}` : "";
 
   let specs = [];
   if (req.body.specifications) {
@@ -723,8 +727,10 @@ app.post("/admin/product", verifyAdmin, upload.fields([{ name: 'image', maxCount
 
   const product = await Product.create({
     ...req.body,
+    gstPercent: req.body.gstPercent !== undefined ? Number(req.body.gstPercent) : 18,
     image: mainImage,
     images: galleryImages,
+    pdfUrl: pdfFile,
     specifications: specs
   });
   res.json(product);
@@ -807,6 +813,7 @@ app.put(
   upload.fields([
     { name: "image", maxCount: 1 },
     { name: "galleryImages", maxCount: 5 },
+    { name: "pdf", maxCount: 1 },
   ]),
   async (req, res) => {
     try {
@@ -814,6 +821,9 @@ app.put(
       if (!product) return res.status(404).json({ message: "Product not found" });
 
       const updateData = { ...req.body };
+      if (req.body.gstPercent !== undefined) {
+        updateData.gstPercent = Number(req.body.gstPercent);
+      }
 
       if (req.body.name) {
         let baseSlug = generateSlug(req.body.name);
@@ -848,6 +858,16 @@ app.put(
         updateData.images = req.files.galleryImages.map(
           (f) => `/uploads/${f.filename}`
         );
+      }
+
+      if (req.files?.pdf) {
+        if (product.pdfUrl) {
+          const oldPath = path.join(__dirname, product.pdfUrl);
+          if (fs.existsSync(oldPath)) {
+            fs.unlinkSync(oldPath);
+          }
+        }
+        updateData.pdfUrl = `/uploads/${req.files.pdf[0].filename}`;
       }
 
       // Handle direct sales price to discount percent conversion if salesPrice is provided
@@ -1079,7 +1099,7 @@ app.get("/cart/:email", async (req, res) => {
 // ADD TO CART / UPDATE QUANTITY
 app.post("/cart", async (req, res) => {
   try {
-    const { userEmail, productId, name, price, img, qty } = req.body;
+    const { userEmail, productId, name, price, img, qty, gstPercent } = req.body;
 
     let cartItem = await Cart.findOne({ userEmail, productId });
 
@@ -1095,7 +1115,8 @@ app.post("/cart", async (req, res) => {
         unitPrice: price,
         price: price * qty,
         img,
-        qty
+        qty,
+        gstPercent: gstPercent !== undefined ? Number(gstPercent) : 18
       });
     }
     res.json(cartItem);
