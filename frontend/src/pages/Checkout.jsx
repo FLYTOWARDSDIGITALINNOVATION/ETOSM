@@ -69,7 +69,7 @@ const Checkout = () => {
 
   // Calculations
   const subtotal = checkoutItems.reduce((acc, item) => acc + item.price * item.qty, 0);
-  const shippingCosts = { standard: 0, express: 9.99, overnight: 24.99 };
+  const shippingCosts = { standard: 0, express: 9.99 };
   const shippingCost = shippingCosts[selectedShipping];
   const tax = checkoutItems.reduce(
     (acc, item) => acc + (Number(item.price) * Number(item.qty) * (Number(item.gstPercent !== undefined ? item.gstPercent : 18) / 100)),
@@ -359,19 +359,7 @@ const Checkout = () => {
                   <span className="method-price">₹9.99</span>
                 </label>
 
-                <label className={`method-option ${selectedShipping === 'overnight' ? 'active' : ''}`}>
-                  <input
-                    type="radio"
-                    name="shipping"
-                    onChange={() => setSelectedShipping('overnight')}
-                    checked={selectedShipping === 'overnight'}
-                  />
-                  <span className="custom-radio"></span>
-                  <div className="method-details">
-                    <span className="method-title">Overnight Shipping <span className="method-time">Next business day</span></span>
-                  </div>
-                  <span className="method-price">₹24.99</span>
-                </label>
+
               </div>
             </section>
 
