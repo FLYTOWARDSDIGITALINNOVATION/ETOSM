@@ -497,6 +497,10 @@
         justify-content: flex-end;
     }
 
+    .nav-links-wrapper {
+        display: none;
+    }
+
     .nav-links {
         position: fixed;
         top: 0;

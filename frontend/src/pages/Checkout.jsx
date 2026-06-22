@@ -1,5 +1,5 @@
 import API_BASE_URL from '../apiConfig';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCart } from "../context/CartContext";
 import { ChevronLeft, Lock, FileText } from 'lucide-react';
 import { useNavigate, useLocation } from "react-router-dom";
@@ -40,6 +40,25 @@ const Checkout = () => {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [useExistingAddress, setUseExistingAddress] = useState(previousAddresses.length > 0);
   const [selectedPreviousAddress, setSelectedPreviousAddress] = useState(previousAddresses.length > 0 ? 0 : null);
+  const [storeSettings, setStoreSettings] = useState({ standardShippingPrice: 0, expressShippingPrice: 9.99 });
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/settings`);
+        if (res.ok) {
+          const data = await res.json();
+          setStoreSettings({
+            standardShippingPrice: data.standardShippingPrice ?? 0,
+            expressShippingPrice: data.expressShippingPrice ?? 9.99
+          });
+        }
+      } catch (err) {
+        console.error("Failed to fetch settings", err);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   // State for shipping information
   const [shippingInfo, setShippingInfo] = useState({
@@ -69,7 +88,7 @@ const Checkout = () => {
 
   // Calculations
   const subtotal = checkoutItems.reduce((acc, item) => acc + item.price * item.qty, 0);
-  const shippingCosts = { standard: 0, express: 9.99 };
+  const shippingCosts = { standard: storeSettings.standardShippingPrice, express: storeSettings.expressShippingPrice };
   const shippingCost = shippingCosts[selectedShipping];
   const tax = checkoutItems.reduce(
     (acc, item) => acc + (Number(item.price) * Number(item.qty) * (Number(item.gstPercent !== undefined ? item.gstPercent : 18) / 100)),
@@ -342,7 +361,9 @@ const Checkout = () => {
                   <div className="method-details">
                     <span className="method-title">Standard Shipping <span className="method-time">5-7 business days</span></span>
                   </div>
-                  <span className="method-price free">FREE</span>
+                  <span className={`method-price ${storeSettings.standardShippingPrice === 0 ? 'free' : ''}`}>
+                    {storeSettings.standardShippingPrice === 0 ? 'FREE' : `₹${storeSettings.standardShippingPrice.toFixed(2)}`}
+                  </span>
                 </label>
 
                 <label className={`method-option ${selectedShipping === 'express' ? 'active' : ''}`}>
@@ -356,7 +377,7 @@ const Checkout = () => {
                   <div className="method-details">
                     <span className="method-title">Express Shipping <span className="method-time">2-3 business days</span></span>
                   </div>
-                  <span className="method-price">₹9.99</span>
+                  <span className="method-price">₹{storeSettings.expressShippingPrice.toFixed(2)}</span>
                 </label>
 
 

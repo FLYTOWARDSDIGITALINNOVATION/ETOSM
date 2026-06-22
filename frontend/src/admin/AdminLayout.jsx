@@ -10,6 +10,7 @@ import {
   LogOut,
   ChevronDown,
   Star,
+  Settings,
 } from "lucide-react";
 import "./AdminLayout.css";
 
@@ -65,6 +66,12 @@ const AdminLayout = ({ children }) => {
       title: "Reviews",
       icon: Star,
       path: "/admin/reviews",
+      submenu: null,
+    },
+    {
+      title: "Settings",
+      icon: Settings,
+      path: "/admin/settings",
       submenu: null,
     },
   ];

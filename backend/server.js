@@ -157,6 +157,9 @@ const productSchema = new mongoose.Schema({
   discountStart: Date,
   discountEnd: Date,
 
+  // ⭐ NEW: Inventory
+  stock: { type: Number, default: 0 },
+
   averageRating: { type: Number, default: 0 },
   ratingCount: { type: Number, default: 0 },
 
@@ -414,6 +417,13 @@ const supportSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 const Support = mongoose.model("Support", supportSchema);
+
+// SETTINGS
+const settingsSchema = new mongoose.Schema({
+  expressShippingPrice: { type: Number, default: 9.99 },
+  standardShippingPrice: { type: Number, default: 0 }
+});
+const Settings = mongoose.model("Settings", settingsSchema);
 
 
 // START/SEND MESSAGE (USER)
@@ -735,6 +745,33 @@ app.get("/user/:email", async (req, res) => {
 
 /* ================= ADMIN ================= */
 
+// SETTINGS
+app.get("/settings", async (req, res) => {
+  try {
+    let settings = await Settings.findOne();
+    if (!settings) {
+      settings = await Settings.create({});
+    }
+    res.json(settings);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch settings" });
+  }
+});
+
+app.put("/admin/settings", verifyAdmin, async (req, res) => {
+  try {
+    let settings = await Settings.findOne();
+    if (!settings) {
+      settings = await Settings.create(req.body);
+    } else {
+      settings = await Settings.findOneAndUpdate({}, req.body, { new: true });
+    }
+    res.json(settings);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to update settings" });
+  }
+});
+
 // CATEGORY
 app.post("/admin/category", verifyAdmin, async (req, res) => {
   try {
@@ -815,6 +852,7 @@ app.post("/admin/product", verifyAdmin, upload.fields([{ name: 'image', maxCount
   const product = await Product.create({
     ...req.body,
     gstPercent: req.body.gstPercent !== undefined ? Number(req.body.gstPercent) : 18,
+    stock: req.body.stock !== undefined ? Number(req.body.stock) : 0,
     image: mainImage,
     images: galleryImages,
     pdfUrl: pdfFile,
@@ -910,6 +948,13 @@ app.put(
       const updateData = { ...req.body };
       if (req.body.gstPercent !== undefined) {
         updateData.gstPercent = Number(req.body.gstPercent);
+      }
+
+      if (req.body.restockQuantity !== undefined && req.body.restockQuantity !== "") {
+        updateData.$inc = { stock: Number(req.body.restockQuantity) };
+        delete updateData.restockQuantity;
+      } else if (req.body.stock !== undefined) {
+        updateData.stock = Number(req.body.stock);
       }
 
       if (req.body.name) {
@@ -1033,9 +1078,23 @@ app.get("/products/:idOrSlug", async (req, res) => {
 // ORDERS
 app.post("/orders", async (req, res) => {
   try {
+    const product = await Product.findById(req.body.productId);
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    if (product.stock < req.body.quantity) {
+      return res.status(400).json({ message: `Insufficient stock. Only ${product.stock} items left.` });
+    }
+
+    await Product.findByIdAndUpdate(req.body.productId, {
+      $inc: { stock: -req.body.quantity }
+    });
+
     const order = await Order.create(req.body);
     res.json(order);
   } catch (err) {
+    console.error("Order creation failed:", err);
     res.status(500).json({ message: "Failed to create order" });
   }
 });

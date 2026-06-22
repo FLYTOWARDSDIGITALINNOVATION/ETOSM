@@ -15,8 +15,10 @@ const ProductCard = ({ product }) => {
   const [showWishAdded, setShowWishAdded] = useState(false);
 
   const isWishlisted = wishlist.some(p => p._id === product._id);
+  const isOutOfStock = product?.stock <= 0;
 
   const handleAddToCart = () => {
+    if (isOutOfStock) return;
     addToCart(product);
     setShowAdded(true);
     setTimeout(() => {
@@ -51,6 +53,11 @@ const ProductCard = ({ product }) => {
   return (
     <div className="card">
       <div className="image-box">
+        {isOutOfStock && (
+          <div className="out-of-stock-badge" style={{ position: 'absolute', top: '10px', left: '10px', background: '#e3000f', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', zIndex: 10 }}>
+            OUT OF STOCK
+          </div>
+        )}
         <button className={`wishlist-btn ${isWishlisted ? "liked" : ""}`} onClick={toggleWishlist} title="Add to wishlist">
           <FaHeart />
         </button>
@@ -102,8 +109,13 @@ const ProductCard = ({ product }) => {
           </div>
           <span className="gst-excl-label" style={{ fontSize: '10px', color: '#6b7280', marginTop: '2px' }}>Excl. {product.gstPercent !== undefined ? product.gstPercent : 18}% GST</span>
         </div>
-        <button className="add-cart-btn" onClick={handleAddToCart}>
-          <FaShoppingCart /> Add to Cart
+        <button 
+          className="add-cart-btn" 
+          onClick={handleAddToCart}
+          disabled={isOutOfStock}
+          style={{ opacity: isOutOfStock ? 0.5 : 1, cursor: isOutOfStock ? 'not-allowed' : 'pointer' }}
+        >
+          <FaShoppingCart /> {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
         </button>
       </div>
     </div>

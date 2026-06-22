@@ -13,6 +13,7 @@ const AddProduct = () => {
     subcategory: "",
     price: "",
     gstPercent: "18",
+    stock: "",
     description: "",
   });
   const [image, setImage] = useState(null);
@@ -42,6 +43,7 @@ const AddProduct = () => {
     formData.append("subcategory", form.subcategory || "");
     formData.append("price", form.price);
     formData.append("gstPercent", form.gstPercent !== undefined && form.gstPercent !== "" ? form.gstPercent : "18");
+    formData.append("stock", form.stock !== "" ? form.stock : "0");
     formData.append("description", form.description);
     formData.append("email", adminEmail);
     formData.append("image", image);
@@ -139,6 +141,16 @@ const AddProduct = () => {
                   placeholder="18"
                   value={form.gstPercent}
                   onChange={(e) => setForm({ ...form, gstPercent: e.target.value })}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Initial Stock Quantity *</label>
+                <input
+                  type="number"
+                  placeholder="0"
+                  value={form.stock}
+                  onChange={(e) => setForm({ ...form, stock: e.target.value })}
                 />
               </div>
             </div>

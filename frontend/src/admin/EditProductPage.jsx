@@ -24,6 +24,8 @@ const EditProductPage = () => {
     description: "",
     discountPercent: 0,
     salesPrice: "",
+    stock: 0,
+    restockQuantity: "",
     discountStart: "",
     discountEnd: "",
     image: "",
@@ -111,6 +113,9 @@ const EditProductPage = () => {
       if (pdfFile) {
         formData.append("pdf", pdfFile);
       }
+      if (form.restockQuantity) {
+        formData.append("restockQuantity", form.restockQuantity);
+      }
       const validSpecs = specifications.filter(spec => spec.label.trim() || spec.value.trim());
       formData.append("specifications", JSON.stringify(validSpecs));
     }
@@ -195,6 +200,28 @@ const EditProductPage = () => {
               onChange={handleChange}
               required
             />
+
+            <div style={{ display: 'flex', gap: '20px', width: '100%', marginBottom: '10px' }}>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                <label>Current Stock</label>
+                <input
+                  type="number"
+                  value={form.stock || 0}
+                  disabled
+                  style={{ backgroundColor: '#f1f5f9', cursor: 'not-allowed' }}
+                />
+              </div>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                <label>Add Restock Quantity</label>
+                <input
+                  type="number"
+                  name="restockQuantity"
+                  placeholder="e.g. 10"
+                  value={form.restockQuantity || ""}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
 
             <label>Product Image</label>
             <div className="image-edit-section">

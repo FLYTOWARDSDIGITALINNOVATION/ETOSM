@@ -367,8 +367,10 @@ const ProductDetailPage = () => {
 
   const sizes = ["S", "M", "L", "XL"];
 
+  const isOutOfStock = product?.stock <= 0;
+
   const handleAddToCart = () => {
-    if (product) {
+    if (product && !isOutOfStock) {
       addToCart({
         ...product,
         qty: quantity,
@@ -378,7 +380,7 @@ const ProductDetailPage = () => {
   };
 
   const handleBuyNow = () => {
-    if (!product) return;
+    if (!product || isOutOfStock) return;
 
     // Calculate dynamic price based on discount logic
     const now = new Date();
@@ -487,7 +489,7 @@ const ProductDetailPage = () => {
               <span className="gst-excl-detail-label" style={{ fontSize: '13px', color: '#6b7280', marginTop: '4px', fontWeight: '500' }}>(Excluding {product.gstPercent !== undefined ? product.gstPercent : 18}% GST)</span>
             </div>
 
-            <div className="detail-rating" style={{ marginBottom: '20px' }}>
+            <div className="detail-rating" style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
               <div className="stars">
                 {[...Array(5)].map((_, i) => (
                   <FaStar
@@ -497,7 +499,10 @@ const ProductDetailPage = () => {
                 ))}
               </div>
               <span className="reviews">({product.ratingCount || 0} ratings)</span>
-              {product.tag && <span className="detail-tag" style={{ marginLeft: '15px' }}>{product.tag}</span>}
+              {product.tag && <span className="detail-tag">{product.tag}</span>}
+              <span className={`stock-status ${isOutOfStock ? 'out-of-stock' : 'in-stock'}`} style={{ fontWeight: 'bold', color: isOutOfStock ? '#e3000f' : '#10b981', padding: '4px 8px', backgroundColor: isOutOfStock ? '#fff1f2' : '#ecfdf5', borderRadius: '4px', fontSize: '12px' }}>
+                {isOutOfStock ? 'Out of Stock' : `${product.stock} in stock`}
+              </span>
             </div>
 
             {product.specifications && product.specifications.length > 0 && (
@@ -557,16 +562,18 @@ const ProductDetailPage = () => {
             <div className="selection-group">
               <h4>Quantity</h4>
               <div className="quantity-control">
-                <button onClick={() => setQuantity(Math.max(1, quantity - 1))}>-</button>
+                <button onClick={() => setQuantity(Math.max(1, quantity - 1))} disabled={isOutOfStock}>-</button>
                 <span>{quantity}</span>
-                <button onClick={() => setQuantity(quantity + 1)}>+</button>
+                <button onClick={() => setQuantity(Math.min(product.stock, quantity + 1))} disabled={isOutOfStock || quantity >= product.stock}>+</button>
               </div>
             </div>
             <div className="action-buttons">
-              <button className="add-to-cart-outline" onClick={handleAddToCart}>
-                <FaShoppingCart /> Add to Cart
+              <button className="add-to-cart-outline" onClick={handleAddToCart} disabled={isOutOfStock} style={{ opacity: isOutOfStock ? 0.5 : 1, cursor: isOutOfStock ? 'not-allowed' : 'pointer' }}>
+                <FaShoppingCart /> {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
               </button>
-              <button className="buy-now-btn" onClick={handleBuyNow}>Buy Now</button>
+              <button className="buy-now-btn" onClick={handleBuyNow} disabled={isOutOfStock} style={{ opacity: isOutOfStock ? 0.5 : 1, cursor: isOutOfStock ? 'not-allowed' : 'pointer' }}>
+                {isOutOfStock ? 'Out of Stock' : 'Buy Now'}
+              </button>
               <button 
                 className="download-pdf-btn" 
                 onClick={handleDownloadPDF} 

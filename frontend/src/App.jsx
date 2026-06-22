@@ -33,6 +33,7 @@ import RemoveProductPage from "./admin/RemoveProductPage";
 import AdminOrdersPage from "./admin/AdminOrdersPage";
 import AdminSupportPage from "./admin/AdminSupportPage"; // ✅ Import Admin Support
 import AdminReviewsPage from "./admin/AdminReviewsPage";
+import AdminSettings from "./admin/AdminSettings"; // ✅ Import Admin Settings
 import OrdersPage from "./pages/OrdersPage"; // ✅ Import Orders Page
 import CustomerService from "./pages/CustomerService"; // ✅ Import Customer Service Page
 import Profile from "./pages/Profile";
@@ -77,6 +78,7 @@ function App() {
             <Route path="/admin/orders" element={<AdminOrdersPage />} />
             <Route path="/admin/support" element={<AdminSupportPage />} />
             <Route path="/admin/reviews" element={<AdminReviewsPage />} />
+            <Route path="/admin/settings" element={<AdminSettings />} />
           </Routes>
         </Router>
       </CartProvider>

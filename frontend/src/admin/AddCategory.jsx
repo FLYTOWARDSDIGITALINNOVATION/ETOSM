@@ -80,16 +80,28 @@ const AddCategory = () => {
 
   // Delete
   const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this category?")) return;
+
     const token = localStorage.getItem("token");
-    await fetch(`${API_BASE_URL}/admin/category/${id}`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
-      },
-      body: JSON.stringify({ email: ADMIN_EMAIL }),
-    });
-    fetchCategories();
+    try {
+      const res = await fetch(`${API_BASE_URL}/admin/category/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+      
+      if (res.ok) {
+        alert("Category deleted successfully.");
+        fetchCategories();
+      } else {
+        const errorData = await res.json();
+        alert(`Failed to delete category: ${errorData.message || res.statusText}`);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("An error occurred while deleting the category.");
+    }
   };
 
   return (
