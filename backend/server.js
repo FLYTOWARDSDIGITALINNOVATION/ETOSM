@@ -888,6 +888,37 @@ app.get("/admin/orders", verifyAdmin, async (req, res) => {
   }
 });
 
+// ✅ GET PRODUCTS WITH STATS (ADMIN)
+app.get("/admin/products-stats", verifyAdmin, async (req, res) => {
+  try {
+    const products = await Product.find().lean();
+    
+    const orderStats = await Order.aggregate([
+      { $group: { _id: "$productId", orderCount: { $sum: 1 }, totalQuantityOrdered: { $sum: "$quantity" } } }
+    ]);
+    
+    const statsMap = {};
+    orderStats.forEach(stat => {
+      if (stat._id) {
+        statsMap[stat._id.toString()] = stat;
+      }
+    });
+    
+    const productsWithStats = products.map(p => {
+      const stats = statsMap[p._id.toString()] || { orderCount: 0, totalQuantityOrdered: 0 };
+      return {
+        ...p,
+        orderCount: stats.orderCount,
+        totalQuantityOrdered: stats.totalQuantityOrdered
+      };
+    });
+    
+    res.json(productsWithStats);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch product stats" });
+  }
+});
+
 
 app.put("/admin/orders/:id", verifyAdmin, async (req, res) => {
   const order = await Order.findByIdAndUpdate(req.params.id, { status: req.body.status }, { new: true });

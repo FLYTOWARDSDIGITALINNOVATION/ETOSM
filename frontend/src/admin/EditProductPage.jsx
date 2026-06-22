@@ -116,6 +116,7 @@ const EditProductPage = () => {
       if (form.restockQuantity) {
         formData.append("restockQuantity", form.restockQuantity);
       }
+      formData.append("stock", form.stock);
       const validSpecs = specifications.filter(spec => spec.label.trim() || spec.value.trim());
       formData.append("specifications", JSON.stringify(validSpecs));
     }
@@ -203,20 +204,20 @@ const EditProductPage = () => {
 
             <div style={{ display: 'flex', gap: '20px', width: '100%', marginBottom: '10px' }}>
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                <label>Current Stock</label>
+                <label>Current Stock (Edit Total)</label>
                 <input
                   type="number"
-                  value={form.stock || 0}
-                  disabled
-                  style={{ backgroundColor: '#f1f5f9', cursor: 'not-allowed' }}
+                  name="stock"
+                  value={form.stock === "" ? "" : form.stock}
+                  onChange={handleChange}
                 />
               </div>
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                <label>Add Restock Quantity</label>
+                <label>Or Add/Reduce Quantity (e.g. -5)</label>
                 <input
                   type="number"
                   name="restockQuantity"
-                  placeholder="e.g. 10"
+                  placeholder="e.g. 10 or -5"
                   value={form.restockQuantity || ""}
                   onChange={handleChange}
                 />

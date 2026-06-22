@@ -24,7 +24,12 @@ const RemoveProductPage = () => {
 
     const fetchProducts = async () => {
         try {
-            const res = await fetch(`${API_BASE_URL}/products`);
+            const token = localStorage.getItem("token");
+            const res = await fetch(`${API_BASE_URL}/admin/products-stats`, {
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            });
             const data = await res.json();
             setProducts(data);
             setLoading(false);
@@ -68,7 +73,7 @@ const RemoveProductPage = () => {
             <div className="manage-products-container">
                 <div className="page-header">
                     <h1>Manage Products</h1>
-                    <p>Edit, discount, or delete products from your catalog</p>
+                    <p>Edit, discount, view stats, or delete products from your catalog</p>
                 </div>
 
                 <div className="search-section">
@@ -102,6 +107,10 @@ const RemoveProductPage = () => {
                                         <h3>{product.name}</h3>
                                         <p className="price">₹{product.price}</p>
                                         <p className="category">{product.category}</p>
+                                        <div className="product-stats" style={{ display: 'flex', gap: '15px', marginTop: '10px', fontSize: '0.9rem', fontWeight: 'bold' }}>
+                                            <span style={{ color: product.stock > 0 ? '#10b981' : '#ef4444' }}>📦 Stock: {product.stock || 0}</span>
+                                            <span style={{ color: '#3b82f6' }}>🛒 Orders: {product.orderCount || 0}</span>
+                                        </div>
                                     </div>
                                     <div className="product-actions">
                                         <button
