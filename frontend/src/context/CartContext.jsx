@@ -52,14 +52,26 @@ export const CartProvider = ({ children }) => {
   const addToCart = async (product) => {
     const pid = product._id || product.id;
     const addedQty = product.qty || 1;
-    const newCartItem = { ...product, productId: pid, qty: addedQty };
+    const maxStock = product.stock !== undefined ? product.stock : 999;
+    
+    const existingItem = cart.find(p => p.productId === pid);
+    const currentQty = existingItem ? existingItem.qty : 0;
+    
+    if (currentQty >= maxStock) {
+      alert(`You cannot add more than the available stock (${maxStock}).`);
+      return false;
+    }
+    
+    const finalQty = Math.min(currentQty + addedQty, maxStock);
+    const qtyToAdd = finalQty - currentQty;
 
     setCart(prev => {
       const exists = prev.find(p => p.productId === pid);
       if (exists) {
-        return prev.map(p => p.productId === pid ? { ...p, qty: p.qty + addedQty } : p);
+        const safeFinalQty = Math.min(exists.qty + addedQty, maxStock);
+        return prev.map(p => p.productId === pid ? { ...p, qty: safeFinalQty, stock: maxStock } : p);
       }
-      return [...prev, newCartItem];
+      return [...prev, { ...product, productId: pid, qty: finalQty, stock: maxStock }];
     });
 
     if (userEmail) {
@@ -73,9 +85,10 @@ export const CartProvider = ({ children }) => {
             name: product.name,
             price: product.price,
             img: product.image || product.img,
-            qty: addedQty,
+            qty: qtyToAdd,
             variation: product.size,
-            gstPercent: product.gstPercent !== undefined ? product.gstPercent : 18
+            gstPercent: product.gstPercent !== undefined ? product.gstPercent : 18,
+            stock: maxStock
           })
         });
       } catch (err) {
@@ -99,6 +112,12 @@ export const CartProvider = ({ children }) => {
   };
 
   const updateQty = async (id, newQty) => {
+    const existingItem = cart.find(p => String(p.productId) === String(id));
+    if (existingItem && existingItem.stock !== undefined && newQty > existingItem.stock) {
+      alert(`You cannot add more than the available stock (${existingItem.stock}).`);
+      return;
+    }
+
     if (newQty < 1) {
       removeFromCart(id);
       return;

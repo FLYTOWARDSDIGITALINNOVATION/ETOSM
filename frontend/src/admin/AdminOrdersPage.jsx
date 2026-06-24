@@ -214,7 +214,11 @@ const AdminOrdersPage = () => {
                     <p><strong>Name:</strong> {selectedOrder.shippingAddress?.firstName} {selectedOrder.shippingAddress?.lastName}</p>
                     <p><strong>Email:</strong> {selectedOrder.shippingAddress?.email}</p>
                     <p><strong>Phone:</strong> {selectedOrder.phone || selectedOrder.shippingAddress?.phone || 'N/A'}</p>
-                    <p><strong>Address:</strong> {selectedOrder.shippingAddress?.address}</p>
+                    <p><strong>Address:</strong> 
+                        <br />{selectedOrder.shippingAddress?.address}{selectedOrder.shippingAddress?.apartment ? ` (${selectedOrder.shippingAddress.apartment})` : ''}
+                        {selectedOrder.shippingAddress?.locality && <><br />{selectedOrder.shippingAddress.locality}</>}
+                        <br />{[selectedOrder.shippingAddress?.city, selectedOrder.shippingAddress?.state, selectedOrder.shippingAddress?.postalCode].filter(Boolean).join(', ')}
+                    </p>
                     <p><strong>Method:</strong> {selectedOrder.shippingMethod?.toUpperCase()}</p>
                   </div>
                 </div>

@@ -45,7 +45,11 @@ const OrderReceipt = ({ order, items, onClose }) => {
                         <p><strong>Name:</strong> {order.shippingAddress.firstName} {order.shippingAddress.lastName}</p>
                         <p><strong>Email:</strong> {order.shippingAddress.email}</p>
                         <p><strong>Phone:</strong> {order.shippingAddress.phone}</p>
-                        <p><strong>Address:</strong> {order.shippingAddress.address}</p>
+                        <p><strong>Address:</strong> 
+                            <br />{order.shippingAddress.address}{order.shippingAddress.apartment ? ` (${order.shippingAddress.apartment})` : ''}
+                            {order.shippingAddress.locality && <><br />{order.shippingAddress.locality}</>}
+                            <br />{[order.shippingAddress.city, order.shippingAddress.state, order.shippingAddress.postalCode].filter(Boolean).join(', ')}
+                        </p>
                         <p><strong>Method:</strong> {order.shippingMethod.toUpperCase()}</p>
                     </div>
 

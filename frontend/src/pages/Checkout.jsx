@@ -62,11 +62,16 @@ const Checkout = () => {
 
   // State for shipping information
   const [shippingInfo, setShippingInfo] = useState({
-    firstName: useExistingAddress && previousAddresses.length > 0 ? previousAddresses[0].firstName : '',
-    lastName: useExistingAddress && previousAddresses.length > 0 ? previousAddresses[0].lastName : '',
+    firstName: useExistingAddress && previousAddresses.length > 0 ? previousAddresses[0].firstName || '' : '',
+    lastName: useExistingAddress && previousAddresses.length > 0 ? previousAddresses[0].lastName || '' : '',
     email: user?.email || '',
-    phone: useExistingAddress && previousAddresses.length > 0 ? previousAddresses[0].phone : '',
-    address: useExistingAddress && previousAddresses.length > 0 ? previousAddresses[0].address : ''
+    phone: useExistingAddress && previousAddresses.length > 0 ? previousAddresses[0].phone || '' : '',
+    address: useExistingAddress && previousAddresses.length > 0 ? previousAddresses[0].address || '' : '',
+    apartment: useExistingAddress && previousAddresses.length > 0 ? previousAddresses[0].apartment || '' : '',
+    locality: useExistingAddress && previousAddresses.length > 0 ? previousAddresses[0].locality || '' : '',
+    city: useExistingAddress && previousAddresses.length > 0 ? previousAddresses[0].city || '' : '',
+    state: useExistingAddress && previousAddresses.length > 0 ? previousAddresses[0].state || '' : '',
+    postalCode: useExistingAddress && previousAddresses.length > 0 ? previousAddresses[0].postalCode || '' : ''
   });
 
   const handleShippingChange = (e) => {
@@ -78,11 +83,16 @@ const Checkout = () => {
     const addr = previousAddresses[index];
     setSelectedPreviousAddress(index);
     setShippingInfo({
-      firstName: addr.firstName,
-      lastName: addr.lastName,
-      email: addr.email,
-      phone: addr.phone,
-      address: addr.address
+      firstName: addr.firstName || '',
+      lastName: addr.lastName || '',
+      email: addr.email || '',
+      phone: addr.phone || '',
+      address: addr.address || '',
+      apartment: addr.apartment || '',
+      locality: addr.locality || '',
+      city: addr.city || '',
+      state: addr.state || '',
+      postalCode: addr.postalCode || ''
     });
   };
 
@@ -102,8 +112,8 @@ const Checkout = () => {
       return;
     }
 
-    if (!shippingInfo.firstName || !shippingInfo.address || !shippingInfo.phone) {
-      alert("Please fill in required shipping information including phone number");
+    if (!shippingInfo.firstName || !shippingInfo.address || !shippingInfo.phone || !shippingInfo.city || !shippingInfo.state || !shippingInfo.postalCode || !shippingInfo.locality) {
+      alert("Please fill in all required shipping information including locality, city, state, and postal code.");
       return;
     }
 
@@ -265,8 +275,12 @@ const Checkout = () => {
                             onChange={() => handleSelectPreviousAddress(idx)}
                             style={{ marginRight: '10px' }}
                           />
-                          <label style={{ cursor: 'pointer' }}>
-                            {addr.firstName} {addr.lastName} - {addr.address}, {addr.phone}
+                          <label style={{ cursor: 'pointer', display: 'inline-block', verticalAlign: 'top' }}>
+                            <div style={{ fontWeight: '600', marginBottom: '2px' }}>{addr.firstName} {addr.lastName}</div>
+                            <div>{addr.address}{addr.apartment ? ` (${addr.apartment})` : ''}</div>
+                            {addr.locality && <div>{addr.locality}</div>}
+                            <div>{[addr.city, addr.state, addr.postalCode].filter(Boolean).join(', ')}</div>
+                            <div style={{ color: '#64748b', fontSize: '13px', marginTop: '4px' }}>Phone: {addr.phone}</div>
                           </label>
                         </div>
                       ))}
@@ -291,7 +305,7 @@ const Checkout = () => {
                   <input
                     type="text"
                     name="firstName"
-                    placeholder="FirstName"
+                    placeholder="First Name"
                     value={shippingInfo.firstName}
                     onChange={handleShippingChange}
                     required
@@ -302,9 +316,10 @@ const Checkout = () => {
                   <input
                     type="text"
                     name="lastName"
-                    placeholder="LastName"
+                    placeholder="Last Name"
                     value={shippingInfo.lastName}
                     onChange={handleShippingChange}
+                    required
                   />
                 </div>
                 <div className="field full">
@@ -336,6 +351,60 @@ const Checkout = () => {
                     name="address"
                     placeholder="123 Main Street"
                     value={shippingInfo.address}
+                    onChange={handleShippingChange}
+                    required
+                  />
+                </div>
+                <div className="field">
+                  <label>Apartment, suite, etc. (optional)</label>
+                  <input
+                    type="text"
+                    name="apartment"
+                    placeholder="Apt 4B"
+                    value={shippingInfo.apartment}
+                    onChange={handleShippingChange}
+                  />
+                </div>
+                <div className="field">
+                  <label>Locality</label>
+                  <input
+                    type="text"
+                    name="locality"
+                    placeholder="Locality / Area"
+                    value={shippingInfo.locality}
+                    onChange={handleShippingChange}
+                    required
+                  />
+                </div>
+                <div className="field">
+                  <label>City</label>
+                  <input
+                    type="text"
+                    name="city"
+                    placeholder="City"
+                    value={shippingInfo.city}
+                    onChange={handleShippingChange}
+                    required
+                  />
+                </div>
+                <div className="field">
+                  <label>State</label>
+                  <input
+                    type="text"
+                    name="state"
+                    placeholder="State"
+                    value={shippingInfo.state}
+                    onChange={handleShippingChange}
+                    required
+                  />
+                </div>
+                <div className="field full">
+                  <label>Postal Code</label>
+                  <input
+                    type="text"
+                    name="postalCode"
+                    placeholder="Postal Code"
+                    value={shippingInfo.postalCode}
                     onChange={handleShippingChange}
                     required
                   />

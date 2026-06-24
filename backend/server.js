@@ -348,6 +348,7 @@ const cartSchema = new mongoose.Schema({
   qty: { type: Number, default: 1 },
   variation: String,      // ✅ Added variation (weight)
   gstPercent: { type: Number, default: 18 },
+  stock: Number,          // ✅ Added stock
 });
 const Cart = mongoose.model("Cart", cartSchema);
 
@@ -1289,13 +1290,14 @@ app.get("/cart/:email", async (req, res) => {
 // ADD TO CART / UPDATE QUANTITY
 app.post("/cart", async (req, res) => {
   try {
-    const { userEmail, productId, name, price, img, qty, gstPercent } = req.body;
+    const { userEmail, productId, name, price, img, qty, gstPercent, stock } = req.body;
 
     let cartItem = await Cart.findOne({ userEmail, productId });
 
     if (cartItem) {
       cartItem.qty += qty;
       cartItem.price = cartItem.qty * cartItem.unitPrice;
+      if (stock !== undefined) cartItem.stock = stock;
       await cartItem.save();
     } else {
       cartItem = await Cart.create({
@@ -1306,7 +1308,8 @@ app.post("/cart", async (req, res) => {
         price: price * qty,
         img,
         qty,
-        gstPercent: gstPercent !== undefined ? Number(gstPercent) : 18
+        gstPercent: gstPercent !== undefined ? Number(gstPercent) : 18,
+        stock
       });
     }
     res.json(cartItem);
