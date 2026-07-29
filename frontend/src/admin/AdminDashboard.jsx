@@ -66,19 +66,8 @@ const AdminDashboard = () => {
     );
   };
 
-  const fetchStats = async (skipCache = false) => {
+  const fetchStats = async () => {
     try {
-      // Try cache first (unless explicitly skipped)
-      if (!skipCache) {
-        const cached = getCachedStats();
-        if (cached) {
-          setStats(cached.stats);
-          setRecentOrders(cached.recentOrders);
-          setLoading(false);
-          return;
-        }
-      }
-
       setLoading(true);
       const res = await fetch(`${API_BASE_URL}/admin/dashboard-stats`, {
         headers: { Authorization: `Bearer ${token}` },

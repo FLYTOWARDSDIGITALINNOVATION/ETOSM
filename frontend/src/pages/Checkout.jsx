@@ -125,20 +125,21 @@ const Checkout = () => {
       localStorage.setItem(`addresses_${user.email}`, JSON.stringify(addresses));
     }
 
-    const placeDatabaseOrder = async () => {
+    const placeDatabaseOrder = async (paymentDetails = {}) => {
       try {
+        const websiteInvoiceNumber = `INV-${Math.floor(100000 + Math.random() * 900000)}`;
         const orderPromises = checkoutItems.map(item => {
           const itemGst = item.qty * (Number(item.price) * (Number(item.gstPercent !== undefined ? item.gstPercent : 18) / 100));
           return fetch(`${API_BASE_URL}/orders`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              productName: item.name,
-              productId: item._id || item.id,
-              quantity: item.qty,
+              productName: item.name || item.productName || item.title || "Product Item",
+              productId: item.productId || item._id || item.id || "N/A",
+              quantity: item.qty || item.quantity || 1,
               price: item.price * item.qty,
               userEmail: user.email,
-              userName: user.name,
+              userName: user.name || `${shippingInfo.firstName} ${shippingInfo.lastName}`,
               phone: shippingInfo.phone,
               shippingAddress: shippingInfo,
               shippingMethod: selectedShipping,
@@ -146,14 +147,23 @@ const Checkout = () => {
               shippingCost: shippingCost,
               tax: itemGst,
               totalAmount: (item.price * item.qty) + itemGst + (shippingCost / checkoutItems.length),
-              variation: item.variation || item.size
+              variation: item.variation || item.size,
+              invoiceNumber: websiteInvoiceNumber,
+              razorpayPaymentId: paymentDetails.razorpay_payment_id || undefined,
+              razorpayOrderId: paymentDetails.razorpay_order_id || undefined
             })
           });
         });
 
         await Promise.all(orderPromises);
         if (clearCart && !buyNowItem) clearCart();
-        navigate('/order-success', { state: { purchasedItems: checkoutItems } });
+        navigate('/order-success', {
+          state: {
+            purchasedItems: checkoutItems,
+            invoiceNumber: websiteInvoiceNumber,
+            razorpayPaymentId: paymentDetails.razorpay_payment_id
+          }
+        });
       } catch (error) {
         console.error("Order failed:", error);
         alert("Failed to place order. Please try again.");
@@ -183,11 +193,12 @@ const Checkout = () => {
 
         // 2. Open Razorpay Checkout Modal
         const options = {
-          key: 'rzp_live_T1px3FgPWmGoPr', // Public Key ID
+          key: 'rzp_test_SxqSdTVSMDLJfd', // Test Key ID
+          // key: 'rzp_live_T1px3FgPWmGoPr', // Live Key ID
           amount: orderData.amount,
           currency: orderData.currency,
           name: "ETOSM Technology",
-          description: "Test Transaction",
+          description: "Order Payment",
           image: "/logo1.png",
           order_id: orderData.id,
           handler: async function (response) {
@@ -204,7 +215,10 @@ const Checkout = () => {
             const verifyData = await verifyRes.json();
 
             if (verifyData.success) {
-              await placeDatabaseOrder();
+              await placeDatabaseOrder({
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id
+              });
             } else {
               alert("Payment Verification Failed!");
             }

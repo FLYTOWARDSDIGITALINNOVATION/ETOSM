@@ -129,6 +129,7 @@ const AdminOrdersPage = () => {
                 <thead>
                   <tr>
                     <th>Order ID</th>
+                    <th>Invoice ID</th>
                     <th>Customer</th>
                     <th>Product</th>
                     <th>Qty</th>
@@ -142,12 +143,19 @@ const AdminOrdersPage = () => {
                   {orders.map((o) => (
                     <tr key={o._id}>
                       <td className="order-id">#{o._id?.slice(-6) || 'N/A'}</td>
+                      <td style={{ fontSize: '12px', fontWeight: '600', color: '#475569' }}>
+                        {o.invoiceNumber || 'N/A'}
+                      </td>
                       <td>
                         <strong>{o.userName || 'New Customer'}</strong>
                         <br />
                         <small>{o.userEmail || 'No Email'}</small>
                       </td>
-                      <td>{o.productName || 'Unknown Product'}</td>
+                      <td>
+                        <strong>{o.productName || 'Unknown Product'}</strong>
+                        <br />
+                        <small style={{ color: '#64748b' }}>ID: {o.productId || 'N/A'}</small>
+                      </td>
                       <td>{o.quantity || 0}</td>
                       <td className="price">₹{o.totalAmount?.toFixed(2) || o.price || '0.00'}</td>
                       <td>{o.createdAt ? new Date(o.createdAt).toLocaleDateString() : 'N/A'}</td>
@@ -226,8 +234,11 @@ const AdminOrdersPage = () => {
                 <div className="modal-section">
                   <h4><CreditCard size={16} /> Payment & Billing</h4>
                   <div className="payment-box">
-                    <p><strong>Method:</strong> {selectedOrder.paymentMethod?.toUpperCase()}</p>
-                    <div className="price-breakdown">
+                    <p><strong>Payment Method:</strong> {selectedOrder.paymentMethod?.toUpperCase()}</p>
+                    <p><strong>Invoice ID:</strong> {selectedOrder.invoiceNumber || 'N/A'}</p>
+                    <p><strong>Razorpay Payment ID:</strong> {selectedOrder.razorpayPaymentId || (selectedOrder.invoiceNumber?.startsWith('pay_') ? selectedOrder.invoiceNumber : 'N/A')}</p>
+                    {selectedOrder.razorpayOrderId && <p><strong>Razorpay Order ID:</strong> {selectedOrder.razorpayOrderId}</p>}
+                    <div className="price-breakdown" style={{ marginTop: '10px' }}>
                       <div className="price-row"><span>Unit Price:</span> <span>₹{(selectedOrder.price / selectedOrder.quantity).toFixed(2)}</span></div>
                       <div className="price-row"><span>Quantity:</span> <span>x{selectedOrder.quantity}</span></div>
                       <div className="price-row"><span>Product Total:</span> <span>₹{selectedOrder.price}</span></div>
@@ -242,9 +253,9 @@ const AdminOrdersPage = () => {
                 <div className="modal-section">
                   <h4><ShoppingBag size={16} /> Product Info</h4>
                   <div className="product-box">
-                    <p><strong>Item:</strong> {selectedOrder.productName}</p>
-                    <p><strong>ID:</strong> {selectedOrder.productId}</p>
-                    <p><strong>Order ID:</strong> {selectedOrder._id}</p>
+                    <p><strong>Product Name:</strong> {selectedOrder.productName || 'N/A'}</p>
+                    <p><strong>Product ID:</strong> {selectedOrder.productId || 'N/A'}</p>
+                    <p><strong>Database Order ID:</strong> {selectedOrder._id}</p>
                   </div>
                 </div>
               </div>

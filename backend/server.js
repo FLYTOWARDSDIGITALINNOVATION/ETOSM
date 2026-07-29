@@ -329,7 +329,10 @@ const orderSchema = new mongoose.Schema({
   tax: Number,             // ✅ Added tax
   totalAmount: Number,     // ✅ Added totalAmount
   variation: String,       // ✅ Added variation (weight)
-  phone: String,     // ✅ Added phone number
+  phone: String,           // ✅ Added phone number
+  invoiceNumber: String,   // ✅ Distinct Invoice ID (e.g. INV-104928)
+  razorpayPaymentId: String, // ✅ Distinct Razorpay Payment ID (e.g. pay_XXXX)
+  razorpayOrderId: String,   // ✅ Distinct Razorpay Order ID (e.g. order_XXXX)
   status: { type: String, default: "Ordered" },
   createdAt: { type: Date, default: Date.now },
 });
@@ -1110,20 +1113,47 @@ app.get("/products/:idOrSlug", async (req, res) => {
 // ORDERS
 app.post("/orders", async (req, res) => {
   try {
-    const product = await Product.findById(req.body.productId);
-    if (!product) {
-      return res.status(404).json({ message: "Product not found" });
+    const {
+      productName,
+      productId,
+      quantity,
+      userEmail,
+      userName,
+      invoiceNumber: providedInvoice,
+      razorpayPaymentId,
+      razorpayOrderId,
+    } = req.body;
+
+    // Safely check product stock if valid productId
+    if (productId && mongoose.Types.ObjectId.isValid(productId)) {
+      const product = await Product.findById(productId);
+      if (product) {
+        if (product.stock < (quantity || 1)) {
+          return res.status(400).json({ message: `Insufficient stock. Only ${product.stock} items left.` });
+        }
+        await Product.findByIdAndUpdate(productId, {
+          $inc: { stock: -(quantity || 1) }
+        });
+      }
     }
 
-    if (product.stock < req.body.quantity) {
-      return res.status(400).json({ message: `Insufficient stock. Only ${product.stock} items left.` });
+    // Generate distinct Invoice ID (e.g. INV-849201) if not provided or if provided as razorpay pay_ id
+    let invoiceNum = providedInvoice;
+    if (!invoiceNum || invoiceNum.startsWith("pay_")) {
+      const uniqueNum = Math.floor(100000 + Math.random() * 900000);
+      invoiceNum = `INV-${uniqueNum}`;
     }
 
-    await Product.findByIdAndUpdate(req.body.productId, {
-      $inc: { stock: -req.body.quantity }
-    });
+    const orderData = {
+      ...req.body,
+      productName: productName || "Product Item",
+      productId: productId || "N/A",
+      invoiceNumber: invoiceNum,
+      razorpayPaymentId: razorpayPaymentId || (providedInvoice?.startsWith("pay_") ? providedInvoice : undefined),
+      razorpayOrderId: razorpayOrderId || undefined,
+    };
 
-    const order = await Order.create(req.body);
+    const order = await Order.create(orderData);
     res.json(order);
   } catch (err) {
     console.error("Order creation failed:", err);
