@@ -1,7 +1,7 @@
 import API_BASE_URL from '../apiConfig';
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { FaSearch, FaUser, FaHeart, FaShoppingCart, FaBars, FaTimes, FaChevronDown, FaHome, FaBox, FaInfoCircle, FaFileContract, FaShieldAlt, FaEnvelope } from "react-icons/fa";
+import { FaSearch, FaUser, FaHeart, FaShoppingCart, FaBars, FaTimes, FaChevronDown, FaHome, FaBox, FaInfoCircle, FaEnvelope } from "react-icons/fa";
 import "./Header.css";
 
 import { useWishlist } from "../context/WishlistContext";
@@ -84,16 +84,6 @@ const Header = ({ onSearch }) => {
               </Link>
             </li>
             <li>
-              <Link to="/terms" className="nav-item">
-                <FaFileContract className="nav-icon-small" /> Terms of Service
-              </Link>
-            </li>
-            <li>
-              <Link to="/privacy" className="nav-item">
-                <FaShieldAlt className="nav-icon-small" /> Privacy Policy
-              </Link>
-            </li>
-            <li>
               <Link to="/contact" className="nav-item">
                 <FaEnvelope className="nav-icon-small" /> Contact Us
               </Link>
@@ -126,16 +116,6 @@ const Header = ({ onSearch }) => {
               <li>
                 <Link to="/about" className="nav-item">
                   <FaInfoCircle className="nav-icon-small" /> About
-                </Link>
-              </li>
-              <li>
-                <Link to="/terms" className="nav-item">
-                  <FaFileContract className="nav-icon-small" /> Terms of Service
-                </Link>
-              </li>
-              <li>
-                <Link to="/privacy" className="nav-item">
-                  <FaShieldAlt className="nav-icon-small" /> Privacy Policy
                 </Link>
               </li>
               <li>

@@ -155,12 +155,15 @@ const Checkout = () => {
           });
         });
 
-        await Promise.all(orderPromises);
+        const responses = await Promise.all(orderPromises);
+        const firstOrderData = await responses[0].json();
+        const dbOrderId = firstOrderData?._id || '';
         if (clearCart && !buyNowItem) clearCart();
         navigate('/order-success', {
           state: {
             purchasedItems: checkoutItems,
             invoiceNumber: websiteInvoiceNumber,
+            dbOrderId: dbOrderId,
             razorpayPaymentId: paymentDetails.razorpay_payment_id
           }
         });
