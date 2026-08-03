@@ -7,10 +7,11 @@ import './OrderSuccess.css';
 const OrderSuccess = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [orderNumber] = useState(Math.floor(100000 + Math.random() * 900000));
-
-  // Get purchased items from navigation state
+  // Get purchased items and invoice number from navigation state
   const purchasedItems = location.state?.purchasedItems || [];
+  const invoiceNumber = location.state?.invoiceNumber || `INV-${Math.floor(100000 + Math.random() * 900000)}`;
+  const dbOrderId = location.state?.dbOrderId || '';
+  const shortOrderId = dbOrderId ? `#${dbOrderId.slice(-6)}` : invoiceNumber;
   const itemToRate = purchasedItems.length > 0 ? purchasedItems[0] : null;
 
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
@@ -71,7 +72,7 @@ const OrderSuccess = () => {
             <CheckCircle size={80} className="main-check-icon" />
           </div>
           <h1 className="success-title">Order Placed!</h1>
-          <p className="success-subtitle">Order #{orderNumber}</p>
+          <p className="success-subtitle">Order {shortOrderId}</p>
           <p className="success-note">
             We'll send you a confirmation shortly. Your order is being prepared.
           </p>
