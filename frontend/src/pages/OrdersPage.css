@@ -124,6 +124,12 @@
     border: 1px solid #dbeafe;
 }
 
+.status-packed {
+    background: #fffbeb;
+    color: #b45309;
+    border: 1px solid #fde68a;
+}
+
 .status-delivered {
     background: #fff0f0;
     color: #e3000f;
@@ -399,6 +405,18 @@
     border: 1px solid transparent;
     transition: all 0.2s;
     text-transform: uppercase;
+}
+
+.date-info.packed {
+    background: #fffbeb;
+    color: #b45309;
+    border: 1px solid #fde68a;
+}
+
+.demo-btn.pack {
+    background: #fffbeb;
+    color: #b45309;
+    border-color: #fde68a;
 }
 
 .demo-btn.ship {

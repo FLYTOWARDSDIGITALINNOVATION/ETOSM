@@ -196,8 +196,8 @@ const Checkout = () => {
 
         // 2. Open Razorpay Checkout Modal
         const options = {
-          key: 'rzp_test_SxqSdTVSMDLJfd', // Test Key ID
-          // key: 'rzp_live_T1px3FgPWmGoPr', // Live Key ID
+
+          key: 'rzp_live_T1px3FgPWmGoPr', // Live Key ID
           amount: orderData.amount,
           currency: orderData.currency,
           name: "ETOSM Technology",
@@ -538,7 +538,7 @@ const Checkout = () => {
                     {shippingCost === 0 ? "FREE" : `₹${shippingCost.toFixed(2)}`}
                   </span>
                 </div>
-                 <div className="total-row">
+                <div className="total-row">
                   <span>GST</span>
                   <span>₹{tax.toFixed(2)}</span>
                 </div>

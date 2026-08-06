@@ -90,7 +90,7 @@ const OrdersPage = () => {
 
     if (loading) return <div className="loading">Loading orders...</div>;
 
-    const stages = ["Ordered", "Shipped", "Delivered"];
+    const stages = ["Ordered", "Packed", "Shipped", "Delivered"];
 
     return (
         <div className="orders-container">
@@ -110,7 +110,8 @@ const OrdersPage = () => {
             ) : (
                 <div className="orders-list">
                     {orders.map((order) => {
-                        const currentStageIndex = stages.indexOf(order.status || "Ordered");
+                        const isCancelled = order.status === "Cancelled";
+                        const currentStageIndex = isCancelled ? -1 : stages.indexOf(order.status || "Ordered");
                         return (
                             <div key={order._id} className="order-card">
                                 <div className="order-header">
@@ -119,17 +120,23 @@ const OrdersPage = () => {
                                 </div>
 
                                 {/* Visual Stepper */}
-                                <div className="order-stepper">
-                                    {stages.map((stage, index) => (
-                                        <div key={stage} className={`step ${index <= currentStageIndex ? "active completed" : ""}`}>
-                                            <div className="step-circle">
-                                                {index < currentStageIndex ? <FaCheck size={12} /> : index + 1}
+                                {!isCancelled ? (
+                                    <div className="order-stepper">
+                                        {stages.map((stage, index) => (
+                                            <div key={stage} className={`step ${index <= currentStageIndex ? "active completed" : ""}`}>
+                                                <div className="step-circle">
+                                                    {index < currentStageIndex ? <FaCheck size={12} /> : index + 1}
+                                                </div>
+                                                <div className="step-label">{stage}</div>
+                                                {index < stages.length - 1 && <div className="step-line"></div>}
                                             </div>
-                                            <div className="step-label">{stage}</div>
-                                            {index < stages.length - 1 && <div className="step-line"></div>}
-                                        </div>
-                                    ))}
-                                </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="cancelled-banner" style={{ padding: '12px', background: '#fef2f2', color: '#b91c1c', borderRadius: '8px', border: '1px solid #fee2e2', fontWeight: '600', textAlign: 'center', margin: '15px 0' }}>
+                                        This order has been Cancelled
+                                    </div>
+                                )}
 
                                 <div className="order-details">
                                     <div className="product-info">
@@ -137,6 +144,11 @@ const OrdersPage = () => {
                                         <span className="product-qty">Quantity: {order.quantity}</span>
                                         {order.variation && <span className="product-qty" style={{ marginLeft: '10px' }}>Size: {order.variation}</span>}
                                         <div className="order-dates">
+                                            {order.packedAt && (
+                                                <span className="date-info packed">
+                                                    Packed: {new Date(order.packedAt).toLocaleDateString()}
+                                                </span>
+                                            )}
                                             {order.shippedAt && (
                                                 <span className="date-info shipped">
                                                     Shipped: {new Date(order.shippedAt).toLocaleDateString()}
@@ -164,6 +176,11 @@ const OrdersPage = () => {
 
                                     <div className="demo-controls">
                                         {order.status === "Ordered" && (
+                                            <button className="demo-btn pack" onClick={() => updateOrderStatus(order._id, "Packed")}>
+                                                Pack Item
+                                            </button>
+                                        )}
+                                        {order.status === "Packed" && (
                                             <button className="demo-btn ship" onClick={() => updateOrderStatus(order._id, "Shipped")}>
                                                 Ship Item
                                             </button>

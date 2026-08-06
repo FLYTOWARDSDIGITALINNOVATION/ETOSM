@@ -42,6 +42,8 @@ import Contact from "./pages/Contact";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 
+import AllProductsPage from "./pages/AllProductsPage";
+
 function App() {
   return (
     <WishlistProvider>
@@ -55,6 +57,7 @@ function App() {
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/home" element={<HomePage />} />
+            <Route path="/all-products" element={<AllProductsPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/wishlist" element={<WishlistPage />} />
             <Route path="/cart" element={<CartPage />} />

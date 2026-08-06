@@ -64,6 +64,32 @@ const RemoveProductPage = () => {
         }
     };
 
+    const handleToggleVisibility = async (productId, currentVisibility) => {
+        const token = localStorage.getItem("token");
+        const newVisibility = !(currentVisibility !== false);
+
+        try {
+            const res = await fetch(`${API_BASE_URL}/admin/product/${productId}/toggle-visibility`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({ isVisible: newVisibility })
+            });
+
+            if (res.ok) {
+                setProducts(prev =>
+                    prev.map(p => p._id === productId ? { ...p, isVisible: newVisibility } : p)
+                );
+            } else {
+                alert("Failed to update visibility");
+            }
+        } catch (err) {
+            console.error("Error toggling product visibility:", err);
+        }
+    };
+
     const filteredProducts = products.filter((product) =>
         product.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -73,7 +99,7 @@ const RemoveProductPage = () => {
             <div className="manage-products-container">
                 <div className="page-header">
                     <h1>Manage Products</h1>
-                    <p>Edit, discount, view stats, or delete products from your catalog</p>
+                    <p>Toggle Home Page visibility (ON/OFF), edit, discount, view stats, or delete products</p>
                 </div>
 
                 <div className="search-section">
@@ -95,7 +121,7 @@ const RemoveProductPage = () => {
                             <p className="no-results">No products found.</p>
                         ) : (
                             filteredProducts.map((product) => (
-                                <div key={product._id} className="product-card">
+                                <div key={product._id} className={`product-card ${product.isVisible === false ? 'visibility-off' : ''}`}>
                                     <div className="product-image">
                                         <img
                                             src={`${API_BASE_URL}${product.image}`}
@@ -107,9 +133,24 @@ const RemoveProductPage = () => {
                                         <h3>{product.name}</h3>
                                         <p className="price">₹{product.price}</p>
                                         <p className="category">{product.category}</p>
-                                        <div className="product-stats" style={{ display: 'flex', gap: '15px', marginTop: '10px', fontSize: '0.9rem', fontWeight: 'bold' }}>
+                                        <div className="product-stats" style={{ display: 'flex', gap: '15px', marginTop: '8px', fontSize: '0.85rem', fontWeight: 'bold' }}>
                                             <span style={{ color: product.stock > 0 ? '#10b981' : '#ef4444' }}>📦 Stock: {product.stock || 0}</span>
                                             <span style={{ color: '#3b82f6' }}>🛒 Orders: {product.orderCount || 0}</span>
+                                        </div>
+
+                                        {/* 🔘 Home Page On/Off Toggle */}
+                                        <div className="visibility-toggle-row">
+                                            <span className={`status-badge ${product.isVisible !== false ? 'on' : 'off'}`}>
+                                                {product.isVisible !== false ? '🟢 Visible on Home' : '🔴 Hidden from Home'}
+                                            </span>
+                                            <label className="switch-toggle" title="Toggle Home Page Visibility">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={product.isVisible !== false}
+                                                    onChange={() => handleToggleVisibility(product._id, product.isVisible)}
+                                                />
+                                                <span className="slider-round"></span>
+                                            </label>
                                         </div>
                                     </div>
                                     <div className="product-actions">

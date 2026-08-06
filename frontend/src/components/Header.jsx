@@ -69,6 +69,12 @@ const Header = ({ onSearch }) => {
                 <FaBox className="nav-icon-small" /> Products <FaChevronDown className="dropdown-caret" />
               </span>
               <ul className="dropdown-menu">
+                <li>
+                  <Link to="/all-products" className="dropdown-item" style={{ fontWeight: 'bold', color: '#e3000f' }}>
+                    <span className="item-dot" style={{ background: '#e3000f' }}></span> All Products Catalog
+                  </Link>
+                </li>
+                <li style={{ borderTop: '1px solid #f1f5f9', margin: '4px 0' }}></li>
                 {Array.isArray(categories) && categories.map(cat => (
                   <li key={cat._id}>
                     <Link to={`/category/${cat.name}`} className="dropdown-item">
@@ -102,6 +108,12 @@ const Header = ({ onSearch }) => {
                   <FaBox className="nav-icon-small" /> Products <FaChevronDown className="dropdown-caret" />
                 </span>
                 <ul className="dropdown-menu">
+                  <li>
+                    <Link to="/all-products" className="dropdown-item" style={{ fontWeight: 'bold', color: '#e3000f' }}>
+                      <span className="item-dot" style={{ background: '#e3000f' }}></span> All Products Catalog
+                    </Link>
+                  </li>
+                  <li style={{ borderTop: '1px solid #f1f5f9', margin: '4px 0' }}></li>
                   {Array.isArray(categories) && categories.map(cat => (
                     <li key={cat._id}>
                       <Link to={`/category/${cat.name}`} className="dropdown-item">

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import { FaQuoteRight, FaStar, FaHeartbeat, FaRunning, FaArrowRight, FaGoogle, FaPen, FaTimes } from 'react-icons/fa';
 import Header from "../components/Header";
 import SidebarFilters from "../components/SidebarFilters";
@@ -85,7 +85,7 @@ export default function Home() {
   const [filters, setFilters] = useState({
     deals: [],
     delivery: [],
-    maxPrice: 20000,
+    maxPrice: 1000000,
     minPrice: 0,
     minRating: 0
   });
@@ -214,6 +214,34 @@ export default function Home() {
               </div>
             )}
           </section>
+
+          {/* View All Products CTA */}
+          {!loading && (
+            <div style={{ textAlign: 'center', padding: '10px 0 40px' }}>
+              <Link
+                to="/all-products"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  background: 'linear-gradient(135deg, #e3000f, #b5000c)',
+                  color: 'white',
+                  padding: '14px 36px',
+                  borderRadius: '50px',
+                  fontWeight: '700',
+                  fontSize: '1rem',
+                  textDecoration: 'none',
+                  boxShadow: '0 6px 24px rgba(227,0,15,0.28)',
+                  transition: 'all 0.3s ease',
+                  letterSpacing: '0.3px',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 12px 32px rgba(227,0,15,0.36)'; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 6px 24px rgba(227,0,15,0.28)'; }}
+              >
+                View All Products Catalog <FaArrowRight />
+              </Link>
+            </div>
+          )}
         </div>
       </div>
 

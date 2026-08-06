@@ -163,6 +163,8 @@ const productSchema = new mongoose.Schema({
   averageRating: { type: Number, default: 0 },
   ratingCount: { type: Number, default: 0 },
 
+  isVisible: { type: Boolean, default: false },
+
   specifications: [{ label: String, value: String }],
 });
 
@@ -1074,17 +1076,64 @@ app.put(
 );
 
 
+// TOGGLE PRODUCT VISIBILITY (ADMIN)
+app.put("/admin/product/:id/toggle-visibility", verifyAdmin, async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ message: "Product not found" });
+
+    const newStatus = req.body.isVisible !== undefined ? req.body.isVisible : !(product.isVisible !== false);
+    product.isVisible = newStatus;
+    await product.save();
+
+    res.json({ message: `Product visibility updated to ${newStatus ? 'ON' : 'OFF'}`, product });
+  } catch (err) {
+    console.error("Failed to toggle product visibility:", err);
+    res.status(500).json({ message: "Failed to update product visibility" });
+  }
+});
+
+// ONE-TIME ADMIN MIGRATION: Reset ALL products to isVisible: false
+app.put("/admin/reset-all-visibility", verifyAdmin, async (req, res) => {
+  try {
+    const result = await Product.updateMany({}, { $set: { isVisible: false } });
+    res.json({ message: `Reset ${result.modifiedCount} products to OFF (hidden)` });
+  } catch (err) {
+    res.status(500).json({ message: "Migration failed", error: err.message });
+  }
+});
+
+
 /* ================= USER ================= */
 
-// PRODUCTS
-app.get("/products", async (req, res) => res.json(await Product.find()));
+// PRODUCTS (Storefront - Home Page shows only visible ON products)
+app.get("/products", async (req, res) => {
+  try {
+    const products = await Product.find({ isVisible: true });
+    res.json(products);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch products" });
+  }
+});
+
+// ALL PRODUCTS (Complete Catalog page - returns ALL added products)
+app.get("/products/all", async (req, res) => {
+  try {
+    const products = await Product.find({});
+    res.json(products);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch all products" });
+  }
+});
+
 app.get("/products/category/:category", async (req, res) => {
   try {
     const category = req.params.category;
 
     // Use exact case-insensitive match so 'Battery' does NOT match 'Battery Accessories'
     const products = await Product.find({
-      category: { $regex: new RegExp(`^${category}$`, "i") }
+      category: { $regex: new RegExp(`^${category}$`, "i") },
+      isVisible: true
     });
 
     res.json(products);
