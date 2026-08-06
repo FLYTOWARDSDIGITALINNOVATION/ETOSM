@@ -41,7 +41,7 @@ const ProductDetailPage = () => {
       });
   }, [id]);
 
-  const [selectedSize, setSelectedSize] = useState("M");
+  const [selectedSize, setSelectedSize] = useState("");
   const [quantity, setQuantity] = useState(1);
 
   // Review State
@@ -374,7 +374,7 @@ const ProductDetailPage = () => {
       addToCart({
         ...product,
         qty: quantity,
-        size: selectedSize,
+        ...(selectedSize ? { size: selectedSize } : {}),
       });
     }
   };
@@ -395,15 +395,19 @@ const ProductDetailPage = () => {
       ? (product.price * (1 - product.discountPercent / 100))
       : product.price;
 
+    const buyNowPayload = {
+      ...product,
+      productId: product._id || product.id,
+      qty: quantity,
+      price: finalPrice
+    };
+    if (selectedSize) {
+      buyNowPayload.size = selectedSize;
+    }
+
     navigate("/checkout", {
       state: {
-        buyNowItem: {
-          ...product,
-          productId: product._id || product.id,
-          qty: quantity,
-          size: selectedSize,
-          price: finalPrice // Ensure checkout gets the discounted price
-        }
+        buyNowItem: buyNowPayload
       }
     });
   };

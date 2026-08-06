@@ -20,7 +20,10 @@ const OrdersPage = () => {
             fetch(`${API_BASE_URL}/orders/${user.email}`)
                 .then((res) => res.json())
                 .then((data) => {
-                    setOrders(data);
+                    const sorted = Array.isArray(data)
+                        ? [...data].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+                        : [];
+                    setOrders(sorted);
                     setLoading(false);
                 })
                 .catch((err) => {
@@ -116,7 +119,7 @@ const OrdersPage = () => {
                             <div key={order._id} className="order-card">
                                 <div className="order-header">
                                     <span>Ordered on {new Date(order.createdAt).toLocaleDateString()}</span>
-                                    <span>Order ID: {order._id.slice(-6).toUpperCase()}</span>
+                                    <span>Order ID: #{order._id.slice(-6)}</span>
                                 </div>
 
                                 {/* Visual Stepper */}
@@ -142,7 +145,7 @@ const OrdersPage = () => {
                                     <div className="product-info">
                                         <span className="product-name">{order.productName}</span>
                                         <span className="product-qty">Quantity: {order.quantity}</span>
-                                        {order.variation && <span className="product-qty" style={{ marginLeft: '10px' }}>Size: {order.variation}</span>}
+                                        {order.variation && order.variation !== "M" && <span className="product-qty" style={{ marginLeft: '10px' }}>Size: {order.variation}</span>}
                                         <div className="order-dates">
                                             {order.packedAt && (
                                                 <span className="date-info packed">
@@ -173,24 +176,6 @@ const OrdersPage = () => {
                                     <button className="rate-btn" onClick={() => handleOpenModal(order)}>
                                         <FaStar /> Rate & Review
                                     </button>
-
-                                    <div className="demo-controls">
-                                        {order.status === "Ordered" && (
-                                            <button className="demo-btn pack" onClick={() => updateOrderStatus(order._id, "Packed")}>
-                                                Pack Item
-                                            </button>
-                                        )}
-                                        {order.status === "Packed" && (
-                                            <button className="demo-btn ship" onClick={() => updateOrderStatus(order._id, "Shipped")}>
-                                                Ship Item
-                                            </button>
-                                        )}
-                                        {order.status === "Shipped" && (
-                                            <button className="demo-btn deliver" onClick={() => updateOrderStatus(order._id, "Delivered")}>
-                                                Mark Delivered
-                                            </button>
-                                        )}
-                                    </div>
                                 </div>
                             </div>
                         );

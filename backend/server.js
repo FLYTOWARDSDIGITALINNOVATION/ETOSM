@@ -1211,7 +1211,12 @@ app.post("/orders", async (req, res) => {
 });
 
 app.get("/orders/:email", async (req, res) => {
-  res.json(await Order.find({ userEmail: req.params.email }));
+  try {
+    const orders = await Order.find({ userEmail: req.params.email }).sort({ createdAt: -1 });
+    res.json(orders);
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching user orders" });
+  }
 });
 
 // ⭐ NEW: Public Recent Orders for Home Page proof

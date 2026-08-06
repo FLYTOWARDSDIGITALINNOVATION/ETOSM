@@ -56,7 +56,8 @@ const AdminOrdersPage = () => {
       console.log("Orders data:", data); // Debugging log
 
       if (data && Array.isArray(data.orders)) {
-        setOrders(data.orders);
+        const sortedOrders = [...data.orders].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+        setOrders(sortedOrders);
       } else {
         console.error("Invalid data format:", data);
         setOrders([]);
