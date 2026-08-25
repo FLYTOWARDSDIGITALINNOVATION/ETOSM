@@ -78,6 +78,7 @@ mongoose
   .then(async () => {
     console.log("MongoDB Connected");
     await migrateSlugs();
+    await migrateProductVisibility();
     await seedGoogleReviews();
     await seedAdminUser();
     await seedSubcategories();
@@ -139,6 +140,10 @@ function generateSlug(name) {
     .replace(/(^-|-$)+/g, "");
 }
 
+function escapeRegex(string) {
+  return string ? string.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&') : '';
+}
+
 // PRODUCT
 const productSchema = new mongoose.Schema({
   name: String,
@@ -163,7 +168,7 @@ const productSchema = new mongoose.Schema({
   averageRating: { type: Number, default: 0 },
   ratingCount: { type: Number, default: 0 },
 
-  isVisible: { type: Boolean, default: false },
+  isVisible: { type: Boolean, default: true },
 
   specifications: [{ label: String, value: String }],
 });
@@ -201,6 +206,21 @@ async function migrateSlugs() {
     }
   } catch (err) {
     console.error("Slug migration failed:", err);
+  }
+}
+
+async function migrateProductVisibility() {
+  try {
+    const ProductModel = mongoose.model("Product");
+    const result = await ProductModel.updateMany(
+      { $or: [{ isVisible: { $exists: false } }, { isVisible: false }] },
+      { $set: { isVisible: true } }
+    );
+    if (result.modifiedCount > 0) {
+      console.log(`Migrated ${result.modifiedCount} products to isVisible: true`);
+    }
+  } catch (err) {
+    console.error("Product visibility migration failed:", err);
   }
 }
 
@@ -258,30 +278,34 @@ async function seedAdminUser() {
 
 async function seedSubcategories() {
   try {
+    const defaultElecSubs = [
+      "Connectors",
+      "Resistor",
+      "Capacitor",
+      "MOSFET",
+      "Transistor",
+      "Diode & Rectifier",
+      "Power Management ICs",
+      "Gate Driver",
+      "Operational Amplifiers",
+      "Audio IC",
+      "Voltage Regulators",
+      "Microcontrollers",
+      "NTC",
+      "Fuse",
+      "Modules"
+    ];
+
     // 1. Electronics Components Category
     let elecCat = await Category.findOne({ name: "Electronics Components" });
     if (elecCat) {
-      if (!elecCat.subcategories || elecCat.subcategories.length === 0) {
-        elecCat.subcategories = [
-          "Passive Components",
-          "Active Components",
-          "Sensor",
-          "Modules",
-          "Connectors"
-        ];
-        await elecCat.save();
-        console.log("Seeded Electronics Components subcategories.");
-      }
+      const merged = Array.from(new Set([...(elecCat.subcategories || []), ...defaultElecSubs]));
+      elecCat.subcategories = merged;
+      await elecCat.save();
     } else {
       await Category.create({
         name: "Electronics Components",
-        subcategories: [
-          "Passive Components",
-          "Active Components",
-          "Sensor",
-          "Modules",
-          "Connectors"
-        ]
+        subcategories: defaultElecSubs
       });
       console.log("Created & Seeded Electronics Components category.");
     }
@@ -960,6 +984,106 @@ app.get("/admin/dashboard-stats", verifyAdmin, async (req, res) => {
   }
 });
 
+// ✅ GET ALL CUSTOMERS WITH STATS & SEARCH/FILTER (ADMIN)
+app.get("/admin/customers", verifyAdmin, async (req, res) => {
+  try {
+    const registeredUsers = await User.find({ isAdmin: { $ne: true } }).select("-password").lean();
+
+    const orderStats = await Order.aggregate([
+      {
+        $group: {
+          _id: { $toLower: "$userEmail" },
+          orderCount: { $sum: 1 },
+          totalSpent: { $sum: { $ifNull: ["$totalAmount", "$price"] } },
+          lastOrderDate: { $max: "$createdAt" },
+          userNames: { $addToSet: "$userName" },
+          phones: { $addToSet: "$phone" },
+          shippingAddresses: { $addToSet: "$shippingAddress" },
+          ordersList: {
+            $push: {
+              _id: "$_id",
+              invoiceNumber: "$invoiceNumber",
+              productName: "$productName",
+              quantity: "$quantity",
+              totalAmount: "$totalAmount",
+              price: "$price",
+              status: "$status",
+              createdAt: "$createdAt"
+            }
+          }
+        }
+      }
+    ]);
+
+    const statsMap = {};
+    orderStats.forEach(stat => {
+      if (stat._id) {
+        statsMap[stat._id.toLowerCase()] = stat;
+      }
+    });
+
+    const customersMap = {};
+
+    // 1. Process registered users
+    registeredUsers.forEach(u => {
+      const emailKey = (u.email || "").toLowerCase();
+      if (!emailKey) return;
+      const stats = statsMap[emailKey] || {
+        orderCount: 0,
+        totalSpent: 0,
+        lastOrderDate: u.createdAt || null,
+        userNames: [],
+        phones: [],
+        shippingAddresses: [],
+        ordersList: []
+      };
+
+      const phone = u.phone || (stats.phones.find(p => p) || "N/A");
+      const name = u.name || (stats.userNames.find(n => n) || "Customer");
+
+      customersMap[emailKey] = {
+        _id: u._id,
+        name: name,
+        email: u.email,
+        phone: phone,
+        isRegistered: true,
+        addresses: u.addresses || stats.shippingAddresses || [],
+        orderCount: stats.orderCount,
+        totalSpent: stats.totalSpent,
+        lastOrderDate: stats.lastOrderDate,
+        orders: (stats.ordersList || []).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      };
+    });
+
+    // 2. Process non-registered customers from orders
+    orderStats.forEach(stat => {
+      const emailKey = (stat._id || "").toLowerCase();
+      if (emailKey && !customersMap[emailKey]) {
+        const name = stat.userNames.find(n => n) || "Guest Customer";
+        const phone = stat.phones.find(p => p) || "N/A";
+        customersMap[emailKey] = {
+          _id: emailKey,
+          name: name,
+          email: emailKey,
+          phone: phone,
+          isRegistered: false,
+          addresses: stat.shippingAddresses || [],
+          orderCount: stat.orderCount,
+          totalSpent: stat.totalSpent,
+          lastOrderDate: stat.lastOrderDate,
+          orders: (stat.ordersList || []).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        };
+      }
+    });
+
+    const customersList = Object.values(customersMap);
+    res.json({ customers: customersList });
+  } catch (err) {
+    console.error("Failed to fetch customers:", err);
+    res.status(500).json({ message: "Failed to fetch customers" });
+  }
+});
+
 // ✅ USER ORDERS STATUS UPDATE (FOR DEMO/TESTING PURPOSE)
 app.put("/orders/:id/status", async (req, res) => {
   try {
@@ -1106,10 +1230,10 @@ app.put("/admin/reset-all-visibility", verifyAdmin, async (req, res) => {
 
 /* ================= USER ================= */
 
-// PRODUCTS (Storefront - Home Page shows only visible ON products)
+// PRODUCTS (Storefront - Home Page shows active products)
 app.get("/products", async (req, res) => {
   try {
-    const products = await Product.find({ isVisible: true });
+    const products = await Product.find({ isVisible: { $ne: false } });
     res.json(products);
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch products" });
@@ -1128,17 +1252,18 @@ app.get("/products/all", async (req, res) => {
 
 app.get("/products/category/:category", async (req, res) => {
   try {
-    const category = req.params.category;
+    const rawCategory = decodeURIComponent(req.params.category || "");
+    const escapedCategory = escapeRegex(rawCategory.trim());
 
-    // Use exact case-insensitive match so 'Battery' does NOT match 'Battery Accessories'
+    // Match category case-insensitively and show active products
     const products = await Product.find({
-      category: { $regex: new RegExp(`^${category}$`, "i") },
-      isVisible: true
+      category: { $regex: new RegExp(`^${escapedCategory}$`, "i") },
+      isVisible: { $ne: false }
     });
 
     res.json(products);
   } catch (err) {
-    console.error(err);
+    console.error("Error fetching category products:", err);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -1406,7 +1531,10 @@ app.post("/cart", async (req, res) => {
 app.delete("/cart/:email/:productId", async (req, res) => {
   try {
     const { email, productId } = req.params;
-    await Cart.findOneAndDelete({ userEmail: email, productId });
+    await Cart.deleteMany({
+      userEmail: email,
+      $or: [{ productId: productId }, { _id: productId }]
+    });
     res.json({ message: "Item removed from cart" });
   } catch (err) {
     res.status(500).json({ message: "Failed to remove item" });

@@ -7,6 +7,7 @@ import "./CategoryProducts.css";
 
 const CategoryProducts = () => {
   const { category } = useParams();
+  const decodedCategory = decodeURIComponent(category || "").trim();
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -25,28 +26,48 @@ const CategoryProducts = () => {
   useEffect(() => {
     setLoading(true);
     setSelectedSubcategory(""); // Reset subcategory filter on category change
-    fetch(`${API_BASE_URL}/products/category/${category}`)
+    fetch(`${API_BASE_URL}/products/category/${encodeURIComponent(decodedCategory)}`)
       .then(res => res.json())
       .then(data => {
         setProducts(data || []);
         setLoading(false);
       })
       .catch(err => {
-        console.error(err);
+        console.error("Error fetching category products:", err);
         setLoading(false);
       });
-  }, [category]);
+  }, [category, decodedCategory]);
 
   const activeCategoryObj = categories.find(
-    c => c.name.toLowerCase() === category.toLowerCase()
+    c => (c.name || "").toLowerCase().trim() === decodedCategory.toLowerCase()
   );
-  const activeSubcategories = activeCategoryObj?.subcategories || [];
+  
+  // Combine defined category subcategories with subcategories actually present on products
+  const definedSubcategories = activeCategoryObj?.subcategories || [];
+  const productSubcategories = Array.from(
+    new Set(
+      products
+        .map(p => (p.subcategory || "").trim())
+        .filter(sub => sub.length > 0)
+    )
+  );
 
-  // Filter products client-side
+  // Create unique, case-preserving list of all available subcategories
+  const activeSubcategoriesMap = new Map();
+  [...definedSubcategories, ...productSubcategories].forEach(sub => {
+    const key = sub.toLowerCase();
+    if (!activeSubcategoriesMap.has(key)) {
+      activeSubcategoriesMap.set(key, sub);
+    }
+  });
+  const activeSubcategories = Array.from(activeSubcategoriesMap.values());
+
+  // Filter products client-side with case-insensitive and trimmed comparison
   const filteredProducts = products.filter(product => {
     if (!selectedSubcategory) return true;
-    if (selectedSubcategory === "Uncategorized") return !product.subcategory;
-    return product.subcategory === selectedSubcategory;
+    const prodSub = (product.subcategory || "").trim();
+    if (selectedSubcategory === "Uncategorized") return prodSub === "";
+    return prodSub.toLowerCase() === selectedSubcategory.trim().toLowerCase();
   });
 
   return (
@@ -60,7 +81,7 @@ const CategoryProducts = () => {
         </button>
 
         <h2 className="category-title">
-          {category.toUpperCase()} PRODUCTS
+          {decodedCategory.toUpperCase()} PRODUCTS
         </h2>
 
         {activeSubcategories.length > 0 ? (
@@ -72,23 +93,30 @@ const CategoryProducts = () => {
                   className={`sidebar-item ${selectedSubcategory === "" ? "active" : ""}`}
                   onClick={() => setSelectedSubcategory("")}
                 >
-                  All Products
+                  All Products ({products.length})
                 </li>
-                {activeSubcategories.map((sub, idx) => (
+                {activeSubcategories.map((sub, idx) => {
+                  const count = products.filter(
+                    p => (p.subcategory || "").trim().toLowerCase() === sub.toLowerCase()
+                  ).length;
+                  return (
+                    <li
+                      key={idx}
+                      className={`sidebar-item ${selectedSubcategory.toLowerCase() === sub.toLowerCase() ? "active" : ""}`}
+                      onClick={() => setSelectedSubcategory(sub)}
+                    >
+                      {sub} {count > 0 && <span style={{ fontSize: '0.8em', opacity: 0.75, marginLeft: '4px' }}>({count})</span>}
+                    </li>
+                  );
+                })}
+                {products.some(p => !(p.subcategory || "").trim()) && (
                   <li
-                    key={idx}
-                    className={`sidebar-item ${selectedSubcategory === sub ? "active" : ""}`}
-                    onClick={() => setSelectedSubcategory(sub)}
+                    className={`sidebar-item ${selectedSubcategory === "Uncategorized" ? "active" : ""}`}
+                    onClick={() => setSelectedSubcategory("Uncategorized")}
                   >
-                    {sub}
+                    Uncategorized ({products.filter(p => !(p.subcategory || "").trim()).length})
                   </li>
-                ))}
-                <li
-                  className={`sidebar-item ${selectedSubcategory === "Uncategorized" ? "active" : ""}`}
-                  onClick={() => setSelectedSubcategory("Uncategorized")}
-                >
-                  Uncategorized
-                </li>
+                )}
               </ul>
             </aside>
             <main className="category-main-content">

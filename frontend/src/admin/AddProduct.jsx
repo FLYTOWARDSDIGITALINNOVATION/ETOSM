@@ -45,6 +45,7 @@ const AddProduct = () => {
     formData.append("gstPercent", form.gstPercent !== undefined && form.gstPercent !== "" ? form.gstPercent : "18");
     formData.append("stock", form.stock !== "" ? form.stock : "0");
     formData.append("description", form.description);
+    formData.append("isVisible", "true");
     formData.append("email", adminEmail);
     formData.append("image", image);
     if (pdfFile) {

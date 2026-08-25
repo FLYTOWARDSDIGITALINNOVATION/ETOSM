@@ -23,7 +23,7 @@ export const CartProvider = ({ children }) => {
       fetch(`${API_BASE_URL}/cart/${userEmail}`)
         .then(res => res.json())
         .then(data => {
-          if (Array.isArray(data) && data.length > 0) {
+          if (Array.isArray(data)) {
             setCart(data);
           }
         })
@@ -54,7 +54,7 @@ export const CartProvider = ({ children }) => {
     const addedQty = product.qty || 1;
     const maxStock = product.stock !== undefined ? product.stock : 999;
     
-    const existingItem = cart.find(p => p.productId === pid);
+    const existingItem = cart.find(p => String(p.productId) === String(pid) || String(p._id || '') === String(pid));
     const currentQty = existingItem ? existingItem.qty : 0;
     
     if (currentQty >= maxStock) {
@@ -66,10 +66,10 @@ export const CartProvider = ({ children }) => {
     const qtyToAdd = finalQty - currentQty;
 
     setCart(prev => {
-      const exists = prev.find(p => p.productId === pid);
+      const exists = prev.find(p => String(p.productId) === String(pid) || String(p._id || '') === String(pid));
       if (exists) {
         const safeFinalQty = Math.min(exists.qty + addedQty, maxStock);
-        return prev.map(p => p.productId === pid ? { ...p, qty: safeFinalQty, stock: maxStock } : p);
+        return prev.map(p => (String(p.productId) === String(pid) || String(p._id || '') === String(pid)) ? { ...p, qty: safeFinalQty, stock: maxStock } : p);
       }
       return [...prev, { ...product, productId: pid, qty: finalQty, stock: maxStock }];
     });
@@ -99,7 +99,7 @@ export const CartProvider = ({ children }) => {
   };
 
   const removeFromCart = async (id) => {
-    setCart(prev => prev.filter(p => p.productId !== id));
+    setCart(prev => prev.filter(p => String(p.productId) !== String(id) && String(p._id || '') !== String(id)));
     if (userEmail) {
       try {
         await fetch(`${API_BASE_URL}/cart/${userEmail}/${id}`, {

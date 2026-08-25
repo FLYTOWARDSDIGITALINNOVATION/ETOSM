@@ -54,6 +54,7 @@ const RemoveProductPage = () => {
             });
 
             if (res.ok) {
+                localStorage.removeItem("admin_dashboard_cache");
                 setProducts(products.filter((p) => p._id !== productId));
                 alert("Product deleted successfully");
             } else {

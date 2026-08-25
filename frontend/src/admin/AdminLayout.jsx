@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   Package,
   ShoppingCart,
+  Users,
   MessageSquare,
   LogOut,
   ChevronDown,
@@ -54,6 +55,12 @@ const AdminLayout = ({ children }) => {
       title: "Orders",
       icon: ShoppingCart,
       path: "/admin/orders",
+      submenu: null,
+    },
+    {
+      title: "Customers",
+      icon: Users,
+      path: "/admin/customers",
       submenu: null,
     },
     {

@@ -228,20 +228,91 @@
   gap: 6px;
 }
 
-.detail-description {
-  color: #1a1a1a;
-  line-height: 1.6;
-  margin-bottom: 30px;
+
+/* ── Smart Description Renderer ─────────────────────────────────────────── */
+.desc-rendered {
+  margin-bottom: 20px;
   font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 1.1rem;
-  font-weight: 400;
-  white-space: pre-line;
+  color: #1a1a1a;
+  line-height: 1.75;
 }
 
-.detail-description.collapsed {
-  max-height: 4.8em; /* 3 lines of text (3 * 1.6 line-height) */
+/* Collapsed: show only ~4 lines then hide */
+.desc-rendered.collapsed {
+  max-height: 6em;
   overflow: hidden;
+  position: relative;
 }
+
+/* Fade-out gradient at bottom when collapsed */
+.desc-rendered.collapsed::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2.5em;
+  background: linear-gradient(to bottom, transparent, #fff);
+  pointer-events: none;
+}
+
+/* First line of description (same topic as product H1) — visually subtle */
+.desc-main-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #4b5563;
+  margin: 0 0 10px 0;
+  display: none; /* hidden visually, kept for SEO context */
+}
+
+/* Section headings → H2 */
+.desc-section-heading {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 22px 0 6px 0;
+  padding-left: 0;
+  border-left: 3px solid var(--primary, #0057a8);
+  padding-left: 10px;
+}
+
+/* FAQ questions → H3 */
+.desc-faq-question {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #374151;
+  margin: 14px 0 4px 0;
+}
+
+/* Body paragraphs */
+.desc-body {
+  font-size: 0.97rem;
+  color: #374151;
+  margin: 0 0 10px 0;
+}
+
+/* Bullet list */
+.desc-bullet-list {
+  margin: 8px 0 14px 18px;
+  padding: 0;
+  list-style: none;
+}
+
+.desc-bullet-list li {
+  font-size: 0.95rem;
+  color: #374151;
+  padding: 3px 0 3px 18px;
+  position: relative;
+}
+
+.desc-bullet-list li::before {
+  content: '✔';
+  position: absolute;
+  left: 0;
+  color: var(--primary, #0057a8);
+  font-size: 0.8rem;
+}
+/* ─────────────────────────────────────────────────────────────────────────── */
 
 .read-more-btn {
   background: none;
@@ -253,6 +324,7 @@
   padding: 0;
   text-decoration: underline;
 }
+
 
 .selection-group {
   margin-bottom: 25px;

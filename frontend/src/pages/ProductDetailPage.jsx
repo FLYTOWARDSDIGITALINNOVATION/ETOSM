@@ -9,6 +9,99 @@ import { jsPDF } from "jspdf";
 import { useCart } from "../context/CartContext";
 import "./ProductDetailPage.css";
 
+// ── Smart Description Renderer ──────────────────────────────────────────────
+// Parses the plain-text description stored in MongoDB and outputs proper
+// semantic HTML: h2 for section headings, h3 for FAQ questions,
+// ul/li for bullet lines, and p for body text.
+// The very first heading-style line (same wording as H1) is skipped because
+// the product <h1> already covers it above the description block.
+const renderDescription = (text, collapsed) => {
+  if (!text) return null;
+
+  const lines = text.split('\n');
+  const elements = [];
+  let bulletBuffer = [];
+  let key = 0;
+
+  // Flush any accumulated bullet points into a <ul>
+  const flushBullets = () => {
+    if (bulletBuffer.length > 0) {
+      elements.push(
+        <ul key={key++} className="desc-bullet-list">
+          {bulletBuffer.map((b, i) => (
+            <li key={i}>{b}</li>
+          ))}
+        </ul>
+      );
+      bulletBuffer = [];
+    }
+  };
+
+  // Detect whether a line is a standalone section heading:
+  // – not a bullet, not an FAQ question, not empty
+  // – reasonably short (≤ 120 chars) so body sentences don't become headings
+  const isSectionHeading = (line) => {
+    if (!line.trim()) return false;
+    if (line.startsWith('•')) return false;
+    if (/^\d+\.\s/.test(line)) return false;
+    return line.trim().length <= 120;
+  };
+
+  let firstHeadingSkipped = false; // skip the duplicate of the product <h1>
+
+  lines.forEach((rawLine, idx) => {
+    const line = rawLine.trim();
+
+    if (!line) {
+      flushBullets();
+      return; // skip blank lines (they just act as separators)
+    }
+
+    // Bullet point → collect into buffer
+    if (line.startsWith('•')) {
+      bulletBuffer.push(line.replace(/^•\s*/, ''));
+      return;
+    }
+
+    flushBullets();
+
+    // FAQ question  e.g. "1. What is a rechargeable battery 3.7V?"
+    if (/^\d+\.\s/.test(line)) {
+      elements.push(<h3 key={key++} className="desc-faq-question">{line}</h3>);
+      return;
+    }
+
+    // Section heading detection
+    if (isSectionHeading(line)) {
+      // The very first heading duplicates the product <h1> — skip it visually
+      // but keep it in the DOM as an SEO-friendly hidden h1 only if needed.
+      // Here we simply skip it to avoid duplicate H1 on the page.
+      if (!firstHeadingSkipped) {
+        firstHeadingSkipped = true;
+        // Render as visually hidden but present for SEO context
+        elements.push(
+          <h2 key={key++} className="desc-main-title">{line}</h2>
+        );
+        return;
+      }
+      elements.push(<h2 key={key++} className="desc-section-heading">{line}</h2>);
+      return;
+    }
+
+    // Regular body paragraph
+    elements.push(<p key={key++} className="desc-body">{line}</p>);
+  });
+
+  flushBullets();
+
+  return (
+    <div className={`desc-rendered ${collapsed ? 'collapsed' : ''}`}>
+      {elements}
+    </div>
+  );
+};
+// ─────────────────────────────────────────────────────────────────────────────
+
 const ProductDetailPage = () => {
   const [showFullDescription, setShowFullDescription] = useState(false);
   const { id } = useParams();
@@ -530,12 +623,10 @@ const ProductDetailPage = () => {
               </div>
             )}
 
-            <p
-              className={`detail-description ${!showFullDescription ? "collapsed" : ""}`}
-              style={{ whiteSpace: 'pre-line' }}
-            >
-              {product.description || `Elevate your style with this premium quality ${product.name.toLowerCase()}.`}
-            </p>
+            {product.description
+              ? renderDescription(product.description, !showFullDescription)
+              : <p className="desc-body">Elevate your style with this premium quality {product.name.toLowerCase()}.</p>
+            }
             {product.description && (
               <button className="read-more-btn" onClick={() => setShowFullDescription(!showFullDescription)}>
                 {showFullDescription ? 'Show less' : 'Read more'}

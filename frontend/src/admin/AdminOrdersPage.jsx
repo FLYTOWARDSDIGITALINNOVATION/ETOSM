@@ -1,7 +1,7 @@
 import API_BASE_URL from '../apiConfig';
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Package, Clock, Eye, X, MapPin, CreditCard, ShoppingBag, Printer } from "lucide-react";
+import { ArrowLeft, Package, Clock, Eye, X, MapPin, CreditCard, ShoppingBag, Printer, Search } from "lucide-react";
 import AdminLayout from "./AdminLayout";
 import "./AdminOrdersPage.css";
 
@@ -19,6 +19,7 @@ const AdminOrdersPage = () => {
   const [loading, setLoading] = useState(true);
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const [selectedOrder, setSelectedOrder] = useState(null);
 
   // ✅ AUTH CHECK
@@ -117,12 +118,24 @@ const AdminOrdersPage = () => {
         {/* 📦 TABLE */}
         {!loading && orders.length > 0 && (
           <>
-            <div className="filter-bar">
-              <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} placeholder="From Date" />
-              <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} placeholder="To Date" />
-              <button className="filter-btn" onClick={fetchOrders}>
-                Filter
-              </button>
+            <div className="filter-bar" style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <div style={{ position: 'relative', flex: '1', minWidth: '220px' }}>
+                <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                <input
+                  type="text"
+                  placeholder="Search customer name, email, or order ID..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  style={{ width: '100%', paddingLeft: '36px', paddingRight: '12px', paddingTop: '8px', paddingBottom: '8px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                />
+              </div>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} placeholder="From Date" style={{ padding: '8px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }} />
+                <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} placeholder="To Date" style={{ padding: '8px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }} />
+                <button className="filter-btn" onClick={fetchOrders}>
+                  Filter
+                </button>
+              </div>
             </div>
 
             <div className="table-wrapper">
@@ -141,7 +154,20 @@ const AdminOrdersPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {orders.map((o) => (
+                  {orders
+                    .filter((o) => {
+                      if (!searchTerm) return true;
+                      const term = searchTerm.toLowerCase();
+                      return (
+                        (o._id || "").toLowerCase().includes(term) ||
+                        (o.invoiceNumber || "").toLowerCase().includes(term) ||
+                        (o.userName || "").toLowerCase().includes(term) ||
+                        (o.userEmail || "").toLowerCase().includes(term) ||
+                        (o.phone || "").toLowerCase().includes(term) ||
+                        (o.productName || "").toLowerCase().includes(term)
+                      );
+                    })
+                    .map((o) => (
                     <tr key={o._id}>
                       <td className="order-id">#{o._id?.slice(-6) || 'N/A'}</td>
                       <td style={{ fontSize: '12px', fontWeight: '600', color: '#475569' }}>
