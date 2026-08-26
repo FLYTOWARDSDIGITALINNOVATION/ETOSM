@@ -37,48 +37,57 @@ const renderDescription = (text, collapsed) => {
     }
   };
 
-  // Detect whether a line is a standalone section heading:
-  // – not a bullet, not an FAQ question, not empty
-  // – reasonably short (≤ 120 chars) so body sentences don't become headings
-  const isSectionHeading = (line) => {
-    if (!line.trim()) return false;
-    if (line.startsWith('•')) return false;
-    if (/^\d+\.\s/.test(line)) return false;
-    return line.trim().length <= 120;
+  const isBullet = (line) => {
+    return /^([•✓\-\*]|\d+\))\s*/.test(line) && !/^\d+\.\s/.test(line);
   };
 
-  let firstHeadingSkipped = false; // skip the duplicate of the product <h1>
+  const isFaq = (line) => {
+    return /^\d+\.\s/.test(line);
+  };
 
-  lines.forEach((rawLine, idx) => {
+  const isSectionHeading = (line) => {
+    if (!line.trim()) return false;
+    if (isBullet(line)) return false;
+    if (isFaq(line)) return false;
+
+    // Ends with colon or question mark (e.g. "This particular battery may find application in the following:", "Why Choose...?")
+    if (/[:\?]$/.test(line.trim())) return true;
+
+    // Short standalone title line (<= 90 chars) that does not end in a period '.'
+    if (line.trim().length <= 90 && !line.trim().endsWith('.')) return true;
+
+    return false;
+  };
+
+  let firstHeadingSkipped = false;
+
+  lines.forEach((rawLine) => {
     const line = rawLine.trim();
 
     if (!line) {
       flushBullets();
-      return; // skip blank lines (they just act as separators)
+      return;
     }
 
     // Bullet point → collect into buffer
-    if (line.startsWith('•')) {
-      bulletBuffer.push(line.replace(/^•\s*/, ''));
+    if (isBullet(line)) {
+      const cleanBullet = line.replace(/^([•✓\-\*]|\d+\))\s*/, '');
+      bulletBuffer.push(cleanBullet);
       return;
     }
 
     flushBullets();
 
     // FAQ question  e.g. "1. What is a rechargeable battery 3.7V?"
-    if (/^\d+\.\s/.test(line)) {
+    if (isFaq(line)) {
       elements.push(<h3 key={key++} className="desc-faq-question">{line}</h3>);
       return;
     }
 
     // Section heading detection
     if (isSectionHeading(line)) {
-      // The very first heading duplicates the product <h1> — skip it visually
-      // but keep it in the DOM as an SEO-friendly hidden h1 only if needed.
-      // Here we simply skip it to avoid duplicate H1 on the page.
       if (!firstHeadingSkipped) {
         firstHeadingSkipped = true;
-        // Render as visually hidden but present for SEO context
         elements.push(
           <h2 key={key++} className="desc-main-title">{line}</h2>
         );

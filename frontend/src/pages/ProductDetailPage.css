@@ -256,61 +256,65 @@
   pointer-events: none;
 }
 
-/* First line of description (same topic as product H1) — visually subtle */
+/* First line of description */
 .desc-main-title {
   font-size: 1rem;
   font-weight: 600;
   color: #4b5563;
   margin: 0 0 10px 0;
-  display: none; /* hidden visually, kept for SEO context */
+  display: none;
 }
 
-/* Section headings → H2 */
+/* Section headings → H2 with Red Accent bar */
 .desc-section-heading {
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   font-weight: 700;
-  color: #1e293b;
-  margin: 22px 0 6px 0;
-  padding-left: 0;
-  border-left: 3px solid var(--primary, #0057a8);
+  color: #0f172a;
+  margin: 24px 0 10px 0;
   padding-left: 10px;
+  border-left: 3.5px solid #d32f2f;
+  line-height: 1.4;
 }
 
 /* FAQ questions → H3 */
 .desc-faq-question {
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 700;
-  color: #374151;
-  margin: 14px 0 4px 0;
+  color: #1e293b;
+  margin: 18px 0 6px 0;
+  line-height: 1.4;
 }
 
 /* Body paragraphs */
 .desc-body {
-  font-size: 0.97rem;
+  font-size: 0.98rem;
   color: #374151;
-  margin: 0 0 10px 0;
+  margin: 0 0 12px 0;
+  line-height: 1.7;
 }
 
 /* Bullet list */
 .desc-bullet-list {
-  margin: 8px 0 14px 18px;
+  margin: 10px 0 16px 0;
   padding: 0;
   list-style: none;
 }
 
 .desc-bullet-list li {
-  font-size: 0.95rem;
+  font-size: 0.98rem;
   color: #374151;
-  padding: 3px 0 3px 18px;
+  padding: 4px 0 4px 24px;
   position: relative;
+  line-height: 1.5;
 }
 
 .desc-bullet-list li::before {
-  content: '✔';
+  content: '✓';
   position: absolute;
   left: 0;
-  color: var(--primary, #0057a8);
-  font-size: 0.8rem;
+  color: #d32f2f;
+  font-size: 1rem;
+  font-weight: bold;
 }
 /* ─────────────────────────────────────────────────────────────────────────── */
 
