@@ -95,11 +95,31 @@ const CartPage = () => {
 
                       <div className="product-footer">
                         <div className="qty-controls">
-                          <button onClick={() => updateQty(item.productId, item.qty - 1)}>
+                          <button
+                            type="button"
+                            onClick={() => updateQty(item.productId, item.qty - 1)}
+                            disabled={item.qty <= 1}
+                          >
                             -
                           </button>
-                          <span>{item.qty}</span>
-                          <button onClick={() => updateQty(item.productId, item.qty + 1)}>
+                          <input
+                            type="number"
+                            className="cart-qty-input"
+                            min="1"
+                            max={item.stock || 999}
+                            value={item.qty}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value, 10);
+                              if (!isNaN(val) && val >= 1) {
+                                updateQty(item.productId, val);
+                              }
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => updateQty(item.productId, item.qty + 1)}
+                            disabled={item.stock && item.qty >= item.stock}
+                          >
                             +
                           </button>
                         </div>

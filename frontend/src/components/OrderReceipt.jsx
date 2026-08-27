@@ -73,6 +73,7 @@ const OrderReceipt = ({ order, items, onClose }) => {
                                     <tr key={index}>
                                         <td>
                                             {item.name}
+                                            {item.sku != null && <span style={{ display: 'block', fontSize: '11px', fontWeight: 'bold', color: '#e3000f' }}>SKU: {item.sku}</span>}
                                             {item.variation && <span style={{ display: 'block', fontSize: '12px', color: '#666' }}>Size: {item.variation}</span>}
                                         </td>
                                         <td>{item.qty}</td>

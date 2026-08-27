@@ -164,7 +164,8 @@ const AdminOrdersPage = () => {
                         (o.userName || "").toLowerCase().includes(term) ||
                         (o.userEmail || "").toLowerCase().includes(term) ||
                         (o.phone || "").toLowerCase().includes(term) ||
-                        (o.productName || "").toLowerCase().includes(term)
+                        (o.productName || "").toLowerCase().includes(term) ||
+                        (o.sku != null && String(o.sku).toLowerCase().includes(term))
                       );
                     })
                     .map((o) => (
@@ -180,8 +181,14 @@ const AdminOrdersPage = () => {
                       </td>
                       <td>
                         <strong>{o.productName || 'Unknown Product'}</strong>
-                        <br />
-                        <small style={{ color: '#64748b' }}>ID: {o.productId || 'N/A'}</small>
+                        {o.sku != null && (
+                          <div style={{ marginTop: '3px' }}>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', backgroundColor: '#fee2e2', color: '#b91c1c', padding: '2px 7px', borderRadius: '4px', fontSize: '11px', fontWeight: '700', border: '1px solid #fecaca' }}>
+                              SKU: {o.sku}
+                            </span>
+                          </div>
+                        )}
+                        <small style={{ color: '#64748b', display: 'block', marginTop: '2px' }}>ID: {o.productId || 'N/A'}</small>
                       </td>
                       <td>{o.quantity || 0}</td>
                       <td className="price">₹{o.totalAmount?.toFixed(2) || o.price || '0.00'}</td>
@@ -281,6 +288,14 @@ const AdminOrdersPage = () => {
                   <h4><ShoppingBag size={16} /> Product Info</h4>
                   <div className="product-box">
                     <p><strong>Product Name:</strong> {selectedOrder.productName || 'N/A'}</p>
+                    {selectedOrder.sku != null && (
+                      <p>
+                        <strong>SKU Number:</strong>{' '}
+                        <span style={{ fontWeight: '700', color: '#b91c1c', backgroundColor: '#fee2e2', padding: '2px 8px', borderRadius: '4px', fontSize: '13px', border: '1px solid #fecaca' }}>
+                          {selectedOrder.sku}
+                        </span>
+                      </p>
+                    )}
                     <p><strong>Product ID:</strong> {selectedOrder.productId || 'N/A'}</p>
                     <p><strong>Database Order ID:</strong> {selectedOrder._id}</p>
                   </div>

@@ -25,6 +25,7 @@ const EditProductPage = () => {
     discountPercent: 0,
     salesPrice: "",
     stock: 0,
+    sku: "",
     restockQuantity: "",
     discountStart: "",
     discountEnd: "",
@@ -56,6 +57,7 @@ const EditProductPage = () => {
           ...data,
           gstPercent: data.gstPercent !== undefined ? data.gstPercent : 18,
           salesPrice: salesPriceValue,
+          sku: data.sku !== null && data.sku !== undefined ? data.sku : "",
           discountStart: data.discountStart ? data.discountStart.slice(0, 16) : "",
           discountEnd: data.discountEnd ? data.discountEnd.slice(0, 16) : "",
         });
@@ -117,6 +119,7 @@ const EditProductPage = () => {
         formData.append("restockQuantity", form.restockQuantity);
       }
       formData.append("stock", form.stock);
+      formData.append("sku", form.sku !== undefined ? form.sku : "");
       const validSpecs = specifications.filter(spec => spec.label.trim() || spec.value.trim());
       formData.append("specifications", JSON.stringify(validSpecs));
     }
@@ -223,6 +226,15 @@ const EditProductPage = () => {
                 />
               </div>
             </div>
+
+            <label>SKU Number</label>
+            <input
+              type="number"
+              name="sku"
+              placeholder="e.g. 10012"
+              value={form.sku}
+              onChange={handleChange}
+            />
 
             <label>Product Image</label>
             <div className="image-edit-section">

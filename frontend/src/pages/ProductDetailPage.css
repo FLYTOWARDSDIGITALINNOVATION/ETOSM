@@ -425,18 +425,68 @@
 .quantity-control {
   display: flex;
   align-items: center;
-  gap: 20px;
-  border: 1px solid #ced6e0;
+  gap: 12px;
+  border: 1.5px solid #cbd5e1;
   width: fit-content;
-  padding: 8px 15px;
-  border-radius: 4px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: border-color 0.2s;
+}
+
+.quantity-control:focus-within {
+  border-color: #e3000f;
+  box-shadow: 0 0 0 3px rgba(227, 0, 15, 0.1);
 }
 
 .quantity-control button {
-  background: none;
+  background: #f1f5f9;
   border: none;
-  font-size: 1.5rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #334155;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.quantity-control button:hover:not(:disabled) {
+  background: #e2e8f0;
+  color: #e3000f;
+}
+
+.quantity-control button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.quantity-input-box {
+  width: 55px;
+  height: 32px;
+  border: 1px solid transparent;
+  background: transparent;
+  text-align: center;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #0f172a;
+  outline: none;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  padding: 0;
+  margin: 0;
+  -moz-appearance: textfield;
+}
+
+.quantity-input-box::-webkit-outer-spin-button,
+.quantity-input-box::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 .quantity-control span {

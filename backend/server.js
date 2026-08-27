@@ -170,6 +170,8 @@ const productSchema = new mongoose.Schema({
 
   isVisible: { type: Boolean, default: true },
 
+  sku: { type: Number, default: null },
+
   specifications: [{ label: String, value: String }],
 });
 
@@ -212,12 +214,14 @@ async function migrateSlugs() {
 async function migrateProductVisibility() {
   try {
     const ProductModel = mongoose.model("Product");
+    // Only initialise the field for products where it has never been set.
+    // Do NOT touch products that have explicitly been set to false by the admin.
     const result = await ProductModel.updateMany(
-      { $or: [{ isVisible: { $exists: false } }, { isVisible: false }] },
+      { isVisible: { $exists: false } },
       { $set: { isVisible: true } }
     );
     if (result.modifiedCount > 0) {
-      console.log(`Migrated ${result.modifiedCount} products to isVisible: true`);
+      console.log(`Migrated ${result.modifiedCount} products to isVisible: true (field initialisation only)`);
     }
   } catch (err) {
     console.error("Product visibility migration failed:", err);
@@ -359,6 +363,7 @@ const orderSchema = new mongoose.Schema({
   invoiceNumber: String,   // ✅ Distinct Invoice ID (e.g. INV-104928)
   razorpayPaymentId: String, // ✅ Distinct Razorpay Payment ID (e.g. pay_XXXX)
   razorpayOrderId: String,   // ✅ Distinct Razorpay Order ID (e.g. order_XXXX)
+  sku: { type: Number, default: null }, // ✅ Product SKU for Admin
   status: { type: String, default: "Ordered" },
   createdAt: { type: Date, default: Date.now },
 });
@@ -378,6 +383,7 @@ const cartSchema = new mongoose.Schema({
   variation: String,      // ✅ Added variation (weight)
   gstPercent: { type: Number, default: 18 },
   stock: Number,          // ✅ Added stock
+  sku: { type: Number, default: null }, // ✅ Added sku
 });
 const Cart = mongoose.model("Cart", cartSchema);
 
@@ -883,6 +889,7 @@ app.post("/admin/product", verifyAdmin, upload.fields([{ name: 'image', maxCount
     ...req.body,
     gstPercent: req.body.gstPercent !== undefined ? Number(req.body.gstPercent) : 18,
     stock: req.body.stock !== undefined ? Number(req.body.stock) : 0,
+    sku: req.body.sku !== undefined && req.body.sku !== "" ? Number(req.body.sku) : null,
     image: mainImage,
     images: galleryImages,
     pdfUrl: pdfFile,
@@ -1004,6 +1011,8 @@ app.get("/admin/customers", verifyAdmin, async (req, res) => {
               _id: "$_id",
               invoiceNumber: "$invoiceNumber",
               productName: "$productName",
+              productId: "$productId",
+              sku: "$sku",
               quantity: "$quantity",
               totalAmount: "$totalAmount",
               price: "$price",
@@ -1116,6 +1125,10 @@ app.put(
         delete updateData.restockQuantity;
       } else if (req.body.stock !== undefined) {
         updateData.stock = Number(req.body.stock);
+      }
+
+      if (req.body.sku !== undefined) {
+        updateData.sku = req.body.sku !== "" ? Number(req.body.sku) : null;
       }
 
       if (req.body.name) {
@@ -1255,10 +1268,10 @@ app.get("/products/category/:category", async (req, res) => {
     const rawCategory = decodeURIComponent(req.params.category || "");
     const escapedCategory = escapeRegex(rawCategory.trim());
 
-    // Match category case-insensitively and show active products
+    // Match category case-insensitively.
+    // isVisible only hides products from the home page – category pages show ALL products.
     const products = await Product.find({
-      category: { $regex: new RegExp(`^${escapedCategory}$`, "i") },
-      isVisible: { $ne: false }
+      category: { $regex: new RegExp(`^${escapedCategory}$`, "i") }
     });
 
     res.json(products);
@@ -1298,6 +1311,8 @@ app.post("/orders", async (req, res) => {
       razorpayOrderId,
     } = req.body;
 
+    let productSku = req.body.sku !== undefined && req.body.sku !== "" ? Number(req.body.sku) : null;
+
     // Safely check product stock if valid productId
     if (productId && mongoose.Types.ObjectId.isValid(productId)) {
       const product = await Product.findById(productId);
@@ -1308,6 +1323,9 @@ app.post("/orders", async (req, res) => {
         await Product.findByIdAndUpdate(productId, {
           $inc: { stock: -(quantity || 1) }
         });
+        if (productSku === null && product.sku != null) {
+          productSku = product.sku;
+        }
       }
     }
 
@@ -1322,6 +1340,7 @@ app.post("/orders", async (req, res) => {
       ...req.body,
       productName: productName || "Product Item",
       productId: productId || "N/A",
+      sku: productSku,
       invoiceNumber: invoiceNum,
       razorpayPaymentId: razorpayPaymentId || (providedInvoice?.startsWith("pay_") ? providedInvoice : undefined),
       razorpayOrderId: razorpayOrderId || undefined,
@@ -1499,7 +1518,7 @@ app.get("/cart/:email", async (req, res) => {
 // ADD TO CART / UPDATE QUANTITY
 app.post("/cart", async (req, res) => {
   try {
-    const { userEmail, productId, name, price, img, qty, gstPercent, stock } = req.body;
+    const { userEmail, productId, name, price, img, qty, gstPercent, stock, sku } = req.body;
 
     let cartItem = await Cart.findOne({ userEmail, productId });
 
@@ -1507,6 +1526,7 @@ app.post("/cart", async (req, res) => {
       cartItem.qty += qty;
       cartItem.price = cartItem.qty * cartItem.unitPrice;
       if (stock !== undefined) cartItem.stock = stock;
+      if (sku !== undefined) cartItem.sku = sku !== "" ? Number(sku) : null;
       await cartItem.save();
     } else {
       cartItem = await Cart.create({
@@ -1518,7 +1538,8 @@ app.post("/cart", async (req, res) => {
         img,
         qty,
         gstPercent: gstPercent !== undefined ? Number(gstPercent) : 18,
-        stock
+        stock,
+        sku: sku !== undefined && sku !== "" ? Number(sku) : null
       });
     }
     res.json(cartItem);
