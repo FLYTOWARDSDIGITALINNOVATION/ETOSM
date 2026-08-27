@@ -136,6 +136,7 @@ const Checkout = () => {
             body: JSON.stringify({
               productName: item.name || item.productName || item.title || "Product Item",
               productId: item.productId || item._id || item.id || "N/A",
+              sku: item.sku !== undefined ? item.sku : undefined,
               quantity: item.qty || item.quantity || 1,
               price: item.price * item.qty,
               userEmail: user.email,
@@ -197,7 +198,7 @@ const Checkout = () => {
         // 2. Open Razorpay Checkout Modal
         const options = {
 
-          key: 'rzp_live_T1px3FgPWmGoPr', // Live Key ID
+          key: 'rzp_test_SxqSdTVSMDLJfd', // Live Key ID
           amount: orderData.amount,
           currency: orderData.currency,
           name: "ETOSM Technology",

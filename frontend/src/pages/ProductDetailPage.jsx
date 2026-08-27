@@ -37,48 +37,57 @@ const renderDescription = (text, collapsed) => {
     }
   };
 
-  // Detect whether a line is a standalone section heading:
-  // – not a bullet, not an FAQ question, not empty
-  // – reasonably short (≤ 120 chars) so body sentences don't become headings
-  const isSectionHeading = (line) => {
-    if (!line.trim()) return false;
-    if (line.startsWith('•')) return false;
-    if (/^\d+\.\s/.test(line)) return false;
-    return line.trim().length <= 120;
+  const isBullet = (line) => {
+    return /^([•✓\-\*]|\d+\))\s*/.test(line) && !/^\d+\.\s/.test(line);
   };
 
-  let firstHeadingSkipped = false; // skip the duplicate of the product <h1>
+  const isFaq = (line) => {
+    return /^\d+\.\s/.test(line);
+  };
 
-  lines.forEach((rawLine, idx) => {
+  const isSectionHeading = (line) => {
+    if (!line.trim()) return false;
+    if (isBullet(line)) return false;
+    if (isFaq(line)) return false;
+
+    // Ends with colon or question mark (e.g. "This particular battery may find application in the following:", "Why Choose...?")
+    if (/[:\?]$/.test(line.trim())) return true;
+
+    // Short standalone title line (<= 90 chars) that does not end in a period '.'
+    if (line.trim().length <= 90 && !line.trim().endsWith('.')) return true;
+
+    return false;
+  };
+
+  let firstHeadingSkipped = false;
+
+  lines.forEach((rawLine) => {
     const line = rawLine.trim();
 
     if (!line) {
       flushBullets();
-      return; // skip blank lines (they just act as separators)
+      return;
     }
 
     // Bullet point → collect into buffer
-    if (line.startsWith('•')) {
-      bulletBuffer.push(line.replace(/^•\s*/, ''));
+    if (isBullet(line)) {
+      const cleanBullet = line.replace(/^([•✓\-\*]|\d+\))\s*/, '');
+      bulletBuffer.push(cleanBullet);
       return;
     }
 
     flushBullets();
 
     // FAQ question  e.g. "1. What is a rechargeable battery 3.7V?"
-    if (/^\d+\.\s/.test(line)) {
+    if (isFaq(line)) {
       elements.push(<h3 key={key++} className="desc-faq-question">{line}</h3>);
       return;
     }
 
     // Section heading detection
     if (isSectionHeading(line)) {
-      // The very first heading duplicates the product <h1> — skip it visually
-      // but keep it in the DOM as an SEO-friendly hidden h1 only if needed.
-      // Here we simply skip it to avoid duplicate H1 on the page.
       if (!firstHeadingSkipped) {
         firstHeadingSkipped = true;
-        // Render as visually hidden but present for SEO context
         elements.push(
           <h2 key={key++} className="desc-main-title">{line}</h2>
         );
@@ -463,10 +472,11 @@ const ProductDetailPage = () => {
   const isOutOfStock = product?.stock <= 0;
 
   const handleAddToCart = () => {
+    const finalQty = Math.max(1, Number(quantity) || 1);
     if (product && !isOutOfStock) {
       addToCart({
         ...product,
-        qty: quantity,
+        qty: finalQty,
         ...(selectedSize ? { size: selectedSize } : {}),
       });
     }
@@ -474,6 +484,7 @@ const ProductDetailPage = () => {
 
   const handleBuyNow = () => {
     if (!product || isOutOfStock) return;
+    const finalQty = Math.max(1, Number(quantity) || 1);
 
     // Calculate dynamic price based on discount logic
     const now = new Date();
@@ -491,7 +502,7 @@ const ProductDetailPage = () => {
     const buyNowPayload = {
       ...product,
       productId: product._id || product.id,
-      qty: quantity,
+      qty: finalQty,
       price: finalPrice
     };
     if (selectedSize) {
@@ -602,6 +613,27 @@ const ProductDetailPage = () => {
               </span>
             </div>
 
+            {/* SKU Display */}
+            {product.sku != null && (
+              <div style={{ marginBottom: '16px' }}>
+                <span style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontSize: '13px',
+                  color: '#64748b',
+                  fontWeight: '500',
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '6px',
+                  padding: '5px 12px',
+                }}>
+                  <span style={{ color: '#94a3b8', fontWeight: '400' }}>SKU:</span>
+                  <span style={{ color: '#1e293b', fontWeight: '700', letterSpacing: '0.5px' }}>{product.sku}</span>
+                </span>
+              </div>
+            )}
+
             {product.specifications && product.specifications.length > 0 && (
               <div className="specifications-section">
                 <table className="specifications-table">
@@ -657,9 +689,51 @@ const ProductDetailPage = () => {
             <div className="selection-group">
               <h4>Quantity</h4>
               <div className="quantity-control">
-                <button onClick={() => setQuantity(Math.max(1, quantity - 1))} disabled={isOutOfStock}>-</button>
-                <span>{quantity}</span>
-                <button onClick={() => setQuantity(Math.min(product.stock, quantity + 1))} disabled={isOutOfStock || quantity >= product.stock}>+</button>
+                <button
+                  type="button"
+                  onClick={() => setQuantity(prev => Math.max(1, (Number(prev) || 1) - 1))}
+                  disabled={isOutOfStock || Number(quantity) <= 1}
+                >
+                  -
+                </button>
+                <input
+                  type="number"
+                  className="quantity-input-box"
+                  min="1"
+                  max={product.stock > 0 ? product.stock : 1}
+                  value={quantity}
+                  disabled={isOutOfStock}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === "") {
+                      setQuantity("");
+                      return;
+                    }
+                    const num = parseInt(val, 10);
+                    if (isNaN(num)) return;
+                    if (num < 1) {
+                      setQuantity(1);
+                    } else if (product.stock > 0 && num > product.stock) {
+                      setQuantity(product.stock);
+                    } else {
+                      setQuantity(num);
+                    }
+                  }}
+                  onBlur={() => {
+                    if (!quantity || Number(quantity) < 1) {
+                      setQuantity(1);
+                    } else if (product.stock > 0 && Number(quantity) > product.stock) {
+                      setQuantity(product.stock);
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setQuantity(prev => Math.min(product.stock > 0 ? product.stock : 999, (Number(prev) || 0) + 1))}
+                  disabled={isOutOfStock || (product.stock > 0 && Number(quantity) >= product.stock)}
+                >
+                  +
+                </button>
               </div>
             </div>
             <div className="action-buttons">

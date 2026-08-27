@@ -88,7 +88,8 @@ export const CartProvider = ({ children }) => {
             qty: qtyToAdd,
             variation: product.size,
             gstPercent: product.gstPercent !== undefined ? product.gstPercent : 18,
-            stock: maxStock
+            stock: maxStock,
+            sku: product.sku !== undefined ? product.sku : null
           })
         });
       } catch (err) {

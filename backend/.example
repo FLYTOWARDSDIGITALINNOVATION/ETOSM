@@ -1,10 +1,10 @@
 MONGO_URI=mongodb+srv://ETOSM:ETOSM@cluster0.nh4rh0w.mongodb.net/?appName=Cluster0
 PORT=5001
 JWT_SECRET=Etosm_secret_key_2026
-# RAZORPAY_KEY_ID=rzp_test_SxqSdTVSMDLJfd
-# RAZORPAY_KEY_SECRET=YK7tXeS1Qnzb4tKqyBydK3s0
-RAZORPAY_KEY_ID=rzp_live_T1px3FgPWmGoPr
-RAZORPAY_KEY_SECRET=kBN7EBuDr21NF5TbfE9f7aqk
+RAZORPAY_KEY_ID=rzp_test_SxqSdTVSMDLJfd
+RAZORPAY_KEY_SECRET=YK7tXeS1Qnzb4tKqyBydK3s0
+# RAZORPAY_KEY_ID=rzp_live_T1px3FgPWmGoPr
+# RAZORPAY_KEY_SECRET=kBN7EBuDr21NF5TbfE9f7aqk
 GOOGLE_CLIENT_ID=872496483778-e4ik5krnoa5sag4irt77fm5bf837r47p.apps.googleusercontent.com
 EMAIL_USER=rchinna2003@gmail.com
 EMAIL_PASS=xnmr mlaz myxl ozqg

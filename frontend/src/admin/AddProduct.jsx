@@ -14,6 +14,7 @@ const AddProduct = () => {
     price: "",
     gstPercent: "18",
     stock: "",
+    sku: "",
     description: "",
   });
   const [image, setImage] = useState(null);
@@ -44,6 +45,9 @@ const AddProduct = () => {
     formData.append("price", form.price);
     formData.append("gstPercent", form.gstPercent !== undefined && form.gstPercent !== "" ? form.gstPercent : "18");
     formData.append("stock", form.stock !== "" ? form.stock : "0");
+    if (form.sku !== "" && form.sku !== undefined) {
+      formData.append("sku", form.sku);
+    }
     formData.append("description", form.description);
     formData.append("isVisible", "true");
     formData.append("email", adminEmail);
@@ -152,6 +156,18 @@ const AddProduct = () => {
                   placeholder="0"
                   value={form.stock}
                   onChange={(e) => setForm({ ...form, stock: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label>SKU Number</label>
+                <input
+                  type="number"
+                  placeholder="e.g. 10012"
+                  value={form.sku}
+                  onChange={(e) => setForm({ ...form, sku: e.target.value })}
                 />
               </div>
             </div>

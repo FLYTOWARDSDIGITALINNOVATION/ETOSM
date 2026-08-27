@@ -418,7 +418,14 @@ const AdminCustomersPage = () => {
                           {selectedCustomer.orders.map((ord) => (
                             <tr key={ord._id}>
                               <td className="order-id">#{ord._id?.slice(-6) || 'N/A'}</td>
-                              <td>{ord.productName || "Product"}</td>
+                              <td>
+                                <div>{ord.productName || "Product"}</div>
+                                {ord.sku != null && (
+                                  <span style={{ display: 'inline-block', backgroundColor: '#fee2e2', color: '#b91c1c', padding: '1px 6px', borderRadius: '4px', fontSize: '10px', fontWeight: '700', border: '1px solid #fecaca', marginTop: '2px' }}>
+                                    SKU: {ord.sku}
+                                  </span>
+                                )}
+                              </td>
                               <td>{ord.quantity || 1}</td>
                               <td className="price">₹{(ord.totalAmount || ord.price || 0).toFixed(2)}</td>
                               <td>{ord.createdAt ? new Date(ord.createdAt).toLocaleDateString() : 'N/A'}</td>
