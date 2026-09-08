@@ -1,3 +1,13 @@
 # https://www.robotstxt.org/robotstxt.html
 User-agent: *
-Disallow:
+Disallow: /admin/
+Disallow: /cart
+Disallow: /checkout
+Disallow: /order-success
+Disallow: /orders
+Disallow: /profile
+Disallow: /auth
+Disallow: /forgot-password
+Disallow: /reset-password
+
+Sitemap: https://etosmtechnology.in/sitemap.xml

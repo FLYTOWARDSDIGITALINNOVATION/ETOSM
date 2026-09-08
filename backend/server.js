@@ -721,7 +721,7 @@ app.post("/reset-password", async (req, res) => {
 app.post("/google-login-custom", async (req, res) => {
   try {
     const { email, name } = req.body;
-    
+
     if (!email) {
       return res.status(400).json({ message: "Email is required" });
     }
@@ -814,13 +814,13 @@ app.post("/admin/category", verifyAdmin, async (req, res) => {
     const { name, subcategories } = req.body;
     let subcategoriesArray = [];
     if (subcategories) {
-      subcategoriesArray = Array.isArray(subcategories) 
-        ? subcategories 
+      subcategoriesArray = Array.isArray(subcategories)
+        ? subcategories
         : JSON.parse(subcategories);
     }
-    const category = await Category.create({ 
-      name, 
-      subcategories: subcategoriesArray.map(s => s.trim()).filter(Boolean) 
+    const category = await Category.create({
+      name,
+      subcategories: subcategoriesArray.map(s => s.trim()).filter(Boolean)
     });
     res.json(category);
   } catch (err) {
@@ -929,18 +929,18 @@ app.get("/admin/orders", verifyAdmin, async (req, res) => {
 app.get("/admin/products-stats", verifyAdmin, async (req, res) => {
   try {
     const products = await Product.find().lean();
-    
+
     const orderStats = await Order.aggregate([
       { $group: { _id: "$productId", orderCount: { $sum: 1 }, totalQuantityOrdered: { $sum: "$quantity" } } }
     ]);
-    
+
     const statsMap = {};
     orderStats.forEach(stat => {
       if (stat._id) {
         statsMap[stat._id.toString()] = stat;
       }
     });
-    
+
     const productsWithStats = products.map(p => {
       const stats = statsMap[p._id.toString()] || { orderCount: 0, totalQuantityOrdered: 0 };
       return {
@@ -949,7 +949,7 @@ app.get("/admin/products-stats", verifyAdmin, async (req, res) => {
         totalQuantityOrdered: stats.totalQuantityOrdered
       };
     });
-    
+
     res.json(productsWithStats);
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch product stats" });
