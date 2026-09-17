@@ -1243,20 +1243,70 @@ app.put("/admin/reset-all-visibility", verifyAdmin, async (req, res) => {
 
 /* ================= USER ================= */
 
-// PRODUCTS (Storefront - Home Page shows active products)
+// PRODUCTS (Storefront - Home Page shows active products, or search results)
 app.get("/products", async (req, res) => {
   try {
-    const products = await Product.find({ isVisible: { $ne: false } });
+    const { search } = req.query;
+    let query = { isVisible: { $ne: false } };
+
+    if (search && search.trim()) {
+      const cleanTerm = search.trim();
+      const skuDigits = cleanTerm.replace(/[^0-9]/g, "");
+      const strippedTerm = cleanTerm.replace(/^(sku|item|code)[\s:\-_#]*/i, "").trim();
+      const orConditions = [
+        { name: { $regex: escapeRegex(cleanTerm), $options: "i" } },
+        { category: { $regex: escapeRegex(cleanTerm), $options: "i" } },
+        { subcategory: { $regex: escapeRegex(cleanTerm), $options: "i" } },
+      ];
+      if (skuDigits && !isNaN(Number(skuDigits))) {
+        orConditions.push({ sku: Number(skuDigits) });
+      }
+      if (skuDigits) {
+        orConditions.push({ sku: skuDigits });
+      }
+      if (strippedTerm) {
+        orConditions.push({ sku: strippedTerm });
+        orConditions.push({ sku: { $regex: escapeRegex(strippedTerm), $options: "i" } });
+      }
+      query = { $or: orConditions };
+    }
+
+    const products = await Product.find(query);
     res.json(products);
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch products" });
   }
 });
 
-// ALL PRODUCTS (Complete Catalog page - returns ALL added products)
+// ALL PRODUCTS (Complete Catalog page - returns ALL added products, or search results)
 app.get("/products/all", async (req, res) => {
   try {
-    const products = await Product.find({});
+    const { search } = req.query;
+    let query = {};
+
+    if (search && search.trim()) {
+      const cleanTerm = search.trim();
+      const skuDigits = cleanTerm.replace(/[^0-9]/g, "");
+      const strippedTerm = cleanTerm.replace(/^(sku|item|code)[\s:\-_#]*/i, "").trim();
+      const orConditions = [
+        { name: { $regex: escapeRegex(cleanTerm), $options: "i" } },
+        { category: { $regex: escapeRegex(cleanTerm), $options: "i" } },
+        { subcategory: { $regex: escapeRegex(cleanTerm), $options: "i" } },
+      ];
+      if (skuDigits && !isNaN(Number(skuDigits))) {
+        orConditions.push({ sku: Number(skuDigits) });
+      }
+      if (skuDigits) {
+        orConditions.push({ sku: skuDigits });
+      }
+      if (strippedTerm) {
+        orConditions.push({ sku: strippedTerm });
+        orConditions.push({ sku: { $regex: escapeRegex(strippedTerm), $options: "i" } });
+      }
+      query = { $or: orConditions };
+    }
+
+    const products = await Product.find(query);
     res.json(products);
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch all products" });

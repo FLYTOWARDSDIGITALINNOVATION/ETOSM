@@ -1,6 +1,6 @@
 import API_BASE_URL from '../apiConfig';
-import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useRef, useMemo } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { FaSearch, FaUser, FaHeart, FaShoppingCart, FaBars, FaTimes, FaChevronDown, FaHome, FaBox, FaInfoCircle, FaEnvelope } from "react-icons/fa";
 import "./Header.css";
 
@@ -13,8 +13,12 @@ const Header = ({ onSearch }) => {
   const [scrolled, setScrolled] = useState(false);
   const [categories, setCategories] = useState([]);
   const [localSearch, setLocalSearch] = useState("");
+  const [allProducts, setAllProducts] = useState([]);
+  const [isDropdownVisible, setIsDropdownVisible] = useState(false);
+  const searchWrapperRef = useRef(null);
 
   const navigate = useNavigate();
+  const location = useLocation();
   const { wishlist } = useWishlist();
   const { cart } = useCart();
   const user = JSON.parse(localStorage.getItem("user"));
@@ -26,6 +30,85 @@ const Header = ({ onSearch }) => {
       .then(data => setCategories(data))
       .catch(err => console.error("Failed to fetch categories", err));
   }, []);
+
+  // Fetch all products for instant SKU & name search dropdown
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/products/all`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) setAllProducts(data);
+      })
+      .catch(err => console.error("Failed to fetch products in header", err));
+  }, []);
+
+  // Click outside to close search dropdown
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (searchWrapperRef.current && !searchWrapperRef.current.contains(e.target)) {
+        setIsDropdownVisible(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Instant SKU & product matching
+  const matchingProducts = useMemo(() => {
+    if (!localSearch.trim()) return [];
+    const cleanTerm = localSearch.toLowerCase().trim();
+    const skuDigits = cleanTerm.replace(/[^0-9]/g, "");
+    const skuOnlyTerm = cleanTerm.replace(/^(sku|item|code)[\s:\-_#]*/i, "").trim();
+
+    return allProducts
+      .map(p => {
+        const nameMatch = p.name?.toLowerCase().includes(cleanTerm);
+        const catMatch = p.category?.toLowerCase().includes(cleanTerm);
+        const subcatMatch = p.subcategory?.toLowerCase().includes(cleanTerm);
+
+        let skuMatch = false;
+        let isExactSku = false;
+        if (p.sku != null && p.sku !== "") {
+          const pSkuStr = String(p.sku).toLowerCase().trim();
+          const digitsInSku = pSkuStr.replace(/[^0-9]/g, "");
+
+          if (pSkuStr === cleanTerm || (skuOnlyTerm && pSkuStr === skuOnlyTerm) || (skuDigits && digitsInSku === skuDigits)) {
+            skuMatch = true;
+            isExactSku = true;
+          } else if (
+            pSkuStr.includes(cleanTerm) ||
+            cleanTerm.includes(pSkuStr) ||
+            (skuOnlyTerm && (pSkuStr.includes(skuOnlyTerm) || skuOnlyTerm.includes(pSkuStr))) ||
+            (skuDigits && digitsInSku && (digitsInSku === skuDigits || digitsInSku.includes(skuDigits))) ||
+            `sku: ${pSkuStr}`.includes(cleanTerm) ||
+            `sku ${pSkuStr}`.includes(cleanTerm)
+          ) {
+            skuMatch = true;
+          }
+        }
+
+        const matches = skuMatch || nameMatch || catMatch || subcatMatch;
+        return { product: p, matches, skuMatch, isExactSku };
+      })
+      .filter(item => item.matches)
+      .sort((a, b) => {
+        if (a.isExactSku && !b.isExactSku) return -1;
+        if (!a.isExactSku && b.isExactSku) return 1;
+        if (a.skuMatch && !b.skuMatch) return -1;
+        if (!a.skuMatch && b.skuMatch) return 1;
+        return 0;
+      })
+      .slice(0, 6)
+      .map(item => item.product);
+  }, [allProducts, localSearch]);
+
+  const handleExecuteSearch = () => {
+    if (!localSearch.trim()) return;
+    setIsDropdownVisible(false);
+    const targetUrl = location.pathname === "/all-products"
+      ? `/all-products?search=${encodeURIComponent(localSearch.trim())}`
+      : `/home?search=${encodeURIComponent(localSearch.trim())}`;
+    navigate(targetUrl);
+  };
 
   // Effect to handle scroll styling
   useEffect(() => {
@@ -141,26 +224,154 @@ const Header = ({ onSearch }) => {
 
         {/* 4. Right: Search & Utilities */}
         <div className="nav-right">
-          {/* Enhanced Search Bar */}
-          <div className={`search-container ${isSearchOpen ? "expanded" : ""}`}>
-            <div className="search-box">
-              <FaSearch className="search-trigger" onClick={() => setIsSearchOpen(!isSearchOpen)} />
-              <input
-                type="text"
-                className="search-input"
-                placeholder="Search products..."
-                value={localSearch}
-                onChange={(e) => {
-                  setLocalSearch(e.target.value);
-                  if (onSearch) onSearch(e.target.value);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && localSearch.trim() !== '') {
-                    navigate(`/home?search=${encodeURIComponent(localSearch.trim())}`);
-                  }
-                }}
-              />
+          {/* Enhanced Search Bar & Instant SKU Dropdown */}
+          <div ref={searchWrapperRef} style={{ position: 'relative' }}>
+            <div className={`search-container ${isSearchOpen ? "expanded" : ""}`}>
+              <div className="search-box">
+                <FaSearch
+                  className="search-trigger"
+                  onClick={() => {
+                    if (localSearch.trim() !== '') {
+                      handleExecuteSearch();
+                    } else {
+                      setIsSearchOpen(!isSearchOpen);
+                    }
+                  }}
+                  title="Search"
+                />
+                <input
+                  type="text"
+                  className="search-input"
+                  placeholder="Search products, SKU..."
+                  value={localSearch}
+                  onFocus={() => {
+                    if (localSearch.trim()) setIsDropdownVisible(true);
+                  }}
+                  onChange={(e) => {
+                    setLocalSearch(e.target.value);
+                    setIsDropdownVisible(true);
+                    if (onSearch) onSearch(e.target.value);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleExecuteSearch();
+                    } else if (e.key === 'Escape') {
+                      setIsDropdownVisible(false);
+                    }
+                  }}
+                />
+              </div>
             </div>
+
+            {/* Instant Floating Search Results Dropdown */}
+            {isDropdownVisible && localSearch.trim() !== '' && (
+              <div className="header-search-results-dropdown" style={{
+                position: 'absolute',
+                top: 'calc(100% + 8px)',
+                right: 0,
+                width: '370px',
+                maxWidth: '92vw',
+                background: '#ffffff',
+                borderRadius: '12px',
+                boxShadow: '0 12px 35px rgba(0, 0, 0, 0.16)',
+                border: '1px solid #e2e8f0',
+                zIndex: 3000,
+                overflow: 'hidden',
+                padding: '6px 0',
+              }}>
+                <div style={{ padding: '6px 14px', borderBottom: '1px solid #f1f5f9', fontSize: '11px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>Matching Products ({matchingProducts.length})</span>
+                  <span style={{ color: '#e3000f', cursor: 'pointer', fontSize: '12px' }} onClick={handleExecuteSearch}>
+                    View All &rarr;
+                  </span>
+                </div>
+
+                <div style={{ maxHeight: '360px', overflowY: 'auto' }}>
+                  {matchingProducts.length === 0 ? (
+                    <div style={{ padding: '20px 14px', textAlign: 'center', color: '#64748b', fontSize: '13px' }}>
+                      No product found for "<strong>{localSearch}</strong>"
+                    </div>
+                  ) : (
+                    matchingProducts.map((prod) => (
+                      <div
+                        key={prod._id}
+                        onClick={() => {
+                          setIsDropdownVisible(false);
+                          setLocalSearch("");
+                          navigate(`/product/${prod.slug || prod._id}`);
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px',
+                          padding: '10px 14px',
+                          cursor: 'pointer',
+                          transition: 'background 0.2s',
+                          borderBottom: '1px solid #f8fafc',
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = '#f8fafc'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                      >
+                        <img
+                          src={prod.image ? `${API_BASE_URL}${prod.image}` : "https://via.placeholder.com/50"}
+                          alt={prod.name}
+                          style={{ width: '42px', height: '42px', objectFit: 'contain', borderRadius: '6px', background: '#f8fafc', border: '1px solid #e2e8f0', flexShrink: 0 }}
+                          onError={(e) => (e.target.src = "https://via.placeholder.com/50")}
+                        />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: '13px', fontWeight: '600', color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {prod.name}
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '3px' }}>
+                            {prod.sku != null && prod.sku !== "" && (
+                              <span style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '3px',
+                                fontSize: '11px',
+                                fontWeight: '700',
+                                color: '#1e293b',
+                                background: '#eff6ff',
+                                border: '1px solid #bfdbfe',
+                                borderRadius: '4px',
+                                padding: '1px 6px',
+                              }}>
+                                <span style={{ color: '#3b82f6', fontWeight: '500' }}>SKU:</span>
+                                {prod.sku}
+                              </span>
+                            )}
+                            <span style={{ fontSize: '11px', color: '#64748b' }}>{prod.category}</span>
+                          </div>
+                        </div>
+                        <div style={{ fontSize: '13px', fontWeight: '700', color: '#e3000f', flexShrink: 0 }}>
+                          ₹{prod.price}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                {matchingProducts.length > 0 && (
+                  <div
+                    onClick={handleExecuteSearch}
+                    style={{
+                      padding: '10px 14px',
+                      background: '#f8fafc',
+                      borderTop: '1px solid #e2e8f0',
+                      textAlign: 'center',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      color: '#e3000f',
+                      cursor: 'pointer',
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = '#f1f5f9'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = '#f8fafc'}
+                  >
+                    See all results for "{localSearch}" &rarr;
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="divider"></div>

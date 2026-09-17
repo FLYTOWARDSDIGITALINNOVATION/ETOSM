@@ -80,6 +80,8 @@ export default function Home() {
         const collection = document.querySelector('.collection-section');
         if (collection) collection.scrollIntoView({ behavior: 'smooth' });
       }, 500);
+    } else {
+      setSearchTerm("");
     }
   }, [location.search]);
   const [filters, setFilters] = useState({
@@ -91,11 +93,13 @@ export default function Home() {
   });
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/products`)
+    fetch(`${API_BASE_URL}/products/all`)
       .then((res) => res.json())
       .then((data) => {
-        setAllProducts(data);
-        setFilteredProducts(data);
+        if (Array.isArray(data)) {
+          setAllProducts(data);
+          setFilteredProducts(data.filter(p => p.isVisible !== false));
+        }
         setLoading(false);
       })
       .catch((err) => {
@@ -120,19 +124,47 @@ export default function Home() {
 
   useEffect(() => {
     let result = [...allProducts];
-    if (searchTerm) {
-      result = result.filter(p =>
-        p.name.toLowerCase().includes(searchTerm) ||
-        p.category.toLowerCase().includes(searchTerm)
-      );
+
+    if (!searchTerm) {
+      // Normal storefront browsing: only show products configured as visible on Home
+      result = result.filter(p => p.isVisible !== false);
+      result = result.filter(p => p.price >= (filters.minPrice || 0) && p.price <= filters.maxPrice);
+      if (filters.minRating > 0) {
+        result = result.filter(p => (p.averageRating || 0) >= filters.minRating);
+      }
+      if (filters.deals.includes("republic")) {
+        result = result.filter(p => p.discountPercent > 0 || p.tag === "Sale");
+      }
+    } else {
+      // Search mode: search across ALL products in the store (including those hidden from home showcase)
+      const cleanTerm = searchTerm.toLowerCase().trim();
+      const skuDigits = cleanTerm.replace(/[^0-9]/g, "");
+      const skuOnlyTerm = cleanTerm.replace(/^(sku|item|code)[\s:\-_#]*/i, "").trim();
+
+      result = result.filter(p => {
+        const nameMatch = p.name?.toLowerCase().includes(cleanTerm);
+        const catMatch = p.category?.toLowerCase().includes(cleanTerm);
+        const subcatMatch = p.subcategory?.toLowerCase().includes(cleanTerm);
+
+        let skuMatch = false;
+        if (p.sku != null && p.sku !== "") {
+          const pSkuStr = String(p.sku).toLowerCase().trim();
+          const digitsInSku = pSkuStr.replace(/[^0-9]/g, "");
+          skuMatch = (
+            pSkuStr === cleanTerm ||
+            pSkuStr.includes(cleanTerm) ||
+            cleanTerm.includes(pSkuStr) ||
+            (skuOnlyTerm && (pSkuStr === skuOnlyTerm || pSkuStr.includes(skuOnlyTerm) || skuOnlyTerm.includes(pSkuStr))) ||
+            (skuDigits && digitsInSku && (digitsInSku === skuDigits || digitsInSku.includes(skuDigits))) ||
+            `sku: ${pSkuStr}`.includes(cleanTerm) ||
+            `sku ${pSkuStr}`.includes(cleanTerm)
+          );
+        }
+
+        return skuMatch || nameMatch || catMatch || subcatMatch;
+      });
     }
-    result = result.filter(p => p.price >= (filters.minPrice || 0) && p.price <= filters.maxPrice);
-    if (filters.minRating > 0) {
-      result = result.filter(p => (p.averageRating || 0) >= filters.minRating);
-    }
-    if (filters.deals.includes("republic")) {
-      result = result.filter(p => p.discountPercent > 0 || p.tag === "Sale");
-    }
+
     setFilteredProducts(result);
   }, [filters, searchTerm, allProducts]);
 
