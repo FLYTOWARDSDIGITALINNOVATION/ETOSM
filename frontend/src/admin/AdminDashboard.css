@@ -231,7 +231,6 @@
 
 /* Base resets for global admin alignment */
 .admin-content {
-  padding: 40px;
   background: #fff0f0;
   /* Very light pink tint for background */
   min-height: 100vh;
@@ -239,15 +238,12 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .admin-content {
-    padding: 20px 15px;
-  }
 
   .dashboard-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 15px;
-    padding: 20px;
+    padding: 20px 55px 20px 20px;
   }
 
   .dashboard-header h1 {

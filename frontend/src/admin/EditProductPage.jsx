@@ -2,6 +2,7 @@ import API_BASE_URL from '../apiConfig';
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Plus } from "lucide-react";
+import AdminLayout from "./AdminLayout";
 import "./EditProductPage.css";
 
 const EditProductPage = () => {
@@ -139,9 +140,10 @@ const EditProductPage = () => {
   };
 
   return (
-    <div className="edit-container">
-      <h1 className="heading">{isDiscountTab ? "Manage Discount" : "Edit Product"}</h1>
-      <button className="back-btn" onClick={() => navigate(-1)}> ← Back </button>
+    <AdminLayout>
+      <div className="edit-container">
+        <h1 className="heading">{isDiscountTab ? "Manage Discount" : "Edit Product"}</h1>
+        <button className="back-btn" onClick={() => navigate(-1)}> ← Back </button>
 
       <form className="edit-form" onSubmit={handleSubmit}>
         {!isDiscountTab && (
@@ -437,6 +439,7 @@ const EditProductPage = () => {
         <button type="submit" className="save-btn">Save Changes</button>
       </form>
     </div>
+    </AdminLayout>
   );
 };
 

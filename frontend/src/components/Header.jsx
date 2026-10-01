@@ -144,11 +144,20 @@ const Header = ({ onSearch }) => {
           {/* Enhanced Search Bar */}
           <div className={`search-container ${isSearchOpen ? "expanded" : ""}`}>
             <div className="search-box">
-              <FaSearch className="search-trigger" onClick={() => setIsSearchOpen(!isSearchOpen)} />
+              <FaSearch
+                className="search-trigger"
+                onClick={() => {
+                  if (localSearch.trim() !== '') {
+                    navigate(`/all-products?search=${encodeURIComponent(localSearch.trim())}`);
+                  } else {
+                    setIsSearchOpen(!isSearchOpen);
+                  }
+                }}
+              />
               <input
                 type="text"
                 className="search-input"
-                placeholder="Search products..."
+                placeholder="Search all products..."
                 value={localSearch}
                 onChange={(e) => {
                   setLocalSearch(e.target.value);
@@ -156,7 +165,7 @@ const Header = ({ onSearch }) => {
                 }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && localSearch.trim() !== '') {
-                    navigate(`/home?search=${encodeURIComponent(localSearch.trim())}`);
+                    navigate(`/all-products?search=${encodeURIComponent(localSearch.trim())}`);
                   }
                 }}
               />

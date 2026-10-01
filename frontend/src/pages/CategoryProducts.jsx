@@ -48,6 +48,14 @@ const CategoryProducts = () => {
     setCurrentPage(1);
   };
 
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate("/home");
+    }
+  };
+
   const activeCategoryObj = categories.find(
     c => (c.name || "").toLowerCase().trim() === decodedCategory.toLowerCase()
   );
@@ -160,11 +168,11 @@ const CategoryProducts = () => {
     <>
       <Header />
       <div className="category-page container">
-
-        {/* 🔙 BACK BUTTON */}
-        <button className="back-btn" onClick={() => navigate(-1)}>
-          ← Back
-        </button>
+        <div className="category-nav-header">
+          <button type="button" className="category-back-btn" onClick={handleBack}>
+            ← Back
+          </button>
+        </div>
 
         <h2 className="category-title">
           {decodedCategory.toUpperCase()} PRODUCTS
@@ -172,7 +180,8 @@ const CategoryProducts = () => {
 
         {activeSubcategories.length > 0 ? (
           <div className="category-layout">
-            <aside className="category-sidebar">
+            <div className="category-sidebar-wrap">
+              <aside className="category-sidebar">
               <h3 className="sidebar-title">Subcategories</h3>
               <ul className="sidebar-list">
                 <li
@@ -205,24 +214,25 @@ const CategoryProducts = () => {
                 )}
               </ul>
             </aside>
-            <main className="category-main-content">
-              <div className="product-grid">
-                {loading ? (
-                  <p>Loading products...</p>
-                ) : filteredProducts.length === 0 ? (
-                  <p className="no-products-message">No products found in this subcategory</p>
-                ) : (
-                  paginatedProducts.map(product => (
-                    <ProductCard key={product._id} product={product} />
-                  ))
-                )}
-              </div>
-              {renderPagination()}
-            </main>
           </div>
-        ) : (
-          <>
+          <main className="category-main-content">
             <div className="product-grid">
+              {loading ? (
+                <p>Loading products...</p>
+              ) : filteredProducts.length === 0 ? (
+                <p className="no-products-message">No products found in this subcategory</p>
+              ) : (
+                paginatedProducts.map(product => (
+                  <ProductCard key={product._id} product={product} />
+                ))
+              )}
+            </div>
+            {renderPagination()}
+          </main>
+        </div>
+      ) : (
+        <>
+          <div className="product-grid">
               {loading ? (
                 <p>Loading products...</p>
               ) : products.length === 0 ? (

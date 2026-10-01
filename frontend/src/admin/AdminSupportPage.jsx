@@ -2,6 +2,7 @@ import API_BASE_URL from '../apiConfig';
 import React, { useEffect, useState } from "react";
 import { FaArrowLeft, FaPaperPlane, FaCloudUploadAlt, FaTimes, FaTrash } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import AdminLayout from "./AdminLayout";
 import "./AdminSupportPage.css";
 
 const AdminSupportPage = () => {
@@ -102,10 +103,8 @@ const AdminSupportPage = () => {
     };
 
     return (
-        <div className="admin-support-page chat-mode">
-            <button className="back-btn" onClick={() => navigate("/admin")}>
-                <FaArrowLeft /> Dashboard
-            </button>
+        <AdminLayout>
+            <div className="admin-support-page chat-mode">
 
             <div className="chat-container">
                 {/* SIDEBAR */}
@@ -195,7 +194,8 @@ const AdminSupportPage = () => {
                     )}
                 </div>
             </div>
-        </div>
+          </div>
+        </AdminLayout>
     );
 };
 

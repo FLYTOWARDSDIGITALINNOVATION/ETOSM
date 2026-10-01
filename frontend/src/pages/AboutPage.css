@@ -13,17 +13,17 @@
   background: var(--white);
   font-family: var(--font-standard);
   color: var(--text-dark);
-  overflow-x: hidden;
-  padding-top: 120px;
+  overflow-x: clip;
+  padding-top: 100px;
 }
 
 /* --- HERO SECTION --- */
 .hero-split {
   display: grid;
   grid-template-columns: 1.2fr 0.8fr;
-  min-height: 90vh;
+  min-height: auto;
   align-items: center;
-  padding: 0 8%;
+  padding: 35px 8% 45px;
 }
 
 .tagline {
@@ -32,15 +32,15 @@
   letter-spacing: 7px;
   font-size: 0.8rem;
   font-weight: 700;
-  margin-bottom: 35px;
+  margin-bottom: 18px;
   display: block;
 }
 
 .split-h1 {
   font-weight: 800;
-  font-size: clamp(3.5rem, 6vw, 5.5rem);
+  font-size: clamp(3rem, 5vw, 4.5rem);
   line-height: 1.1;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
   letter-spacing: -1px;
 }
 
@@ -52,18 +52,18 @@
 }
 
 .hero-para {
-  max-width: 440px;
-  font-size: 1.15rem;
-  line-height: 1.8;
+  max-width: 480px;
+  font-size: 1.05rem;
+  line-height: 1.7;
   color: #555;
-  margin-bottom: 50px;
+  margin-bottom: 28px;
 }
 
 .cta-main {
   background: var(--brand-color);
   color: white;
   border: none;
-  padding: 20px 45px;
+  padding: 16px 36px;
   display: flex;
   align-items: center;
   gap: 15px;
@@ -116,7 +116,7 @@
 .brand-marquee {
   background: var(--text-dark);
   color: var(--white);
-  padding: 25px 0;
+  padding: 16px 0;
   overflow: hidden;
 }
 
@@ -132,9 +132,8 @@
 }
 
 /* --- VISION GRID --- */
-/* --- VISION GRID --- */
 .vision-container {
-  padding: 100px 8%;
+  padding: 55px 8%;
   background: #fafafa;
 }
 
@@ -142,7 +141,7 @@
 .vision-card h3 {
   color: #000000;
   font-weight: 800; /* Keeps it looking bold and professional */
-  margin-bottom: 15px;
+  margin-bottom: 12px;
 }
 
 .vision-card p {
@@ -155,12 +154,14 @@
 .vision-layout {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 40px;
+  gap: 28px;
 }
 
 .vision-card {
   background: white;
-  padding: 60px 40px;
+  padding: 38px 28px;
+  border-radius: 8px;
+  border: 1px solid #f1f5f9;
   transition: var(--ease-fluid);
 }
 
@@ -170,20 +171,20 @@
 }
 
 .v-icon {
-  font-size: 35px;
+  font-size: 32px;
   color: var(--brand-color); /* Preserves the var(--primary-color) icon */
-  margin-bottom: 30px;
+  margin-bottom: 18px;
 }
 
 /* --- WHY US (CARD SPACING & IMAGE ZOOM) --- */
 .depth-section {
-  padding: 120px 8%;
+  padding: 60px 8%;
 }
 
 .depth-content {
   display: grid;
   grid-template-columns: 1.2fr 0.8fr;
-  gap: 80px;
+  gap: 45px;
   align-items: center;
   max-width: 1200px;
   margin: 0 auto;
@@ -191,8 +192,8 @@
 
 .depth-title {
   font-weight: 800;
-  font-size: clamp(2.5rem, 5vw, 3.5rem);
-  margin-bottom: 25px;
+  font-size: clamp(2.2rem, 4vw, 3rem);
+  margin-bottom: 16px;
   letter-spacing: -2px;
   line-height: 1.1;
 }
@@ -200,14 +201,15 @@
 .depth-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 24px;
-  margin-top: 40px;
+  gap: 18px;
+  margin-top: 25px;
 }
 
 .depth-col {
-  padding: 35px;
+  padding: 24px;
   background: #fcfcfc;
-  border-radius: 4px;
+  border-radius: 6px;
+  border: 1px solid #f1f5f9;
   border-left: 0px solid var(--brand-color);
   transition: all 0.4s var(--ease-fluid);
 }
@@ -237,17 +239,17 @@
 
 /* --- CLOSING --- */
 .closing-statement {
-  padding: 120px 5%;
+  padding: 45px 5% 55px;
   text-align: center;
 }
 
 .quote-text {
   font-weight: 900;
-  font-size: clamp(2rem, 5vw, 4rem);
-  margin-bottom: 20px;
-  color: #FFE4E1;
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  margin-bottom: 15px;
+  color: #111827;
   text-transform: uppercase;
-  letter-spacing: -2px;
+  letter-spacing: -1px;
 }
 
 .brand-signature {

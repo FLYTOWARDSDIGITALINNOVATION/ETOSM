@@ -94,7 +94,7 @@ const AdminOrdersPage = () => {
   return (
     <AdminLayout>
       <div className="orders-container">
-        <div className="page-header">
+        <div className="orders-page-header">
           <h1>Orders Management</h1>
           <p>View and manage all customer orders</p>
         </div>
@@ -118,20 +118,32 @@ const AdminOrdersPage = () => {
         {/* 📦 TABLE */}
         {!loading && orders.length > 0 && (
           <>
-            <div className="filter-bar" style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-              <div style={{ position: 'relative', flex: '1', minWidth: '220px' }}>
-                <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+            <div className="orders-filter-bar">
+              <div className="filter-search-box">
+                <Search size={16} className="filter-search-icon" />
                 <input
                   type="text"
-                  placeholder="Search customer name, email, or order ID..."
+                  placeholder="Search customer, email, SKU, or order ID..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  style={{ width: '100%', paddingLeft: '36px', paddingRight: '12px', paddingTop: '8px', paddingBottom: '8px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                  className="filter-search-input"
                 />
               </div>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} placeholder="From Date" style={{ padding: '8px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }} />
-                <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} placeholder="To Date" style={{ padding: '8px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }} />
+              <div className="filter-date-group">
+                <input
+                  type="date"
+                  value={fromDate}
+                  onChange={(e) => setFromDate(e.target.value)}
+                  className="filter-date-input"
+                  title="From Date"
+                />
+                <input
+                  type="date"
+                  value={toDate}
+                  onChange={(e) => setToDate(e.target.value)}
+                  className="filter-date-input"
+                  title="To Date"
+                />
                 <button className="filter-btn" onClick={fetchOrders}>
                   Filter
                 </button>
@@ -169,31 +181,40 @@ const AdminOrdersPage = () => {
                       );
                     })
                     .map((o) => (
-                    <tr key={o._id}>
-                      <td className="order-id">#{o._id?.slice(-6) || 'N/A'}</td>
-                      <td style={{ fontSize: '12px', fontWeight: '600', color: '#475569' }}>
-                        {o.invoiceNumber || 'N/A'}
+                    <tr key={o._id} className="order-row-card">
+                      <td className="col-order-id" data-label="Order ID">
+                        <span className="order-id-val">#{o._id?.slice(-6) || 'N/A'}</span>
                       </td>
-                      <td>
-                        <strong>{o.userName || 'New Customer'}</strong>
-                        <br />
-                        <small>{o.userEmail || 'No Email'}</small>
+                      <td className="col-invoice-id" data-label="Invoice ID">
+                        <span className="invoice-val">{o.invoiceNumber || 'N/A'}</span>
                       </td>
-                      <td>
-                        <strong>{o.productName || 'Unknown Product'}</strong>
-                        {o.sku != null && (
-                          <div style={{ marginTop: '3px' }}>
-                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', backgroundColor: '#fee2e2', color: '#b91c1c', padding: '2px 7px', borderRadius: '4px', fontSize: '11px', fontWeight: '700', border: '1px solid #fecaca' }}>
+                      <td className="col-customer" data-label="Customer">
+                        <div className="customer-cell">
+                          <strong className="customer-name">{o.userName || 'New Customer'}</strong>
+                          <small className="customer-email">{o.userEmail || 'No Email'}</small>
+                        </div>
+                      </td>
+                      <td className="col-product" data-label="Product">
+                        <div className="product-cell">
+                          <strong className="product-name-val">{o.productName || 'Unknown Product'}</strong>
+                          {o.sku != null && (
+                            <span className="order-sku-badge">
                               SKU: {o.sku}
                             </span>
-                          </div>
-                        )}
-                        <small style={{ color: '#64748b', display: 'block', marginTop: '2px' }}>ID: {o.productId || 'N/A'}</small>
+                          )}
+                          <small className="product-id-val">ID: {o.productId || 'N/A'}</small>
+                        </div>
                       </td>
-                      <td>{o.quantity || 0}</td>
-                      <td className="price">₹{o.totalAmount?.toFixed(2) || o.price || '0.00'}</td>
-                      <td>{o.createdAt ? new Date(o.createdAt).toLocaleDateString() : 'N/A'}</td>
-                      <td>
+                      <td className="col-qty" data-label="Qty">
+                        <span className="qty-val">{o.quantity || 0}</span>
+                      </td>
+                      <td className="col-price price" data-label="Price">
+                        <span className="price-val">₹{o.totalAmount?.toFixed(2) || o.price || '0.00'}</span>
+                      </td>
+                      <td className="col-date" data-label="Date">
+                        <span className="date-val">{o.createdAt ? new Date(o.createdAt).toLocaleDateString() : 'N/A'}</span>
+                      </td>
+                      <td className="col-status" data-label="Status">
                         <select
                           value={o.status || "Ordered"}
                           className={`status-select ${(o.status || "ordered").toLowerCase()}`}
@@ -204,9 +225,9 @@ const AdminOrdersPage = () => {
                           ))}
                         </select>
                       </td>
-                      <td>
+                      <td className="col-details" data-label="Details">
                         <button className="details-btn" onClick={() => setSelectedOrder(o)} title="View Details">
-                          <Eye size={16} />
+                          <Eye size={16} /> <span className="details-btn-text">View Slip</span>
                         </button>
                       </td>
                     </tr>

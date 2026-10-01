@@ -98,7 +98,7 @@ const RemoveProductPage = () => {
     return (
         <AdminLayout>
             <div className="manage-products-container">
-                <div className="page-header">
+                <div className="manage-header page-header">
                     <h1>Manage Products</h1>
                     <p>Toggle Home Page visibility (ON/OFF), edit, discount, view stats, or delete products</p>
                 </div>

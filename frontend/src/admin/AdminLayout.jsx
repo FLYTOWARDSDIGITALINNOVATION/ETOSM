@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Menu,
@@ -18,8 +18,28 @@ import "./AdminLayout.css";
 const AdminLayout = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  // Sidebar defaults to closed on mobile (<=768px), open on desktop (>768px)
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    if (typeof window !== "undefined") {
+      return window.innerWidth > 768;
+    }
+    return false;
+  });
   const [expandedMenu, setExpandedMenu] = useState(null);
+
+  // Automatically close sidebar on mobile when navigating routes
+  useEffect(() => {
+    if (window.innerWidth <= 768) {
+      setSidebarOpen(false);
+    }
+  }, [location.pathname]);
+
+  const handleNavigate = (path) => {
+    navigate(path);
+    if (window.innerWidth <= 768) {
+      setSidebarOpen(false);
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -93,7 +113,7 @@ const AdminLayout = ({ children }) => {
               src="/logo1.png"
               alt="Logo"
               className="sidebar-logo"
-              onClick={() => navigate("/")}
+              onClick={() => handleNavigate("/")}
               style={{ cursor: 'pointer', height: '40px' }}
             />
           </div>
@@ -131,7 +151,7 @@ const AdminLayout = ({ children }) => {
                           key={subindex}
                           className={`nav-subitem ${isActive(subitem.path) ? "active" : ""
                             }`}
-                          onClick={() => navigate(subitem.path)}
+                          onClick={() => handleNavigate(subitem.path)}
                         >
                           {subitem.title}
                         </button>
@@ -142,7 +162,7 @@ const AdminLayout = ({ children }) => {
               ) : (
                 <button
                   className={`nav-item ${isActive(item.path) ? "active" : ""}`}
-                  onClick={() => navigate(item.path)}
+                  onClick={() => handleNavigate(item.path)}
                 >
                   <item.icon size={20} />
                   {sidebarOpen && <span className="nav-text">{item.title}</span>}
@@ -160,13 +180,16 @@ const AdminLayout = ({ children }) => {
         </div>
       </aside>
 
-      {/* Mobile Toggle Button */}
-      <button
-        className="mobile-toggle-btn"
-        onClick={() => setSidebarOpen(true)}
-      >
-        <Menu size={24} color="white" />
-      </button>
+      {/* Mobile Toggle Button (Visible at top only when sidebar is closed) */}
+      {!sidebarOpen && (
+        <button
+          className="mobile-toggle-btn"
+          onClick={() => setSidebarOpen(true)}
+          aria-label="Open Admin Menu"
+        >
+          <Menu size={22} color="white" />
+        </button>
+      )}
 
       {/* Mobile Overlay */}
       {sidebarOpen && (

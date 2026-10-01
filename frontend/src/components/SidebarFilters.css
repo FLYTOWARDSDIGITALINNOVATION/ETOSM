@@ -5,9 +5,13 @@
     padding: 25px;
     border-radius: 20px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-    height: fit-content;
+    border: 1px solid #e2e8f0;
     position: sticky;
-    top: 100px;
+    top: 130px;
+    max-height: calc(100vh - 150px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    align-self: flex-start;
     transition: all 0.3s ease;
 }
 

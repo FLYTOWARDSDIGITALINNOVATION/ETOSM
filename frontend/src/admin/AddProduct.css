@@ -1,29 +1,37 @@
 .add-product-container {
-  max-width: 900px;
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+  box-sizing: border-box;
 }
 
 .form-header {
-  margin-bottom: 30px;
+  margin-bottom: 24px;
+  padding-right: 55px; /* Leaves clear space for top-right hamburger icon on mobile */
 }
 
 .form-header h1 {
-  margin: 0 0 8px 0;
+  margin: 0 0 6px 0;
   color: #1e293b;
   font-size: 28px;
   font-weight: 700;
+  line-height: 1.2;
 }
 
 .form-header p {
   margin: 0;
   color: #64748b;
   font-size: 14px;
+  line-height: 1.5;
 }
 
 .form-card {
+  width: 100%;
   background: white;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .form-section {
@@ -322,8 +330,33 @@
 }
 
 @media (max-width: 768px) {
+  .add-product-container {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+  }
+
+  .form-header {
+    margin-bottom: 18px;
+    padding-right: 55px;
+  }
+
+  .form-header h1 {
+    font-size: 22px;
+  }
+
+  .form-header p {
+    font-size: 13px;
+  }
+
+  .form-card {
+    border-radius: 12px;
+    width: 100%;
+  }
+
   .form-row {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
 
   .form-actions {
@@ -331,7 +364,7 @@
   }
 
   .form-section {
-    padding: 16px;
+    padding: 16px 14px;
   }
 
   .spec-row-header, .spec-row-edit {

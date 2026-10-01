@@ -379,7 +379,7 @@ const AuthPage = () => {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
           >
-            <div className="divider">
+            <div className="auth-divider">
               <span>Or continue with</span>
             </div>
             <div className="social-buttons">
