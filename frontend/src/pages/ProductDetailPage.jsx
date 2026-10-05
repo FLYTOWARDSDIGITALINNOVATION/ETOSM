@@ -62,11 +62,24 @@ const renderDescription = (text, collapsed) => {
   let firstHeadingSkipped = false;
 
   lines.forEach((rawLine) => {
-    const line = rawLine.trim();
+    let line = rawLine.trim();
 
     if (!line) {
       flushBullets();
       return;
+    }
+
+    // Detect and strip explicit H1 / H2 / H3 tags if present
+    let explicitLevel = null;
+    if (/^H1:\s*/i.test(line)) {
+      line = line.replace(/^H1:\s*/i, '').trim();
+      explicitLevel = 1;
+    } else if (/^H2:\s*/i.test(line)) {
+      line = line.replace(/^H2:\s*/i, '').trim();
+      explicitLevel = 2;
+    } else if (/^H3:\s*/i.test(line)) {
+      line = line.replace(/^H3:\s*/i, '').trim();
+      explicitLevel = 3;
     }
 
     // Bullet point → collect into buffer
@@ -77,6 +90,24 @@ const renderDescription = (text, collapsed) => {
     }
 
     flushBullets();
+
+    // Explicit H1/H2/H3 handling
+    if (explicitLevel === 1) {
+      if (!firstHeadingSkipped) {
+        firstHeadingSkipped = true;
+        return; // Already covered by top page H1
+      }
+      elements.push(<h2 key={key++} className="desc-main-title">{line}</h2>);
+      return;
+    }
+    if (explicitLevel === 2) {
+      elements.push(<h2 key={key++} className="desc-section-heading">{line}</h2>);
+      return;
+    }
+    if (explicitLevel === 3) {
+      elements.push(<h3 key={key++} className="desc-subheading">{line}</h3>);
+      return;
+    }
 
     // FAQ question  e.g. "1. What is a rechargeable battery 3.7V?"
     if (isFaq(line)) {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import API_BASE_URL from "../apiConfig";
+import AdminLayout from "./AdminLayout";
 import "./AdminSettings.css";
 
 const AdminSettings = () => {
@@ -77,57 +78,59 @@ const AdminSettings = () => {
     }
   };
 
-  if (loading) return <div className="settings-loading">Loading settings...</div>;
+  if (loading) {
+    return (
+      <AdminLayout>
+        <div className="settings-loading">Loading settings...</div>
+      </AdminLayout>
+    );
+  }
 
   return (
-    <div className="admin-settings-container">
-      <button 
-        onClick={() => navigate(-1)} 
-        style={{ background: "#fff1f2", color: "#e3000f", border: "none", padding: "8px 16px", borderRadius: "8px", cursor: "pointer", fontWeight: "600", marginBottom: "20px" }}
-      >
-        ← Back
-      </button>
-      <h2>Store Settings</h2>
-      {message && (
-        <div className={`settings-msg ${message.includes("success") ? "success" : "error"}`}>
-          {message}
-        </div>
-      )}
+    <AdminLayout>
+      <div className="admin-settings-container">
+        <h2>Store Settings</h2>
+        {message && (
+          <div className={`settings-msg ${message.includes("success") ? "success" : "error"}`}>
+            {message}
+          </div>
+        )}
 
-      <form className="settings-form" onSubmit={handleSave}>
-        <div className="settings-section">
-          <h3>Shipping Configuration</h3>
-          
-          <div className="form-group">
-            <label>Standard Shipping Price (₹)</label>
-            <input
-              type="number"
-              step="0.01"
-              name="standardShippingPrice"
-              value={settings.standardShippingPrice}
-              onChange={handleChange}
-              required
-            />
+        <form className="settings-form" onSubmit={handleSave}>
+          <div className="settings-section">
+            <h3>Shipping Configuration</h3>
+            
+            <div className="form-group">
+              <label>Standard Shipping Price (₹)</label>
+              <input
+                type="number"
+                step="0.01"
+                name="standardShippingPrice"
+                value={settings.standardShippingPrice}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Express Shipping Price (₹)</label>
+              <input
+                type="number"
+                step="0.01"
+                name="expressShippingPrice"
+                value={settings.expressShippingPrice}
+                onChange={handleChange}
+                required
+              />
+            </div>
           </div>
 
-          <div className="form-group">
-            <label>Express Shipping Price (₹)</label>
-            <input
-              type="number"
-              step="0.01"
-              name="expressShippingPrice"
-              value={settings.expressShippingPrice}
-              onChange={handleChange}
-              required
-            />
-          </div>
-        </div>
-
-        <button type="submit" className="save-settings-btn" disabled={saving}>
-          {saving ? "Saving..." : "Save Settings"}
-        </button>
-      </form>
-    </div>
+          <button type="submit" className="save-settings-btn" disabled={saving}>
+            {saving ? "Saving..." : "Save Settings"}
+          </button>
+        </form>
+      </div>
+    </AdminLayout>
   );
 };
 

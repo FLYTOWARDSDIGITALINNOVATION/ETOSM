@@ -175,10 +175,20 @@
   margin-left: 280px;
   transition: 0.3s;
   min-height: 100vh;
+  width: calc(100% - 280px);
+  box-sizing: border-box;
 }
 
 .admin-main.sidebar-closed {
   margin-left: 80px;
+  width: calc(100% - 80px);
+}
+
+.admin-content {
+  padding: 30px;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 100vh;
 }
 
 /* Custom Scrollbar for Sidebar */
@@ -234,21 +244,38 @@
     margin-left: 0 !important;
   }
 
+  .admin-content {
+    padding: 16px 12px !important;
+    width: 100% !important;
+    box-sizing: border-box;
+  }
+
   .mobile-toggle-btn {
     display: flex;
     position: fixed;
-    bottom: 25px;
-    right: 25px;
-    width: 55px;
-    height: 55px;
+    top: 16px;
+    right: 16px;
+    width: 44px;
+    height: 44px;
     background: #e3000f;
+    color: white;
     border: none;
-    border-radius: 50%;
+    border-radius: 12px;
     align-items: center;
     justify-content: center;
     z-index: 99;
-    box-shadow: 0 4px 15px rgba(227, 0, 15, 0.4);
+    box-shadow: 0 4px 14px rgba(227, 0, 15, 0.35);
     cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .mobile-toggle-btn:hover {
+    background: #b3000c;
+    transform: scale(1.05);
+  }
+
+  .mobile-toggle-btn:active {
+    transform: scale(0.95);
   }
 
   .sidebar-overlay {

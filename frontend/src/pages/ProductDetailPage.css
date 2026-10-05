@@ -276,8 +276,9 @@
   line-height: 1.4;
 }
 
-/* FAQ questions → H3 */
-.desc-faq-question {
+/* Subheadings & FAQ questions → H3 */
+.desc-faq-question,
+.desc-subheading {
   font-size: 1.05rem;
   font-weight: 700;
   color: #1e293b;

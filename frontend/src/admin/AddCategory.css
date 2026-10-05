@@ -1,23 +1,29 @@
 /* Category Management */
 .add-category-container {
-  max-width: 1000px;
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  box-sizing: border-box;
 }
 
 .form-header {
-  margin-bottom: 30px;
+  margin-bottom: 24px;
+  padding-right: 55px; /* Room for hamburger button */
 }
 
 .form-header h1 {
-  margin: 0 0 8px 0;
+  margin: 0 0 6px 0;
   color: #1e293b;
   font-size: 28px;
   font-weight: 700;
+  line-height: 1.2;
 }
 
 .form-header p {
   margin: 0;
   color: #64748b;
   font-size: 14px;
+  line-height: 1.5;
 }
 
 /* Form Section */
@@ -371,4 +377,29 @@
 
 .btn-remove-sub:hover {
   color: #ef4444;
+}
+
+@media (max-width: 768px) {
+  .add-category-container {
+    width: 100%;
+    margin: 0;
+  }
+
+  .form-header {
+    margin-bottom: 18px;
+    padding-right: 55px;
+  }
+
+  .form-header h1 {
+    font-size: 22px;
+  }
+
+  .form-header p {
+    font-size: 13px;
+  }
+
+  .category-form-section {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
 }

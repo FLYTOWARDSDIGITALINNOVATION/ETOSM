@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useLocation, Link } from "react-router-dom";
+import { useLocation, Link, useNavigate } from "react-router-dom";
 import { FaQuoteRight, FaStar, FaHeartbeat, FaRunning, FaArrowRight, FaGoogle, FaPen, FaTimes } from 'react-icons/fa';
 import Header from "../components/Header";
 import SidebarFilters from "../components/SidebarFilters";
@@ -68,12 +68,14 @@ export default function Home() {
   const [recentOrders, setRecentOrders] = useState([]); // Real orders from DB
   const [loading, setLoading] = useState(true);
   const location = useLocation();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const query = params.get("search");
     if (query) {
+      navigate(`/all-products?search=${encodeURIComponent(query)}`, { replace: true });
       setSearchTerm(query);
       // Optional: scroll to products section
       setTimeout(() => {
@@ -83,7 +85,7 @@ export default function Home() {
     } else {
       setSearchTerm("");
     }
-  }, [location.search]);
+  }, [location.search, navigate]);
   const [filters, setFilters] = useState({
     deals: [],
     delivery: [],
@@ -124,6 +126,19 @@ export default function Home() {
 
   useEffect(() => {
     let result = [...allProducts];
+    if (searchTerm && searchTerm.trim()) {
+      const searchWords = searchTerm.toLowerCase().trim().split(/\s+/);
+      result = result.filter(p => {
+        const combined = `${p?.name || ""} ${p?.category || ""} ${p?.subcategory || ""} ${p?.slug || ""}`.toLowerCase();
+        return searchWords.every(word => combined.includes(word));
+      });
+    }
+    result = result.filter(p => p.price >= (filters.minPrice || 0) && p.price <= filters.maxPrice);
+    if (filters.minRating > 0) {
+      result = result.filter(p => (p.averageRating || 0) >= filters.minRating);
+    }
+    if (filters.deals.includes("republic")) {
+      result = result.filter(p => p.discountPercent > 0 || p.tag === "Sale");
 
     if (!searchTerm) {
       // Normal storefront browsing: only show products configured as visible on Home

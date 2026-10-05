@@ -8,11 +8,11 @@
 
 .admin-support-page.chat-mode {
     max-width: 1200px;
-    height: 85vh;
-    padding: 20px;
-    margin: 20px auto;
-    background: linear-gradient(135deg, #ffe6f2, #ffd4e5);
-    border-radius: 20px;
+    height: calc(100vh - 80px);
+    padding: 0;
+    margin: 0;
+    background: transparent;
+    border-radius: 16px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -296,13 +296,21 @@
     .admin-support-page.chat-mode {
         padding: 0;
         margin: 0;
-        height: 100vh;
-        border-radius: 0;
+        height: calc(100vh - 40px);
+        border-radius: 12px;
         max-width: 100%;
     }
 
     .chat-container {
-        border-radius: 0;
+        border-radius: 12px;
+    }
+
+    .sidebar-header {
+        padding: 16px 60px 16px 16px; /* Room for mobile hamburger button */
+    }
+
+    .chat-header {
+        padding-right: 60px; /* Room for mobile hamburger button */
     }
 
     .chat-sidebar {

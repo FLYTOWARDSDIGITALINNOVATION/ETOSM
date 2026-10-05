@@ -1,27 +1,81 @@
 .category-page.container {
-  padding-top: 150px;
-  padding-bottom: 60px;
-}
-
-/* 🔙 Back Button */
-.back-btn {
-  background: var(--primary-color);
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 8px;
-  cursor: pointer;
-  margin-bottom: 20px;
-}
-
-.back-btn:hover {
-  background: var(--primary-dark);
+  padding-top: 140px;
+  padding-bottom: 50px;
 }
 
 .category-title {
   text-align: center;
-  margin-bottom: 30px;
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 1.8rem;
+  font-weight: 800;
   color: var(--primary-dark);
+  letter-spacing: -0.5px;
+}
+
+/* Category Subcategories Sidebar Layout */
+.category-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 30px;
+  align-items: start;
+  margin-top: 10px;
+}
+
+.category-sidebar-wrap {
+  position: sticky;
+  top: 130px;
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 🔙 Back Button and Navigation */
+.category-nav-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 14px;
+  width: 100%;
+}
+
+.category-back-btn,
+.category-page .back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  color: #1e293b;
+  border: 1.5px solid #cbd5e1;
+  padding: 8px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+  width: fit-content;
+  position: relative;
+  z-index: 5;
+}
+
+.category-back-btn:hover,
+.category-page .back-btn:hover {
+  background: var(--primary-color, #e3000f);
+  color: white;
+  border-color: var(--primary-color, #e3000f);
+  transform: translateX(-3px);
+  box-shadow: 0 4px 12px rgba(227, 0, 15, 0.2);
+}
+
+.category-sidebar {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+  max-height: calc(100vh - 180px);
+  overflow-y: auto;
+  scrollbar-width: thin;
 }
 
 /* ✅ FIXED CLASS NAME */
@@ -38,8 +92,16 @@
     gap: 20px;
   }
 
+  .category-page.container,
   .category-page {
-    padding: 110px 20px 40px;
+    padding-top: 135px !important;
+    padding-bottom: 30px !important;
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  .category-sidebar-wrap {
+    position: static;
   }
 }
 
@@ -49,32 +111,28 @@
     gap: 12px;
   }
 
+  .category-page.container,
   .category-page {
-    padding: 100px 15px 30px;
+    padding-top: 130px !important;
+    padding-bottom: 25px !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
   }
 
   .category-title {
-    font-size: 1.2rem;
+    font-size: 1.25rem;
+    margin-bottom: 15px;
   }
-}
 
-/* Category Subcategories Sidebar Layout */
-.category-layout {
-  display: grid;
-  grid-template-columns: 240px 1fr;
-  gap: 30px;
-  align-items: start;
-  margin-top: 20px;
-}
+  .category-nav-header {
+    margin-bottom: 10px;
+  }
 
-.category-sidebar {
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e2e8f0;
-  position: sticky;
-  top: 100px;
+  .category-back-btn,
+  .category-page .back-btn {
+    padding: 7px 14px;
+    font-size: 0.84rem;
+  }
 }
 
 .sidebar-title {

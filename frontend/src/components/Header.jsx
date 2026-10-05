@@ -224,6 +224,34 @@ const Header = ({ onSearch }) => {
 
         {/* 4. Right: Search & Utilities */}
         <div className="nav-right">
+          {/* Enhanced Search Bar */}
+          <div className={`search-container ${isSearchOpen ? "expanded" : ""}`}>
+            <div className="search-box">
+              <FaSearch
+                className="search-trigger"
+                onClick={() => {
+                  if (localSearch.trim() !== '') {
+                    navigate(`/all-products?search=${encodeURIComponent(localSearch.trim())}`);
+                  } else {
+                    setIsSearchOpen(!isSearchOpen);
+                  }
+                }}
+              />
+              <input
+                type="text"
+                className="search-input"
+                placeholder="Search all products..."
+                value={localSearch}
+                onChange={(e) => {
+                  setLocalSearch(e.target.value);
+                  if (onSearch) onSearch(e.target.value);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && localSearch.trim() !== '') {
+                    navigate(`/all-products?search=${encodeURIComponent(localSearch.trim())}`);
+                  }
+                }}
+              />
           {/* Enhanced Search Bar & Instant SKU Dropdown */}
           <div ref={searchWrapperRef} style={{ position: 'relative' }}>
             <div className={`search-container ${isSearchOpen ? "expanded" : ""}`}>
