@@ -52,13 +52,42 @@ const AllProductsPage = () => {
       const searchWords = searchTerm.toLowerCase().trim().split(/\s+/);
       const combined = `${product?.name || ""} ${product?.category || ""} ${product?.subcategory || ""} ${product?.slug || ""}`.toLowerCase();
       matchesSearch = searchWords.every(word => combined.includes(word));
+    if (!searchTerm) {
+      return (
+        selectedCategory === "All" ||
+        product.category?.toLowerCase() === selectedCategory.toLowerCase()
+      );
+    }
+
+    const cleanTerm = searchTerm.toLowerCase().trim();
+    const skuDigits = cleanTerm.replace(/[^0-9]/g, "");
+    const skuOnlyTerm = cleanTerm.replace(/^(sku|item|code)[\s:\-_#]*/i, "").trim();
+
+    const nameMatch = product.name?.toLowerCase().includes(cleanTerm);
+    const catMatch = product.category?.toLowerCase().includes(cleanTerm);
+    const subcatMatch = product.subcategory?.toLowerCase().includes(cleanTerm);
+
+    let skuMatch = false;
+    if (product.sku != null && product.sku !== "") {
+      const pSkuStr = String(product.sku).toLowerCase().trim();
+      const digitsInSku = pSkuStr.replace(/[^0-9]/g, "");
+      skuMatch = (
+        pSkuStr === cleanTerm ||
+        pSkuStr.includes(cleanTerm) ||
+        cleanTerm.includes(pSkuStr) ||
+        (skuOnlyTerm && (pSkuStr === skuOnlyTerm || pSkuStr.includes(skuOnlyTerm) || skuOnlyTerm.includes(pSkuStr))) ||
+        (skuDigits && digitsInSku && (digitsInSku === skuDigits || digitsInSku.includes(skuDigits))) ||
+        `sku: ${pSkuStr}`.includes(cleanTerm) ||
+        `sku ${pSkuStr}`.includes(cleanTerm)
+      );
     }
 
     const matchesCategory =
       selectedCategory === "All" ||
       product.category?.toLowerCase() === selectedCategory.toLowerCase();
 
-    return matchesSearch && matchesCategory;
+    // Direct SKU match always displays the product
+    return skuMatch || ((nameMatch || catMatch || subcatMatch) && matchesCategory);
   });
 
   // Sorting
@@ -89,7 +118,7 @@ const AllProductsPage = () => {
             <Search size={18} className="search-icon" />
             <input
               type="text"
-              placeholder="Search catalog products..."
+              placeholder="Search catalog products, SKU..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />

@@ -88,6 +88,25 @@ const ProductCard = ({ product }) => {
         >
           {product.name}
         </h4>
+        {product.sku != null && product.sku !== "" && (
+          <div style={{ marginTop: '2px', marginBottom: '4px' }}>
+            <span style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              fontSize: '11px',
+              color: '#64748b',
+              fontWeight: '500',
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: '4px',
+              padding: '1px 6px'
+            }}>
+              <span style={{ color: '#94a3b8', fontWeight: '400' }}>SKU:</span>
+              <span style={{ color: '#1e293b', fontWeight: '700' }}>{product.sku}</span>
+            </span>
+          </div>
+        )}
         <div className="rating-container">
           <div className="stars">
             {[...Array(5)].map((_, i) => (

@@ -91,9 +91,33 @@ const RemoveProductPage = () => {
         }
     };
 
-    const filteredProducts = products.filter((product) =>
-        product.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredProducts = products.filter((product) => {
+        if (!searchTerm) return true;
+        const cleanTerm = searchTerm.toLowerCase().trim();
+        const skuDigits = cleanTerm.replace(/[^0-9]/g, "");
+        const skuOnlyTerm = cleanTerm.replace(/^(sku|item|code)[\s:\-_#]*/i, "").trim();
+
+        const nameMatch = product.name?.toLowerCase().includes(cleanTerm);
+        const catMatch = product.category?.toLowerCase().includes(cleanTerm);
+        const subcatMatch = product.subcategory?.toLowerCase().includes(cleanTerm);
+
+        let skuMatch = false;
+        if (product.sku != null && product.sku !== "") {
+            const pSkuStr = String(product.sku).toLowerCase().trim();
+            const digitsInSku = pSkuStr.replace(/[^0-9]/g, "");
+            skuMatch = (
+                pSkuStr === cleanTerm ||
+                pSkuStr.includes(cleanTerm) ||
+                cleanTerm.includes(pSkuStr) ||
+                (skuOnlyTerm && (pSkuStr === skuOnlyTerm || pSkuStr.includes(skuOnlyTerm) || skuOnlyTerm.includes(pSkuStr))) ||
+                (skuDigits && digitsInSku && (digitsInSku === skuDigits || digitsInSku.includes(skuDigits))) ||
+                `sku: ${pSkuStr}`.includes(cleanTerm) ||
+                `sku ${pSkuStr}`.includes(cleanTerm)
+            );
+        }
+
+        return skuMatch || nameMatch || catMatch || subcatMatch;
+    });
 
     return (
         <AdminLayout>
@@ -107,7 +131,7 @@ const RemoveProductPage = () => {
                     <Search size={20} className="search-icon" />
                     <input
                         type="text"
-                        placeholder="Search products..."
+                        placeholder="Search by product name, SKU, or category..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="search-input"
@@ -132,6 +156,25 @@ const RemoveProductPage = () => {
                                     </div>
                                     <div className="product-info">
                                         <h3>{product.name}</h3>
+                                        {product.sku != null && product.sku !== "" && (
+                                            <div style={{ marginTop: '4px', marginBottom: '6px' }}>
+                                                <span style={{
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: '4px',
+                                                    fontSize: '11px',
+                                                    color: '#475569',
+                                                    fontWeight: '600',
+                                                    background: '#f8fafc',
+                                                    border: '1px solid #e2e8f0',
+                                                    borderRadius: '4px',
+                                                    padding: '2px 8px'
+                                                }}>
+                                                    <span style={{ color: '#94a3b8' }}>SKU:</span>
+                                                    <span style={{ color: '#1e293b', fontWeight: '700' }}>{product.sku}</span>
+                                                </span>
+                                            </div>
+                                        )}
                                         <p className="price">₹{product.price}</p>
                                         <p className="category">{product.category}</p>
                                         <div className="product-stats" style={{ display: 'flex', gap: '15px', marginTop: '8px', fontSize: '0.85rem', fontWeight: 'bold' }}>
