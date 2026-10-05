@@ -47,11 +47,6 @@ const AllProductsPage = () => {
 
   // Filtering
   const filteredProducts = products.filter(product => {
-    let matchesSearch = true;
-    if (searchTerm && searchTerm.trim()) {
-      const searchWords = searchTerm.toLowerCase().trim().split(/\s+/);
-      const combined = `${product?.name || ""} ${product?.category || ""} ${product?.subcategory || ""} ${product?.slug || ""}`.toLowerCase();
-      matchesSearch = searchWords.every(word => combined.includes(word));
     if (!searchTerm) {
       return (
         selectedCategory === "All" ||

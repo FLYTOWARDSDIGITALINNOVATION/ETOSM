@@ -126,19 +126,6 @@ export default function Home() {
 
   useEffect(() => {
     let result = [...allProducts];
-    if (searchTerm && searchTerm.trim()) {
-      const searchWords = searchTerm.toLowerCase().trim().split(/\s+/);
-      result = result.filter(p => {
-        const combined = `${p?.name || ""} ${p?.category || ""} ${p?.subcategory || ""} ${p?.slug || ""}`.toLowerCase();
-        return searchWords.every(word => combined.includes(word));
-      });
-    }
-    result = result.filter(p => p.price >= (filters.minPrice || 0) && p.price <= filters.maxPrice);
-    if (filters.minRating > 0) {
-      result = result.filter(p => (p.averageRating || 0) >= filters.minRating);
-    }
-    if (filters.deals.includes("republic")) {
-      result = result.filter(p => p.discountPercent > 0 || p.tag === "Sale");
 
     if (!searchTerm) {
       // Normal storefront browsing: only show products configured as visible on Home

@@ -11,7 +11,7 @@ const Razorpay = require("razorpay");
 const crypto = require("crypto");
 const { OAuth2Client } = require("google-auth-library");
 const nodemailer = require("nodemailer");
-require("dotenv").config();
+require("dotenv").config({ path: path.resolve(__dirname, ".env") });
 
 // Set up Nodemailer with Gmail (if credentials exist) or Ethereal for testing
 let transporter;
