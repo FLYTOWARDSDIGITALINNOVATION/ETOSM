@@ -79,16 +79,18 @@
   border: none;
   color: #64748b;
   cursor: pointer;
-  padding: 15px 20px;
+  padding: 13px 18px;
   display: flex;
   align-items: center;
-  gap: 15px;
-  transition: 0.3s;
+  gap: 14px;
+  transition: all 0.2s ease;
   font-size: 14px;
   font-weight: 600;
   border-radius: 12px;
   white-space: nowrap;
   font-family: 'Plus Jakarta Sans', sans-serif;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .nav-item:hover {
@@ -99,46 +101,83 @@
 .nav-item.active {
   background: #e3000f;
   color: white;
-  box-shadow: 0 4px 15px rgba(199, 21, 133, 0.2);
+  box-shadow: 0 4px 14px rgba(227, 0, 15, 0.25);
 }
 
 .nav-item.active svg {
   color: white;
 }
 
+.nav-item.has-active-child {
+  background: #fff1f2;
+  color: #e3000f;
+  font-weight: 700;
+}
+
+.nav-item.has-active-child svg {
+  color: #e3000f;
+}
+
+.chevron-icon {
+  margin-left: auto;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  color: #94a3b8;
+}
+
+.submenu-toggle.expanded .chevron-icon {
+  transform: rotate(180deg);
+  color: #e3000f;
+}
+
 /* Submenu */
 .submenu {
   background: #fff9fb;
   border-radius: 12px;
-  padding: 5px;
-  margin: 5px 0 15px 0;
-  border: 1px solid #fff1f2;
+  padding: 6px;
+  margin: 4px 0 10px 0;
+  border: 1px solid #ffe4e6;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  animation: submenuSlideDown 0.2s ease forwards;
+}
+
+@keyframes submenuSlideDown {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .nav-subitem {
   background: none;
   border: none;
-  color: #94a3b8;
+  color: #475569;
   cursor: pointer;
-  padding: 12px 20px;
-  display: block;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
   width: 100%;
   text-align: left;
   font-size: 13px;
-  transition: 0.3s;
+  transition: all 0.2s ease;
   font-weight: 500;
   border-radius: 8px;
+  box-sizing: border-box;
+  font-family: inherit;
 }
 
 .nav-subitem:hover {
   color: #e3000f;
-  background: white;
+  background: #ffffff;
+  padding-left: 20px;
 }
 
 .nav-subitem.active {
   color: #e3000f;
   font-weight: 700;
-  background: white;
+  background: #ffffff;
+  box-shadow: 0 2px 6px rgba(227, 0, 15, 0.08);
+  border-left: 3px solid #e3000f;
+  padding-left: 18px;
 }
 
 /* Footer */

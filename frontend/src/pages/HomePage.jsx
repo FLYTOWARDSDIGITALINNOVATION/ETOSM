@@ -1,8 +1,32 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
-import { FaQuoteRight, FaStar, FaHeartbeat, FaRunning, FaArrowRight, FaGoogle, FaPen, FaTimes } from 'react-icons/fa';
+import {
+  FaQuoteLeft,
+  FaQuoteRight,
+  FaUser,
+  FaStar,
+  FaArrowRight,
+  FaGoogle,
+  FaPen,
+  FaTimes
+} from "react-icons/fa";
+import {
+  ShieldCheck,
+  Zap,
+  Snowflake,
+  Activity,
+  Users,
+  Settings,
+  Layers,
+  FileText,
+  Headphones,
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  CheckCircle2,
+  Sparkles
+} from "lucide-react";
 import Header from "../components/Header";
-import SidebarFilters from "../components/SidebarFilters";
 import Hero from "../components/Hero";
 import CollectionGrid from "../components/CollectionGrid";
 import ProductCard from "../components/ProductCard";
@@ -11,23 +35,98 @@ import API_BASE_URL from "../apiConfig";
 
 import "./HomePage.css";
 
+// Section 5 Default Featured Reviews from PDF
+const defaultFeaturedReviews = [
+  {
+    id: "spec-rev-1",
+    name: "Vikram Malhotra",
+    role: "Industrial IoT Lead",
+    rating: 5,
+    text: "Quick shipping and excellent customer support. We use their customized battery packs for our outdoor telemetry sensor nodes. Great thermal management and reliable battery protection.",
+    date: "Verified Customer"
+  },
+  {
+    id: "spec-rev-2",
+    name: "Dr. Ananya Sen",
+    role: "Acoustic Consultant",
+    rating: 5,
+    text: "Used their 250V electrolytic capacitors for a power supply redesign in a high-fidelity valve amplifier. Extremely low ESR and stable capacitance under load. Audio clarity is amazing.",
+    date: "Verified Customer"
+  },
+  {
+    id: "spec-rev-3",
+    name: "Arun Prakash",
+    role: "Coimbatore, India",
+    rating: 5,
+    text: "The team is very helpful and professional. Got exactly what I needed for my project. Quality is top-notch!",
+    date: "Verified Customer"
+  }
+];
+
 export default function Home() {
   const [allProducts, setAllProducts] = useState([]);
-  const [googleReviews, setGoogleReviews] = useState([]);
+  const [googleReviews, setGoogleReviews] = useState(defaultFeaturedReviews);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newName, setNewName] = useState("");
   const [newRole, setNewRole] = useState("Verified Customer");
   const [newRating, setNewRating] = useState(5);
   const [newComment, setNewComment] = useState("");
 
+  const [filteredProducts, setFilteredProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const bestsellersRef = useRef(null);
+
+  const scrollBestsellers = (direction) => {
+    if (bestsellersRef.current) {
+      // Scroll by roughly 2 to 3 card widths
+      const scrollAmount = bestsellersRef.current.clientWidth * 0.8;
+      bestsellersRef.current.scrollBy({
+        left: direction === "next" ? scrollAmount : -scrollAmount,
+        behavior: "smooth"
+      });
+    }
+  };
+
+  // SEO document title & meta tags check
+  useEffect(() => {
+    document.title = "Electronic Components Online India | EToSM";
+
+    // Set meta description
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement("meta");
+      metaDesc.name = "description";
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.content =
+      "Find electronic components online in India at EToSM Technology. Explore power electronic components, battery packs, amplifiers and BMS solutions.";
+
+    // Set meta keywords
+    let metaKeywords = document.querySelector('meta[name="keywords"]');
+    if (!metaKeywords) {
+      metaKeywords = document.createElement("meta");
+      metaKeywords.name = "keywords";
+      document.head.appendChild(metaKeywords);
+    }
+    metaKeywords.content =
+      "Electronic Components Online India, Electronic Components Store India, Power Electronic Components";
+  }, []);
+
   // Fetch approved Google reviews
   useEffect(() => {
     fetch(`${API_BASE_URL}/google-reviews`)
-      .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) setGoogleReviews(data);
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          // Merge API reviews while keeping the 2 PDF specified reviews first
+          setGoogleReviews([...defaultFeaturedReviews.slice(0, 2), ...data]);
+        }
       })
-      .catch(err => console.error("Failed to load Google reviews:", err));
+      .catch((err) => console.error("Failed to load Google reviews:", err));
   }, []);
 
   const handleSubmitGoogleReview = async (e) => {
@@ -64,12 +163,6 @@ export default function Home() {
       alert("Failed to submit review. Please try again.");
     }
   };
-  const [filteredProducts, setFilteredProducts] = useState([]);
-  const [recentOrders, setRecentOrders] = useState([]); // Real orders from DB
-  const [loading, setLoading] = useState(true);
-  const location = useLocation();
-  const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -77,15 +170,11 @@ export default function Home() {
     if (query) {
       navigate(`/all-products?search=${encodeURIComponent(query)}`, { replace: true });
       setSearchTerm(query);
-      // Optional: scroll to products section
-      setTimeout(() => {
-        const collection = document.querySelector('.collection-section');
-        if (collection) collection.scrollIntoView({ behavior: 'smooth' });
-      }, 500);
     } else {
       setSearchTerm("");
     }
   }, [location.search, navigate]);
+
   const [filters, setFilters] = useState({
     deals: [],
     delivery: [],
@@ -100,7 +189,7 @@ export default function Home() {
       .then((data) => {
         if (Array.isArray(data)) {
           setAllProducts(data);
-          setFilteredProducts(data.filter(p => p.isVisible !== false));
+          setFilteredProducts(data.filter((p) => p.isVisible !== false));
         }
         setLoading(false);
       })
@@ -108,16 +197,10 @@ export default function Home() {
         console.error("Failed to fetch products:", err);
         setLoading(false);
       });
-
-    // Fetch real recent orders
-    fetch(`${API_BASE_URL}/orders/public/recent`)
-      .then(res => res.json())
-      .then(data => setRecentOrders(data))
-      .catch(err => console.error("Failed to fetch recent orders", err));
   }, []);
 
   const handleFilterChange = (key, value) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+    setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
   const handleSearch = (term) => {
@@ -128,41 +211,43 @@ export default function Home() {
     let result = [...allProducts];
 
     if (!searchTerm) {
-      // Normal storefront browsing: only show products configured as visible on Home
-      result = result.filter(p => p.isVisible !== false);
-      result = result.filter(p => p.price >= (filters.minPrice || 0) && p.price <= filters.maxPrice);
+      result = result.filter((p) => p.isVisible !== false);
+      result = result.filter(
+        (p) => p.price >= (filters.minPrice || 0) && p.price <= filters.maxPrice
+      );
       if (filters.minRating > 0) {
-        result = result.filter(p => (p.averageRating || 0) >= filters.minRating);
+        result = result.filter((p) => (p.averageRating || 0) >= filters.minRating);
       }
       if (filters.deals.includes("republic")) {
-        result = result.filter(p => p.discountPercent > 0 || p.tag === "Sale");
+        result = result.filter((p) => p.discountPercent > 0 || p.tag === "Sale");
       }
     } else {
-      // Search mode: search across ALL products in the store (including those hidden from home showcase)
       const cleanTerm = searchTerm.toLowerCase().trim();
       const skuDigits = cleanTerm.replace(/[^0-9]/g, "");
       const skuOnlyTerm = cleanTerm.replace(/^(sku|item|code)[\s:\-_#]*/i, "").trim();
 
-      result = result.filter(p => {
+      result = result.filter((p) => {
         const nameMatch = p.name?.toLowerCase().includes(cleanTerm);
         const catMatch = p.category?.toLowerCase().includes(cleanTerm);
         const subcatMatch = p.subcategory?.toLowerCase().includes(cleanTerm);
-
         let skuMatch = false;
         if (p.sku != null && p.sku !== "") {
           const pSkuStr = String(p.sku).toLowerCase().trim();
           const digitsInSku = pSkuStr.replace(/[^0-9]/g, "");
-          skuMatch = (
+          skuMatch =
             pSkuStr === cleanTerm ||
             pSkuStr.includes(cleanTerm) ||
             cleanTerm.includes(pSkuStr) ||
-            (skuOnlyTerm && (pSkuStr === skuOnlyTerm || pSkuStr.includes(skuOnlyTerm) || skuOnlyTerm.includes(pSkuStr))) ||
-            (skuDigits && digitsInSku && (digitsInSku === skuDigits || digitsInSku.includes(skuDigits))) ||
+            (skuOnlyTerm &&
+              (pSkuStr === skuOnlyTerm ||
+                pSkuStr.includes(skuOnlyTerm) ||
+                skuOnlyTerm.includes(pSkuStr))) ||
+            (skuDigits &&
+              digitsInSku &&
+              (digitsInSku === skuDigits || digitsInSku.includes(skuDigits))) ||
             `sku: ${pSkuStr}`.includes(cleanTerm) ||
-            `sku ${pSkuStr}`.includes(cleanTerm)
-          );
+            `sku ${pSkuStr}`.includes(cleanTerm);
         }
-
         return skuMatch || nameMatch || catMatch || subcatMatch;
       });
     }
@@ -170,39 +255,29 @@ export default function Home() {
     setFilteredProducts(result);
   }, [filters, searchTerm, allProducts]);
 
-  const [showMobileFilters, setShowMobileFilters] = useState(false);
-
   const renderReviewCard = (rev, uniqueKey) => (
-    <div key={uniqueKey} className="parallax-card">
-      <div className="card-inner-layer">
-        <div className="card-top">
-          <span className="status-badge">
-            <span className="pulse-dot"></span>
-            Verified Google Review
-          </span>
-          <FaGoogle className="rev-icon-floating" style={{ color: '#4285F4' }} />
+    <div key={uniqueKey} className="customer-review-card">
+      <div className="review-quote-wrap">
+        <FaQuoteLeft className="review-blue-quote" />
+      </div>
+
+      <p className="review-card-body">"{rev.text}"</p>
+
+      <div className="review-card-bottom">
+        <div className="review-author-wrap">
+          <div className="review-avatar-circle">
+            <FaUser className="review-avatar-icon" />
+          </div>
+          <div className="review-author-info">
+            <h4 className="review-author-name">{rev.name}</h4>
+            <span className="review-author-role">{rev.role}</span>
+          </div>
         </div>
 
-        <div className="testimonial-text-box">
-          <span className="quote-watermark">“</span>
-          <p className="testimonial-para">"{rev.text}"</p>
-        </div>
-
-        <div className="card-footer-info">
-          <div>
-            <h4 className="user-name-inter">{rev.name}</h4>
-            <span className="user-role-primary">{rev.role}</span>
-          </div>
-          <div>
-            <div className="rating-stars-gold" style={{ marginBottom: '5px' }}>
-              {[...Array(5)].map((_, i) => (
-                <FaStar key={i} style={{ color: i < rev.rating ? '#ffb800' : '#e2e8f0' }} />
-              ))}
-            </div>
-            <span style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', textAlign: 'right' }}>
-              {rev.createdAt ? new Date(rev.createdAt).toLocaleDateString() : rev.date || "Just now"}
-            </span>
-          </div>
+        <div className="review-stars-gold">
+          {[...Array(rev.rating || 5)].map((_, i) => (
+            <FaStar key={i} />
+          ))}
         </div>
       </div>
     </div>
@@ -211,105 +286,271 @@ export default function Home() {
   return (
     <div className="home" style={{ fontFamily: "'Inter', sans-serif" }}>
       <Header onSearch={handleSearch} />
+
+      {/* =========================================================================
+          SECTION 1: HERO SECTION
+          ========================================================================= */}
       <Hero />
+
+      {/* =========================================================================
+          SECTION 2: PRODUCT CATEGORIES
+          ========================================================================= */}
       <CollectionGrid />
 
-      {/* Main Shop Section */}
-      <div id="shop-section" className="shop-layout container">
-        <div className="mobile-filter-toggle">
-          <button onClick={() => setShowMobileFilters(!showMobileFilters)}>
-            {showMobileFilters ? "Hide Filters" : "Show Filters"}
-          </button>
-        </div>
+      {/* =========================================================================
+          SECTION 3: BESTSELLING PRODUCTS
+          ========================================================================= */}
+      <section className="bestsellers-section" id="shop-section">
+        <div className="container">
+          {/* Section 3 Header (Matching Reference Image & PDF) */}
+          <div className="bestsellers-header-block">
+            <span className="bestsellers-badge">— BESTSELLERS —</span>
+            <h2 className="bestsellers-title">Bestselling Products</h2>
+            <p className="bestsellers-description">
+              Discover our popular electronic products for different power and electronic
+              applications. From everyday components to power electronic components, browse our
+              range to find suitable products for your projects and business needs.
+            </p>
+          </div>
 
-        <SidebarFilters
-          filters={filters}
-          onFilterChange={handleFilterChange}
-          className={showMobileFilters ? "mobile-active" : ""}
-        />
+          {/* Section 3: Bestselling Products 5-Card Carousel with Side Arrows (No boxes below) */}
+          <div className="bestsellers-carousel-outer">
+            <button
+              className="bestsellers-arrow-btn prev"
+              onClick={() => scrollBestsellers("prev")}
+              aria-label="Previous products"
+            >
+              <ChevronLeft size={22} />
+            </button>
 
-        <div className="shop-main">
-          <section className="collection-compact">
-            <p className="item-count">{filteredProducts.length} items found</p>
-          </section>
+            <div className="bestsellers-carousel-track" ref={bestsellersRef}>
+              {loading ? (
+                <p style={{ padding: "40px", width: "100%", textAlign: "center", color: "#64748b" }}>
+                  Loading products...
+                </p>
+              ) : filteredProducts.length === 0 ? (
+                <div className="no-results" style={{ width: "100%", textAlign: "center", padding: "40px" }}>
+                  <h3>No products found</h3>
+                </div>
+              ) : (
+                filteredProducts.map((product) => (
+                  <div className="bestsellers-carousel-card" key={product._id}>
+                    <ProductCard product={product} />
+                  </div>
+                ))
+              )}
+            </div>
 
-          <section className="products-grid-container">
-            {loading ? (
-              <p>Loading products...</p>
-            ) : filteredProducts.length === 0 ? (
-              <div className="no-results">
-                <h3>No products match your filters</h3>
-              </div>
-            ) : (
-              <div className="products-view">
-                {filteredProducts.map((product) => (
-                  <ProductCard key={product._id} product={product} />
-                ))}
-              </div>
-            )}
-          </section>
+            <button
+              className="bestsellers-arrow-btn next"
+              onClick={() => scrollBestsellers("next")}
+              aria-label="Next products"
+            >
+              <ChevronRight size={22} />
+            </button>
+          </div>
 
-          {/* View All Products CTA */}
+          {/* View All Products Catalog CTA */}
           {!loading && (
-            <div style={{ textAlign: 'center', padding: '10px 0 40px' }}>
-              <Link
-                to="/all-products"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  background: 'linear-gradient(135deg, #e3000f, #b5000c)',
-                  color: 'white',
-                  padding: '14px 36px',
-                  borderRadius: '50px',
-                  fontWeight: '700',
-                  fontSize: '1rem',
-                  textDecoration: 'none',
-                  boxShadow: '0 6px 24px rgba(227,0,15,0.28)',
-                  transition: 'all 0.3s ease',
-                  letterSpacing: '0.3px',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 12px 32px rgba(227,0,15,0.36)'; }}
-                onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 6px 24px rgba(227,0,15,0.28)'; }}
-              >
-                View All Products Catalog <FaArrowRight />
+            <div style={{ textAlign: "center", padding: "30px 0 10px" }}>
+              <Link to="/all-products" className="bestsellers-view-all-btn">
+                <span>View All Products Catalog</span>
+                <FaArrowRight />
               </Link>
             </div>
           )}
         </div>
-      </div>
+      </section>
 
-      {/* --- GOOGLE REVIEWS SECTION --- */}
-      <section className="motion-review-section">
-        <div className="bg-glow"></div>
+      {/* =========================================================================
+          SECTION 4: WHY CHOOSE US?
+          ========================================================================= */}
+      <section className="why-choose-section">
         <div className="container">
-          <div className="section-intro" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '20px' }}>
-            <div>
-              <span className="premium-tag">Google Customer Reviews</span>
-              <h2 className="motion-title">Trusted by Tech <span className="italic-primary">Professionals</span></h2>
+          <div className="why-choose-header">
+            <span className="why-choose-badge">WHY CHOOSE US</span>
+            <h2 className="why-choose-title">
+              Your Trusted Source for Electronic Components in India
+            </h2>
+            <p className="why-choose-lead">
+              Finding the right electronic components is important for every project. At EToSM
+              Technology, we offer a range of electronic products and power solutions to help you
+              find products that suit your requirements.
+            </p>
+          </div>
+
+          {/* 4 Key Pillars Grid (H3 tags from PDF Page 3) */}
+          <div className="why-choose-pillars-grid">
+            <div className="pillar-card">
+              <div className="pillar-icon-wrap">
+                <Layers size={22} />
+              </div>
+              <h3>Wide Range of Products</h3>
+              <p>
+                Explore battery packs, electronic components, amplifiers, battery management
+                systems and power solutions in one place.
+              </p>
             </div>
 
-            {/* Google Aggregate Rating Badge */}
-            <div className="google-aggregate-badge">
-              <div className="google-brand-header">
-                <FaGoogle className="g-brand-icon" style={{ color: '#4285F4', marginRight: '6px' }} />
-                <span className="g-brand-text">Google</span>
+            <div className="pillar-card">
+              <div className="pillar-icon-wrap">
+                <FileText size={22} />
               </div>
-              <div className="g-rating-meta">
-                <span className="g-rating-number">4.9</span>
-                <div className="rating-stars-gold">
-                  <FaStar /><FaStar /><FaStar /><FaStar /><FaStar />
+              <h3>Clear Product Details</h3>
+              <p>
+                Check product features and specifications to understand what each product offers
+                before making a decision.
+              </p>
+            </div>
+
+            <div className="pillar-card">
+              <div className="pillar-icon-wrap">
+                <ShieldCheck size={22} />
+              </div>
+              <h3>Quality and Reliability</h3>
+              <p>
+                We focus on product quality, performance and safety to help you choose components
+                for your applications, including projects that require power electronic components.
+              </p>
+            </div>
+
+            <div className="pillar-card">
+              <div className="pillar-icon-wrap">
+                <Headphones size={22} />
+              </div>
+              <h3>Support for Your Needs</h3>
+              <p>
+                Have questions about a product? Contact our team for help finding options that suit
+                your project or business requirements.
+              </p>
+            </div>
+          </div>
+
+          {/* Reference Image: Engineering Standards & Capabilities Banner */}
+          <div className="engineering-standards-box">
+            <div className="standards-left">
+              <h3>Why Choose ETOSM Technology?</h3>
+              <p>
+                We combine engineering expertise with a commitment to quality, delivering electronic
+                components that meet your performance and reliability needs.
+              </p>
+            </div>
+            <div className="standards-grid">
+              <div className="standard-item">
+                <div className="std-icon-wrap">
+                  <ShieldCheck size={22} />
+                </div>
+                <div className="std-item-text">
+                  <strong>Quality Products</strong>
+                  <span>Reliable and tested for consistent performance</span>
                 </div>
               </div>
-              <span className="g-rating-count">Based on 148+ verified reviews</span>
+
+              <div className="standard-item">
+                <div className="std-icon-wrap">
+                  <Snowflake size={22} />
+                </div>
+                <div className="std-item-text">
+                  <strong>Thermal Management</strong>
+                  <span>Efficient cooling for longer life</span>
+                </div>
+              </div>
+
+              <div className="standard-item">
+                <div className="std-icon-wrap">
+                  <ShieldCheck size={22} />
+                </div>
+                <div className="std-item-text">
+                  <strong>Safety & Reliability</strong>
+                  <span>Built with global safety standards</span>
+                </div>
+              </div>
+
+              <div className="standard-item">
+                <div className="std-icon-wrap">
+                  <Activity size={22} />
+                </div>
+                <div className="std-item-text">
+                  <strong>EMI Control</strong>
+                  <span>Reduced interference for stable operation</span>
+                </div>
+              </div>
+
+              <div className="standard-item">
+                <div className="std-icon-wrap">
+                  <Users size={22} />
+                </div>
+                <div className="std-item-text">
+                  <strong>Engineering Support</strong>
+                  <span>Our team is here to help you find the right solution</span>
+                </div>
+              </div>
+
+              <div className="standard-item">
+                <div className="std-icon-wrap">
+                  <Settings size={22} />
+                </div>
+                <div className="std-item-text">
+                  <strong>Custom Solutions</strong>
+                  <span>Tailored products for your unique needs</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className={`motion-grid ${googleReviews.length > 3 ? 'horizontal-scroll' : ''}`}>
-            {googleReviews.map((rev) => renderReviewCard(rev, rev._id || rev.id))}
+          {/* Section 4 CTA: Explore Our Products */}
+          <div className="why-choose-cta">
+            <Link to="/all-products" className="why-choose-btn">
+              <span>Explore Our Products</span>
+              <ArrowRight size={18} />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* =========================================================================
+          SECTION 5: CUSTOMER REVIEWS
+          ========================================================================= */}
+      <section className="motion-review-section">
+        <div className="container">
+          {/* Centered Header from PDF & Reference Image */}
+          <div className="reviews-section-header">
+            <span className="reviews-eyebrow">WHAT OUR CUSTOMERS SAY</span>
+            <h2 className="reviews-h2">What Our Customers Say About EToSM Technology</h2>
+            <h3 className="reviews-subheading">Real Feedback. Real Trust.</h3>
+            <p className="reviews-lead">
+              Read about our customers' experiences with EToSM Technology and the products they
+              use for their work.
+            </p>
           </div>
 
-          <div className="write-review-cta" style={{ textAlign: 'center', marginTop: '50px' }}>
+          {/* Reviews Cards Grid (Matching Reference Image) */}
+          <div className="reviews-cards-grid">
+            {googleReviews.slice(0, 3).map((rev) => renderReviewCard(rev, rev._id || rev.id))}
+          </div>
+
+          {/* Carousel Pagination Dots from Reference Image */}
+          <div className="reviews-carousel-dots">
+            <span className="dot active"></span>
+            <span className="dot"></span>
+            <span className="dot"></span>
+          </div>
+
+          {/* Google Aggregate Social Proof & Write a Google Review CTA */}
+          <div className="write-review-cta-wrap">
+            <div className="google-aggregate-pill">
+              <FaGoogle className="g-pill-icon" style={{ color: "#4285F4" }} />
+              <span className="g-pill-score">4.9</span>
+              <div className="g-pill-stars">
+                <FaStar />
+                <FaStar />
+                <FaStar />
+                <FaStar />
+                <FaStar />
+              </div>
+              <span className="g-pill-count">Based on 148+ verified Google reviews</span>
+            </div>
+
             <button className="write-google-btn" onClick={() => setIsModalOpen(true)}>
               <FaPen /> Write a Google Review
             </button>
@@ -317,7 +558,36 @@ export default function Home() {
         </div>
       </section>
 
-      {/* --- GOOGLE REVIEW MODAL --- */}
+      {/* =========================================================================
+          SECTION 6: FINAL CALL TO ACTION (MATCHING REFERENCE IMAGE)
+          ========================================================================= */}
+      <section className="final-cta-section">
+        <div className="container">
+          <div className="final-cta-card">
+            <div className="final-cta-pcb-overlay"></div>
+
+            <div className="final-cta-left">
+              <h2 className="final-cta-title">
+                Looking for Electronic Components Online in India?
+              </h2>
+              <p className="final-cta-desc">
+                Explore our range of electronic components and power solutions for your next project.
+                Whether you need components for a new design or power electronic components for
+                your application, our team is here to help.
+              </p>
+            </div>
+
+            <div className="final-cta-right">
+              <Link to="/contact" className="final-cta-pill-btn">
+                <span>Talk to Our Team</span>
+                <ArrowRight size={18} />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* --- GOOGLE REVIEW SUBMISSION MODAL --- */}
       {isModalOpen && (
         <div className="google-modal-overlay" onClick={() => setIsModalOpen(false)}>
           <div className="google-modal-card" onClick={(e) => e.stopPropagation()}>
@@ -325,9 +595,9 @@ export default function Home() {
               <FaTimes />
             </button>
             <div className="google-modal-header">
-              <FaGoogle size={32} style={{ color: '#4285F4', marginBottom: '10px' }} />
+              <FaGoogle size={32} style={{ color: "#4285F4", marginBottom: "10px" }} />
               <h3>Submit a Google Review</h3>
-              <p>Share your experience with ETOSM Technology products</p>
+              <p>Share your experience with EToSM Technology products</p>
             </div>
             <form onSubmit={handleSubmitGoogleReview} className="google-modal-form">
               <div className="form-group">
@@ -344,7 +614,7 @@ export default function Home() {
                 <label>Your Professional Role / Designation</label>
                 <input
                   type="text"
-                  placeholder="e.g. IoT Hobbyist, Audio Enthusiast (Optional)"
+                  placeholder="e.g. IoT Lead, Audio Consultant (Optional)"
                   value={newRole}
                   onChange={(e) => setNewRole(e.target.value)}
                 />
@@ -355,7 +625,7 @@ export default function Home() {
                   {[1, 2, 3, 4, 5].map((star) => (
                     <FaStar
                       key={star}
-                      className={`selector-star ${star <= newRating ? 'active' : ''}`}
+                      className={`selector-star ${star <= newRating ? "active" : ""}`}
                       onClick={() => setNewRating(star)}
                     />
                   ))}
@@ -384,4 +654,3 @@ export default function Home() {
     </div>
   );
 }
-

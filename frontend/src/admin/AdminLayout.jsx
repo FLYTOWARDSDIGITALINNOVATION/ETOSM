@@ -12,6 +12,15 @@ import {
   ChevronDown,
   Star,
   Settings,
+  FileText,
+  CheckCircle2,
+  Clock,
+  FileCheck,
+  BarChart3,
+  RotateCcw,
+  Printer,
+  Receipt,
+  Truck,
 } from "lucide-react";
 import "./AdminLayout.css";
 
@@ -49,7 +58,57 @@ const AdminLayout = ({ children }) => {
     window.location.href = "/";
   };
 
-  const isActive = (path) => location.pathname === path;
+  const isActive = (path) => {
+    if (!path) return false;
+    if (path === "/admin/products") {
+      return location.pathname === "/admin/products" || location.pathname === "/admin/remove-product";
+    }
+    if (path === "/admin/create-invoice") {
+      return location.pathname === "/admin/create-invoice" || location.pathname === "/admin/invoices";
+    }
+    if (path === "/admin/paid-invoices") {
+      return location.pathname === "/admin/paid-invoices";
+    }
+    if (path === "/admin/pending-invoices") {
+      return location.pathname === "/admin/pending-invoices";
+    }
+    if (path === "/admin/quotations") {
+      return location.pathname === "/admin/quotations";
+    }
+    if (path === "/admin/billing-reports") {
+      return location.pathname === "/admin/billing-reports";
+    }
+    if (path === "/admin/credit-notes") {
+      return location.pathname === "/admin/credit-notes";
+    }
+    if (path === "/admin/shipping-labels") {
+      return location.pathname === "/admin/shipping-labels";
+    }
+    if (path === "/admin/orders") {
+      return location.pathname === "/admin/orders";
+    }
+    if (path === "/admin/customers") {
+      return location.pathname === "/admin/customers";
+    }
+    if (path === "/admin/support") {
+      return location.pathname === "/admin/support";
+    }
+    if (path === "/admin/reviews") {
+      return location.pathname === "/admin/reviews";
+    }
+    if (path === "/admin/settings") {
+      return location.pathname === "/admin/settings";
+    }
+    if (path === "/admin") {
+      return location.pathname === "/admin";
+    }
+    return location.pathname === path;
+  };
+
+  const isParentActive = (item) => {
+    if (!item.submenu) return isActive(item.path);
+    return item.submenu.some((sub) => isActive(sub.path));
+  };
 
   const toggleMenu = (menu) => {
     setExpandedMenu(expandedMenu === menu ? null : menu);
@@ -63,37 +122,47 @@ const AdminLayout = ({ children }) => {
       submenu: null,
     },
     {
-      title: "Catalog",
+      title: "Products",
       icon: Package,
       submenu: [
+        { title: "Product Management", path: "/admin/products" },
         { title: "Add Product", path: "/admin/add-product" },
-        { title: "Manage Products", path: "/admin/remove-product" },
         { title: "Add Category", path: "/admin/add-category" },
       ],
     },
     {
-      title: "Orders",
-      icon: ShoppingCart,
-      path: "/admin/orders",
-      submenu: null,
+      title: "Invoices & Billing",
+      icon: Receipt,
+      submenu: [
+        { title: "Create Invoice", path: "/admin/create-invoice" },
+        { title: "Paid Invoices", path: "/admin/paid-invoices" },
+        { title: "Pending Invoices", path: "/admin/pending-invoices" },
+        { title: "Quotation Management", path: "/admin/quotations" },
+        { title: "Credit Notes", path: "/admin/credit-notes" },
+        { title: "Billing Reports", path: "/admin/billing-reports" },
+      ],
     },
     {
-      title: "Customers",
+      title: "Orders & Shipping",
+      icon: Truck,
+      submenu: [
+        { title: "Orders Management", path: "/admin/orders" },
+        { title: "Shipping Labels (6*4)", path: "/admin/shipping-labels" },
+      ],
+    },
+    {
+      title: "Customer Management",
       icon: Users,
       path: "/admin/customers",
       submenu: null,
     },
     {
-      title: "Support",
+      title: "Support & Reviews",
       icon: MessageSquare,
-      path: "/admin/support",
-      submenu: null,
-    },
-    {
-      title: "Reviews",
-      icon: Star,
-      path: "/admin/reviews",
-      submenu: null,
+      submenu: [
+        { title: "Customer Support", path: "/admin/support" },
+        { title: "Product Reviews", path: "/admin/reviews" },
+      ],
     },
     {
       title: "Settings",
@@ -102,6 +171,16 @@ const AdminLayout = ({ children }) => {
       submenu: null,
     },
   ];
+
+  // Automatically expand the submenu containing the active route
+  useEffect(() => {
+    const parent = menuItems.find(
+      (item) => item.submenu && item.submenu.some((sub) => isActive(sub.path))
+    );
+    if (parent) {
+      setExpandedMenu(parent.title);
+    }
+  }, [location.pathname]);
 
   return (
     <div className="admin-layout" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
@@ -132,15 +211,24 @@ const AdminLayout = ({ children }) => {
               {item.submenu ? (
                 <>
                   <button
-                    className={`nav-item submenu-toggle ${expandedMenu === item.title ? "expanded" : ""
-                      }`}
-                    onClick={() => toggleMenu(item.title)}
+                    className={`nav-item submenu-toggle ${
+                      expandedMenu === item.title ? "expanded" : ""
+                    } ${isParentActive(item) ? "has-active-child" : ""}`}
+                    onClick={() => {
+                      if (!sidebarOpen) {
+                        setSidebarOpen(true);
+                        setExpandedMenu(item.title);
+                      } else {
+                        toggleMenu(item.title);
+                      }
+                    }}
+                    title={item.title}
                   >
                     <item.icon size={20} />
                     {sidebarOpen && (
                       <>
                         <span className="nav-text">{item.title}</span>
-                        <ChevronDown size={16} />
+                        <ChevronDown size={16} className="chevron-icon" />
                       </>
                     )}
                   </button>
@@ -149,11 +237,10 @@ const AdminLayout = ({ children }) => {
                       {item.submenu.map((subitem, subindex) => (
                         <button
                           key={subindex}
-                          className={`nav-subitem ${isActive(subitem.path) ? "active" : ""
-                            }`}
+                          className={`nav-subitem ${isActive(subitem.path) ? "active" : ""}`}
                           onClick={() => handleNavigate(subitem.path)}
                         >
-                          {subitem.title}
+                          <span>{subitem.title}</span>
                         </button>
                       ))}
                     </div>
@@ -163,6 +250,7 @@ const AdminLayout = ({ children }) => {
                 <button
                   className={`nav-item ${isActive(item.path) ? "active" : ""}`}
                   onClick={() => handleNavigate(item.path)}
+                  title={item.title}
                 >
                   <item.icon size={20} />
                   {sidebarOpen && <span className="nav-text">{item.title}</span>}

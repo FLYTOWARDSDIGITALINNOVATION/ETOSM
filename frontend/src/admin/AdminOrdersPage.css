@@ -1,25 +1,27 @@
 /* Orders Management Page */
-.orders-container {
+.admin-orders-page {
   width: 100%;
-  max-width: 1200px;
+  max-width: 1300px;
   margin: 0 auto;
   box-sizing: border-box;
-  padding-bottom: 90px; /* Leave space above floating mobile toggle button */
+  padding: 0 0 60px 0 !important;
 }
 
 /* Page Header - specifically scoped to avoid conflicts with other admin pages */
-.orders-page-header,
-.orders-container .page-header {
+.admin-orders-page .orders-page-header,
+.orders-page-header {
   display: flex !important;
   flex-direction: column !important;
   align-items: flex-start !important;
+  margin-top: 0 !important;
+  padding-top: 0 !important;
   margin-bottom: 24px;
   gap: 4px;
   padding-right: 55px;
 }
 
 .orders-page-header h1,
-.orders-container .page-header h1 {
+.admin-orders-page .page-header h1 {
   margin: 0;
   color: #1e293b;
   font-size: 26px;
@@ -28,7 +30,7 @@
 }
 
 .orders-page-header p,
-.orders-container .page-header p {
+.admin-orders-page .page-header p {
   margin: 0;
   color: #64748b;
   font-size: 14px;
@@ -363,6 +365,7 @@
 
 /* ================= RESPONSIVE (MOBILE) ================= */
 @media (max-width: 768px) {
+  .admin-orders-page,
   .orders-container {
     padding-bottom: 40px;
   }
@@ -683,6 +686,7 @@
   .admin-sidebar,
   .mobile-toggle-btn,
   .sidebar-overlay,
+  .admin-orders-page,
   .orders-container {
     display: none !important;
   }

@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { ShieldCheck, Headphones, Truck, ArrowRight, Zap } from "lucide-react";
 import "./Hero.css";
 
 const Hero = () => {
@@ -7,46 +8,83 @@ const Hero = () => {
     const shopSection = document.getElementById("shop-section");
     if (shopSection) {
       shopSection.scrollIntoView({ behavior: "smooth" });
+    } else {
+      window.location.href = "/all-products";
     }
   };
 
   return (
     <section className="etosm-hero">
-      <div className="hero-text-container">
-        <h1 className="hero-main-title">
-          <span className="hero-title-highlight">WIRED FOR</span>
-          <br />
-          <span className="hero-title-underline">INNOVATION</span>
-        </h1>
+      <div className="hero-content-wrapper container">
+        <div className="hero-left-col">
+          {/* Tagline Badge */}
+          <div className="hero-tag-badge">
+            <Zap size={14} className="hero-zap-icon" />
+            <span>POWERING A SMARTER TOMORROW</span>
+          </div>
 
-        <p className="hero-description">
-          Welcome to <strong>EToSM Technology</strong>, a product-focused engineering brand delivering
-          dependable <strong>power electronics and embedded systems</strong>. We develop{" "}
-          <strong>
-            SMPS power supplies, Battery Management Systems (BMS), lithium batteries, inverter
-            solutions, audio modules, and automation electronics
-          </strong>{" "}
-          with strong emphasis on{" "}
-          <strong>safety design, thermal management, EMI control, and consistent testing</strong>.
-        </p>
+          {/* Primary H1 Tag (SEO requirement) */}
+          <h1 className="hero-seo-title">
+            Electronic Components Online India – EToSM Technology
+          </h1>
 
-        <div className="hero-cta-group">
-          <button className="hero-btn-primary" onClick={scrollToShop}>
-            Explore Products
-          </button>
-          <Link to="/about" className="hero-btn-secondary">
-            Learn More
-          </Link>
+          {/* Display Headline */}
+          <h2 className="hero-display-headline">
+            WIRED FOR <br />
+            <span className="hero-headline-accent">INNOVATION</span>
+          </h2>
+
+          {/* Description Paragraph */}
+          <p className="hero-description">
+            EToSM Technology provides electronic components and power solutions for businesses
+            and project developers. As an electronic components supplier in India, we offer
+            products for electronic projects, battery systems, and power supply needs.
+          </p>
+
+          {/* CTA Buttons */}
+          <div className="hero-cta-group">
+            <button className="hero-btn-primary" onClick={scrollToShop}>
+              <span>Explore Products</span>
+              <ArrowRight size={16} />
+            </button>
+            <Link to="/about" className="hero-btn-secondary">
+              Learn More
+            </Link>
+          </div>
+
+          {/* Key Highlights (3 Bullet points with icons - Bold & Dark for High Contrast) */}
+          <div className="hero-highlights-row">
+            <div className="hero-highlight-item">
+              <div className="highlight-icon-wrap">
+                <ShieldCheck size={18} />
+              </div>
+              <div className="hero-feature-content">
+                <strong className="hero-feature-title">Quality Products</strong>
+                <span className="hero-feature-sub">Rigorous safety tested</span>
+              </div>
+            </div>
+
+            <div className="hero-highlight-item">
+              <div className="highlight-icon-wrap">
+                <Headphones size={18} />
+              </div>
+              <div className="hero-feature-content">
+                <strong className="hero-feature-title">Customer Support</strong>
+                <span className="hero-feature-sub">Dedicated technical help</span>
+              </div>
+            </div>
+
+            <div className="hero-highlight-item">
+              <div className="highlight-icon-wrap">
+                <Truck size={18} />
+              </div>
+              <div className="hero-feature-content">
+                <strong className="hero-feature-title">Reliable Service and Delivery</strong>
+                <span className="hero-feature-sub">Pan-India secure dispatch</span>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-
-      {/* Decorative animated circuit lines */}
-      <div className="hero-decoration" aria-hidden="true">
-        <div className="circuit-line line-1"></div>
-        <div className="circuit-line line-2"></div>
-        <div className="circuit-dot dot-1"></div>
-        <div className="circuit-dot dot-2"></div>
-        <div className="circuit-dot dot-3"></div>
       </div>
     </section>
   );

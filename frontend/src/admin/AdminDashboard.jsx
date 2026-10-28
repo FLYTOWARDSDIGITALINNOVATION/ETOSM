@@ -8,6 +8,10 @@ import {
   TrendingUp,
   Users,
   AlertCircle,
+  FileText,
+  CheckCircle2,
+  Clock,
+  FileCheck,
 } from "lucide-react";
 import AdminLayout from "./AdminLayout";
 import "./AdminDashboard.css";
@@ -176,10 +180,38 @@ const AdminDashboard = () => {
           </button>
           <button
             className="action-btn"
-            onClick={() => navigate("/admin/remove-product")}
+            onClick={() => navigate("/admin/products")}
           >
             <Package size={24} />
-            <span>Manage Products</span>
+            <span>Product Management</span>
+          </button>
+          <button
+            className="action-btn"
+            onClick={() => navigate("/admin/create-invoice")}
+          >
+            <FileText size={24} />
+            <span>Create Invoice</span>
+          </button>
+          <button
+            className="action-btn"
+            onClick={() => navigate("/admin/paid-invoices")}
+          >
+            <CheckCircle2 size={24} />
+            <span>Paid Invoices</span>
+          </button>
+          <button
+            className="action-btn"
+            onClick={() => navigate("/admin/pending-invoices")}
+          >
+            <Clock size={24} />
+            <span>Pending Invoices</span>
+          </button>
+          <button
+            className="action-btn"
+            onClick={() => navigate("/admin/quotations")}
+          >
+            <FileCheck size={24} />
+            <span>Quotations</span>
           </button>
           <button
             className="action-btn"

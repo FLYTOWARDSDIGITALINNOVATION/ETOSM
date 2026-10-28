@@ -346,10 +346,18 @@
   margin: 0;
 }
 
+/* --- BESTSELLERS GRID LAYOUT (FULL WIDTH) --- */
+.bestsellers-grid-wrapper {
+  width: 100%;
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 20px 0;
+}
+
 .products-view {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 30px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 24px;
 }
 
 .no-results {
@@ -831,5 +839,839 @@
   .motion-grid.horizontal-scroll .parallax-card {
     flex: 0 0 320px !important;
     height: 400px !important;
+  }
+}
+
+/* ==========================================================================
+   SECTION 3: BESTSELLING PRODUCTS
+   ========================================================================== */
+.bestsellers-section {
+  padding: 60px 0 40px;
+  background: #ffffff;
+}
+
+.bestsellers-header-block {
+  text-align: center;
+  max-width: 820px;
+  margin: 0 auto 40px;
+}
+
+.bestsellers-badge {
+  display: inline-block;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 4px;
+  color: #e3000f;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.bestsellers-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+  font-weight: 900;
+  color: #0f172a;
+  margin: 0 0 14px 0;
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+}
+
+.bestsellers-description {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.98rem;
+  line-height: 1.7;
+  color: #475569;
+  margin: 0 0 10px 0;
+}
+
+/* --- 5-CARD HORIZONTAL CAROUSEL WITH SIDE ARROWS (NO BOXES BELOW) --- */
+.bestsellers-carousel-outer {
+  position: relative;
+  width: 100%;
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 0 45px;
+  box-sizing: border-box;
+}
+
+.bestsellers-carousel-track {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding: 15px 4px 25px;
+}
+
+.bestsellers-carousel-track::-webkit-scrollbar {
+  display: none;
+}
+
+.bestsellers-carousel-card {
+  /* Exactly 5 items in the first row on desktop (gap 16px * 4 = 64px) */
+  flex: 0 0 calc((100% - 64px) / 5);
+  min-width: 215px;
+  box-sizing: border-box;
+}
+
+/* Side Navigation Arrow Buttons */
+.bestsellers-arrow-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+  transition: all 0.25s ease;
+}
+
+.bestsellers-arrow-btn:hover {
+  background: #e3000f;
+  border-color: #e3000f;
+  color: #ffffff;
+  transform: translateY(-50%) scale(1.08);
+  box-shadow: 0 6px 20px rgba(227, 0, 15, 0.35);
+}
+
+.bestsellers-arrow-btn.prev {
+  left: 0;
+}
+
+.bestsellers-arrow-btn.next {
+  right: 0;
+}
+
+@media (max-width: 1100px) {
+  .bestsellers-carousel-card {
+    flex: 0 0 calc((100% - 32px) / 3);
+  }
+}
+
+@media (max-width: 768px) {
+  .bestsellers-carousel-outer {
+    padding: 0 10px;
+  }
+  .bestsellers-carousel-card {
+    flex: 0 0 calc((100% - 16px) / 2);
+    min-width: 170px;
+  }
+  .bestsellers-arrow-btn {
+    width: 36px;
+    height: 36px;
+  }
+}
+
+@media (max-width: 480px) {
+  .bestsellers-carousel-card {
+    flex: 0 0 85%;
+  }
+}
+
+
+
+.bestsellers-view-all-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(135deg, #e3000f, #b5000c);
+  color: #ffffff;
+  padding: 13px 34px;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-decoration: none;
+  box-shadow: 0 6px 24px rgba(227, 0, 15, 0.28);
+  transition: all 0.3s ease;
+  letter-spacing: 0.3px;
+}
+
+.bestsellers-view-all-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 32px rgba(227, 0, 15, 0.36);
+  color: #ffffff;
+}
+
+/* ==========================================================================
+   SECTION 4: WHY CHOOSE US?
+   ========================================================================== */
+.why-choose-section {
+  padding: 80px 0 90px;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.why-choose-header {
+  text-align: center;
+  max-width: 820px;
+  margin: 0 auto 50px;
+}
+
+.why-choose-badge {
+  display: inline-block;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: #e3000f;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.why-choose-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+  font-weight: 900;
+  color: #0f172a;
+  margin: 0 0 16px 0;
+  letter-spacing: -0.5px;
+  line-height: 1.25;
+}
+
+.why-choose-lead {
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  line-height: 1.75;
+  color: #475569;
+  margin: 0;
+}
+
+/* 4 Pillars Grid (H3) */
+.why-choose-pillars-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  margin-bottom: 50px;
+}
+
+.pillar-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 28px 24px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.pillar-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.08);
+  border-color: #e3000f;
+}
+
+.pillar-icon-wrap {
+  width: 46px;
+  height: 46px;
+  border-radius: 10px;
+  background: #fee2e2;
+  color: #b91c1c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+
+.pillar-card h3 {
+  font-size: 1.12rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 10px 0;
+  line-height: 1.3;
+}
+
+.pillar-card p {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: #64748b;
+  margin: 0;
+}
+
+/* Reference Image: Engineering Standards & Capabilities Banner */
+.engineering-standards-box {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 10px 0 30px;
+  margin-bottom: 30px;
+  display: flex;
+  align-items: center;
+  gap: 48px;
+  box-shadow: none;
+}
+
+.standards-left {
+  flex: 0 0 340px;
+  max-width: 360px;
+}
+
+.standards-left h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.6rem, 2.4vw, 2.1rem);
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.25;
+  margin: 0 0 14px 0;
+  letter-spacing: -0.4px;
+}
+
+.standards-left p {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.93rem;
+  line-height: 1.65;
+  color: #475569;
+  margin: 0;
+}
+
+.standards-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  row-gap: 24px;
+  column-gap: 20px;
+  align-items: center;
+}
+
+.standard-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+.std-icon-wrap {
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1.5px solid #fca5a5;
+  box-shadow: 0 2px 8px rgba(227, 0, 15, 0.08);
+  color: #e3000f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.standard-item:hover .std-icon-wrap {
+  transform: scale(1.08);
+  border-color: #e3000f;
+  box-shadow: 0 4px 16px rgba(227, 0, 15, 0.22);
+}
+
+.std-item-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.std-item-text strong {
+  display: block;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.3;
+}
+
+.std-item-text span {
+  display: block;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: #64748b;
+}
+
+/* Why Choose CTA */
+.why-choose-cta {
+  text-align: center;
+}
+
+.why-choose-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #e3000f;
+  background: linear-gradient(135deg, #e3000f 0%, #b5000c 100%);
+  color: #ffffff;
+  padding: 14px 34px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-decoration: none;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 18px rgba(227, 0, 15, 0.25);
+}
+
+.why-choose-btn:hover {
+  background: #b5000c;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(227, 0, 15, 0.35);
+  color: #ffffff;
+}
+
+/* ==========================================================================
+   SECTION 5: CUSTOMER REVIEWS TWEAKS
+   ========================================================================= */
+.motion-sub-wrapper {
+  margin-top: 12px;
+}
+
+.motion-trust-head {
+  display: block;
+  font-size: 1.15rem;
+  color: #0f172a;
+  margin-bottom: 4px;
+  font-weight: 800;
+}
+
+.motion-trust-desc {
+  font-size: 0.95rem;
+  color: #64748b;
+  max-width: 600px;
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* ==========================================================================
+   SECTION 6: FINAL CALL TO ACTION
+   ========================================================================= */
+.final-cta-section {
+  padding: 50px 0 85px;
+  background: #ffffff;
+}
+
+.final-cta-card {
+  position: relative;
+  background: #e3000f;
+  background: linear-gradient(135deg, #e3000f 0%, #c4000d 50%, #b5000c 100%);
+  border-radius: 16px;
+  padding: 46px 54px;
+  overflow: hidden;
+  box-shadow: 0 12px 36px rgba(227, 0, 15, 0.28);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 36px;
+}
+
+/* Subtle clean ambient light on the right */
+.final-cta-pcb-overlay {
+  position: absolute;
+  top: -50px;
+  right: -50px;
+  width: 350px;
+  height: 350px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.final-cta-left {
+  position: relative;
+  z-index: 2;
+  max-width: 680px;
+}
+
+.final-cta-title {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(1.5rem, 2.5vw, 2.15rem);
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 12px 0;
+  line-height: 1.28;
+  letter-spacing: -0.4px;
+}
+
+.final-cta-desc {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.94rem;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.95);
+  margin: 0;
+}
+
+.final-cta-right {
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
+}
+
+.final-cta-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: #ffffff;
+  color: #e3000f; /* EToSM Brand Red */
+  padding: 14px 34px;
+  border-radius: 50px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+  transition: all 0.25s ease;
+}
+
+.final-cta-pill-btn:hover {
+  background: #ffffff;
+  color: #b5000c;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(227, 0, 15, 0.45);
+}
+
+@media (max-width: 900px) {
+  .final-cta-card {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 34px 26px;
+    gap: 24px;
+  }
+
+  .final-cta-pcb-overlay {
+    width: 100%;
+    opacity: 0.25;
+  }
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN FOR NEW SECTIONS
+   ========================================================================== */
+@media (max-width: 1024px) {
+  .why-choose-pillars-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .engineering-standards-box {
+    flex-direction: column;
+    gap: 32px;
+    padding: 32px 28px;
+    text-align: center;
+  }
+  .standards-left {
+    flex: none;
+    max-width: 100%;
+  }
+  .standards-grid {
+    grid-template-columns: repeat(2, 1fr);
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .why-choose-pillars-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .standards-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .standard-item {
+    justify-content: flex-start;
+    text-align: left;
+  }
+  .engineering-standards-box {
+    padding: 10px 0 20px;
+    text-align: left;
+  }
+  .standards-left {
+    text-align: left;
+  }
+  .final-cta-card {
+    padding: 40px 24px;
+  }
+}
+
+
+/* ==========================================================================
+   SECTION 5: CUSTOMER REVIEWS (MATCHING REFERENCE IMAGE)
+   ========================================================================== */
+.motion-review-section {
+  padding: 85px 0 95px;
+  background: #fbfbfc;
+  border-top: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+  position: relative;
+}
+
+.reviews-section-header {
+  text-align: center;
+  max-width: 1150px;
+  margin: 0 auto 48px;
+  padding: 0 20px;
+}
+
+.reviews-eyebrow {
+  display: inline-block;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  color: #e3000f; /* EToSM Brand Red */
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.reviews-h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.5rem, 2.4vw, 2.25rem);
+  font-weight: 900;
+  color: #0f172a;
+  margin: 0 0 10px 0;
+  line-height: 1.25;
+  letter-spacing: -0.4px;
+  white-space: nowrap; /* Keep on single line */
+}
+
+@media (max-width: 768px) {
+  .reviews-h2 {
+    white-space: normal;
+    font-size: 1.5rem;
+  }
+}
+
+.reviews-subheading {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(1.2rem, 2vw, 1.45rem);
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 12px 0;
+  line-height: 1.3;
+}
+
+.reviews-lead {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.98rem;
+  line-height: 1.7;
+  color: #475569;
+  margin: 0;
+}
+
+/* Reviews 3-Card Grid */
+.reviews-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 26px;
+  margin-bottom: 30px;
+}
+
+.customer-review-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 32px 28px 24px;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.customer-review-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+  border-color: #fca5a5;
+}
+
+.review-quote-wrap {
+  margin-bottom: 14px;
+}
+
+.review-blue-quote {
+  color: #e3000f;
+  font-size: 24px;
+  display: block;
+}
+
+.review-card-body {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.93rem;
+  line-height: 1.65;
+  color: #334155;
+  margin: 0 0 24px 0;
+  min-height: 80px;
+  font-weight: 450;
+}
+
+.review-card-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 18px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.review-author-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.review-avatar-circle {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.review-author-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.review-author-name {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.review-author-role {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.8rem;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.review-stars-gold {
+  display: flex;
+  gap: 3px;
+  color: #ffb800;
+  font-size: 15px;
+}
+
+/* Pagination Dots */
+.reviews-carousel-dots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 36px;
+}
+
+.reviews-carousel-dots .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #cbd5e1;
+  transition: all 0.3s ease;
+}
+
+.reviews-carousel-dots .dot.active {
+  width: 22px;
+  border-radius: 4px;
+  background: #e3000f;
+}
+
+/* Write a Google Review CTA & Social Proof */
+.write-review-cta-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.google-aggregate-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: #ffffff;
+  padding: 8px 20px;
+  border-radius: 50px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+}
+
+.g-pill-icon {
+  font-size: 1.1rem;
+}
+
+.g-pill-score {
+  font-family: 'Inter', sans-serif;
+  font-weight: 800;
+  color: #0f172a;
+  font-size: 0.95rem;
+}
+
+.g-pill-stars {
+  display: flex;
+  gap: 2px;
+  color: #ffb800;
+  font-size: 0.85rem;
+}
+
+.g-pill-count {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.write-google-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: #0f172a;
+  color: #ffffff;
+  border: 2px solid #0f172a;
+  padding: 13px 32px;
+  border-radius: 8px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.12);
+}
+
+.write-google-btn:hover {
+  background: #e3000f;
+  border-color: #e3000f;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(227, 0, 15, 0.3);
+  color: #ffffff;
+}
+
+@media (max-width: 1024px) {
+  .reviews-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 680px) {
+  .reviews-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  .customer-review-card {
+    padding: 26px 20px 20px;
   }
 }

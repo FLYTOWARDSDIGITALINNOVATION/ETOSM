@@ -93,7 +93,7 @@ const AdminOrdersPage = () => {
 
   return (
     <AdminLayout>
-      <div className="orders-container">
+      <div className="admin-orders-page">
         <div className="orders-page-header">
           <h1>Orders Management</h1>
           <p>View and manage all customer orders</p>
@@ -265,6 +265,51 @@ const AdminOrdersPage = () => {
                     }}
                   >
                     <Printer size={14} /> Print Slip
+                  </button>
+                  <button
+                    onClick={() => {
+                      navigate("/admin/shipping-labels", {
+                        state: {
+                          prefill: {
+                            documentNumber: selectedOrder.invoiceNumber || `ORD-${String(selectedOrder._id).slice(-6).toUpperCase()}`,
+                            isCOD: selectedOrder.paymentMethod === "cod" || (selectedOrder.paymentMethod || "").toLowerCase().includes("cod"),
+                            collectAmount: selectedOrder.totalAmount || selectedOrder.price || 0,
+                            carrier: selectedOrder.shippingMethod || "Delhivery Express",
+                            shipTo: {
+                              name: selectedOrder.shippingAddress ? `${selectedOrder.shippingAddress.firstName || ""} ${selectedOrder.shippingAddress.lastName || ""}`.trim() : (selectedOrder.userName || "Customer"),
+                              phone: selectedOrder.phone || selectedOrder.shippingAddress?.phone || "",
+                              email: selectedOrder.userEmail || selectedOrder.shippingAddress?.email || "",
+                              address: selectedOrder.shippingAddress ? `${selectedOrder.shippingAddress.address || ""} ${selectedOrder.shippingAddress.apartment || ""} ${selectedOrder.shippingAddress.locality || ""}`.trim() : "",
+                              city: selectedOrder.shippingAddress?.city || "",
+                              state: selectedOrder.shippingAddress?.state || "Tamil Nadu",
+                              pincode: selectedOrder.shippingAddress?.postalCode || selectedOrder.shippingAddress?.zipCode || ""
+                            },
+                            itemsSummary: [
+                              {
+                                name: selectedOrder.productName || "Electronics Item",
+                                sku: selectedOrder.sku || "",
+                                quantity: selectedOrder.quantity || 1
+                              }
+                            ]
+                          }
+                        }
+                      });
+                    }}
+                    style={{
+                      background: '#0f172a',
+                      color: 'white',
+                      border: 'none',
+                      padding: '6px 12px',
+                      borderRadius: '6px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      fontSize: '13px',
+                      fontWeight: '600',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <Printer size={14} /> 6*4 Thermal Label
                   </button>
                   <button className="close-btn" onClick={() => setSelectedOrder(null)}><X size={20} /></button>
                 </div>

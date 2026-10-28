@@ -17,6 +17,7 @@ const EditProductPage = () => {
 
   const [form, setForm] = useState({
     name: "",
+    productId: "",
     category: "",
     subcategory: "",
     price: "",
@@ -56,6 +57,7 @@ const EditProductPage = () => {
 
         setForm({
           ...data,
+          productId: data.productId || (data.sku ? `PRD-${data.sku}` : `PRD-${data._id ? data._id.toString().slice(-5).toUpperCase() : ""}`),
           gstPercent: data.gstPercent !== undefined ? data.gstPercent : 18,
           salesPrice: salesPriceValue,
           sku: data.sku !== null && data.sku !== undefined ? data.sku : "",
@@ -97,6 +99,9 @@ const EditProductPage = () => {
       formData.append("discountEnd", form.discountEnd);
     } else {
       formData.append("name", form.name);
+      if (form.productId) {
+        formData.append("productId", form.productId.trim());
+      }
       formData.append("category", form.category);
       formData.append("subcategory", form.subcategory || "");
       formData.append("price", form.price);
@@ -155,6 +160,37 @@ const EditProductPage = () => {
               onChange={handleChange}
               required
             />
+
+            <label>Product ID (for Quotations & Billing)</label>
+            <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
+              <input
+                name="productId"
+                value={form.productId || ""}
+                onChange={handleChange}
+                placeholder="e.g. PRD-10024"
+                style={{ flex: 1 }}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  const randomId = `PRD-${Math.floor(10000 + Math.random() * 90000)}`;
+                  setForm(prev => ({ ...prev, productId: randomId }));
+                }}
+                style={{
+                  background: "#f1f5f9",
+                  border: "1px solid #cbd5e1",
+                  borderRadius: "6px",
+                  padding: "6px 12px",
+                  fontSize: "12px",
+                  fontWeight: "600",
+                  color: "#475569",
+                  cursor: "pointer",
+                  whiteSpace: "nowrap"
+                }}
+              >
+                Auto Generate
+              </button>
+            </div>
 
             <label>Category</label>
             <select

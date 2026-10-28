@@ -161,11 +161,7 @@ const AuthPage = () => {
           animate="visible"
           variants={brandingVariants}
         >
-          <motion.div variants={itemVariants} className="brand-logo-container">
-            <div className="brand-icon" style={{ background: "none", boxShadow: "none" }}>
-              <img src="/logo1.png" alt="ETOSM Technology" style={{ width: "100%", borderRadius: "14px" }} />
-            </div>
-          </motion.div>
+          
 
           <motion.h2 variants={itemVariants} className="brand-headline">
             Power Your <br />
@@ -190,6 +186,16 @@ const AuthPage = () => {
               <p>Delivery</p>
             </div>
           </motion.div>
+        </motion.div>
+
+        {/* ================= 2. CENTER: ETOSM LOGO ================= */}
+        <motion.div
+          className="auth-center-logo"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.7, delay: 0.15 }}
+        >
+          <img src="/logo1.png" alt="ETOSM Technology" className="center-brand-logo" />
         </motion.div>
 
         {/* ================= RIGHT FORM ================= */}

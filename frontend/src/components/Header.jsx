@@ -158,7 +158,9 @@ const Header = ({ onSearch }) => {
                   </Link>
                 </li>
                 <li style={{ borderTop: '1px solid #f1f5f9', margin: '4px 0' }}></li>
-                {Array.isArray(categories) && categories.map(cat => (
+                {Array.isArray(categories) && categories
+                  .filter(cat => cat.name !== "BATTERY PACKS") // capital letters BATTERY PACKS commented out
+                  .map(cat => (
                   <li key={cat._id}>
                     <Link to={`/category/${cat.name}`} className="dropdown-item">
                       <span className="item-dot"></span> {cat.name}
@@ -197,7 +199,9 @@ const Header = ({ onSearch }) => {
                     </Link>
                   </li>
                   <li style={{ borderTop: '1px solid #f1f5f9', margin: '4px 0' }}></li>
-                  {Array.isArray(categories) && categories.map(cat => (
+                  {Array.isArray(categories) && categories
+                  .filter(cat => cat.name !== "BATTERY PACKS") // capital letters BATTERY PACKS commented out
+                  .map(cat => (
                     <li key={cat._id}>
                       <Link to={`/category/${cat.name}`} className="dropdown-item">
                         <span className="item-dot"></span> {cat.name}

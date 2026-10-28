@@ -1,0 +1,889 @@
+/* ==========================================================================
+   SHIPPING LABELS (6*4 THERMAL) - STYLESHEET
+   ETOSM Management Suite - Module 9: 6x4 Thermal Shipping Labels
+   ========================================================================== */
+
+.shipping-labels-page {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px 28px 56px 28px;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  color: #1e293b;
+}
+
+/* ==========================================
+   TOAST NOTIFICATION
+   ========================================== */
+.sl-toast {
+  position: fixed;
+  top: 24px;
+  right: 28px;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13.5px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+  animation: slToastPop 0.25s ease forwards;
+}
+
+.sl-toast.success {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+}
+
+.sl-toast.error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+@keyframes slToastPop {
+  from { transform: translateY(-16px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* ==========================================
+   PAGE HEADER
+   ========================================== */
+.sl-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.sl-eyebrow {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #e3000f;
+  margin-bottom: 4px;
+}
+
+.sl-page-header h1 {
+  font-size: 26px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.02em;
+}
+
+.sl-page-header p {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0;
+  max-width: 740px;
+  line-height: 1.5;
+}
+
+.header-actions-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.sl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 9px 18px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  font-family: inherit;
+}
+
+.sl-btn.primary {
+  background: #e3000f;
+  color: #ffffff;
+}
+
+.sl-btn.primary:hover {
+  background: #cc000d;
+  box-shadow: 0 4px 12px rgba(227, 0, 15, 0.25);
+}
+
+.sl-btn.secondary {
+  background: #ffffff;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+}
+
+.sl-btn.secondary:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+.sl-btn.small {
+  padding: 6px 14px;
+  font-size: 12.5px;
+  border-radius: 6px;
+}
+
+.sl-btn.icon-only {
+  padding: 9px;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #64748b;
+}
+
+.sl-btn.icon-only:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+/* ==========================================
+   2-COLUMN WORKSPACE
+   ========================================== */
+.sl-workspace-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+/* LEFT CONTROLS PANEL */
+.sl-controls-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.sl-card {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.mt-16 {
+  margin-top: 16px;
+}
+
+.card-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.sl-card h3 {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 14px 0;
+}
+
+.card-top-row h3 {
+  margin: 0;
+}
+
+.type-toggle-pills {
+  display: flex;
+  gap: 6px;
+}
+
+.toggle-pill {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.toggle-pill:hover {
+  background: #f1f5f9;
+}
+
+.toggle-pill.active {
+  background: #0f172a;
+  color: #ffffff;
+  border-color: #0f172a;
+}
+
+.source-search-wrap {
+  position: relative;
+  margin-bottom: 12px;
+}
+
+.source-search-wrap input {
+  width: 100%;
+  padding: 8px 12px 8px 34px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  font-size: 13px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.source-search-wrap .s-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+}
+
+.source-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.source-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.source-item-row:hover {
+  background: #ffffff;
+  border-color: #0f172a;
+}
+
+.source-item-row.selected {
+  border-color: #e3000f;
+  background: #fff8f8;
+}
+
+.item-meta {
+  display: flex;
+  flex-direction: column;
+}
+
+.doc-num {
+  font-size: 13px;
+  color: #0f172a;
+}
+
+.cust-title {
+  font-size: 12.5px;
+  color: #334155;
+  font-weight: 600;
+}
+
+.loc-text {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.cod-tag {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.cod-tag.cod {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.cod-tag.prepaid {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+/* Form inputs in left panel */
+.sl-form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.sl-form-grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.sl-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+
+.sl-field label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.sl-field input,
+.sl-field select,
+.sl-field textarea {
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  font-size: 13px;
+  color: #0f172a;
+  outline: none;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.sl-field input:focus,
+.sl-field select:focus,
+.sl-field textarea:focus {
+  border-color: #e3000f;
+  box-shadow: 0 0 0 3px rgba(227, 0, 15, 0.1);
+}
+
+.sl-cod-toggle-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8fafc;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  margin-top: 6px;
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  cursor: pointer;
+}
+
+.cod-amount-input {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cod-amount-input label {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.cod-amount-input input {
+  width: 90px;
+  padding: 5px 8px;
+  border-radius: 4px;
+  border: 1px solid #cbd5e1;
+  font-weight: 700;
+}
+
+/* ========================================================
+   RIGHT PREVIEW PANEL: EXACT 4" x 6" THERMAL PRINTER LABEL
+   ======================================================== */
+.sl-preview-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.preview-top-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 440px;
+  margin-bottom: 12px;
+  background: #ffffff;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  box-sizing: border-box;
+}
+
+.thermal-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: 0.04em;
+}
+
+.preview-actions {
+  display: flex;
+  gap: 6px;
+}
+
+/* THE 4x6 / 6x4 THERMAL LABEL SHELL */
+.thermal-label-container {
+  width: 384px; /* Exact 4 inches at 96 DPI */
+  max-width: 100%;
+  height: 576px; /* Exact 6 inches at 96 DPI */
+  max-height: 576px;
+  background: #ffffff;
+  border: 2px solid #000000;
+  border-radius: 0;
+  padding: 8px;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, Helvetica, sans-serif;
+  color: #000000;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+  line-height: 1.2;
+  overflow: hidden;
+}
+
+/* 1. Carrier Banner */
+.t-carrier-banner {
+  background: #000000;
+  color: #ffffff;
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 2px solid #000000;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
+.t-carrier-name {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  color: #ffffff;
+}
+
+.t-service-type {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  display: block;
+  color: #e2e8f0;
+}
+
+.t-routing-hub {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.t-hub-label {
+  font-size: 8.5px;
+  color: #cbd5e1;
+  font-weight: 700;
+}
+
+.t-hub-val {
+  font-size: 15px;
+  font-weight: 900;
+  color: #ffffff;
+}
+
+/* 2. Tracking Block & Barcode */
+.t-tracking-block {
+  padding: 6px 6px;
+  border-bottom: 2px solid #000000;
+  text-align: center;
+}
+
+.t-tracking-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9.5px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.t-barcode-bars {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  height: 42px;
+  gap: 2px;
+  margin: 3px 0 2px 0;
+}
+
+.t-barcode-bars .bar {
+  background: #000000;
+  height: 100%;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
+.t-barcode-bars .bar.thin { width: 2px; }
+.t-barcode-bars .bar.medium { width: 4px; }
+.t-barcode-bars .bar.thick { width: 6px; }
+
+.t-barcode-text {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+/* 3. Primary Ship-To Consignee Section */
+.t-ship-to-section {
+  padding: 8px 8px;
+  border-bottom: 2px solid #000000;
+  background: #fafafa;
+}
+
+.t-section-label {
+  display: block;
+  font-size: 8.5px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  color: #000000;
+  margin-bottom: 3px;
+}
+
+.t-receiver-name {
+  font-size: 16px;
+  font-weight: 900;
+  margin: 0 0 2px 0;
+  color: #000000;
+  line-height: 1.15;
+}
+
+.t-receiver-company {
+  font-size: 11px;
+  font-weight: 700;
+  color: #000000;
+  margin-bottom: 2px;
+}
+
+.t-receiver-address {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #000000;
+  margin-bottom: 3px;
+  line-height: 1.25;
+}
+
+.t-receiver-city-state {
+  font-size: 12px;
+  font-weight: 800;
+  color: #000000;
+  margin-bottom: 4px;
+}
+
+.t-pincode-phone-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 3px;
+}
+
+.t-pincode-highlight {
+  background: #000000;
+  color: #ffffff;
+  padding: 3px 8px;
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
+.t-receiver-phone {
+  font-size: 12px;
+  font-weight: 900;
+  color: #000000;
+}
+
+/* 4. COD / Prepaid Banner */
+.t-payment-banner {
+  padding: 6px 8px;
+  text-align: center;
+  border-bottom: 2px solid #000000;
+}
+
+.t-payment-banner.prepaid {
+  background: #f1f5f9;
+  border-top: 1px solid #000000;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
+.t-payment-banner.cod {
+  background: #000000;
+  color: #ffffff;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
+.t-pay-title {
+  font-size: 13px;
+  font-weight: 900;
+  display: block;
+  letter-spacing: 0.04em;
+}
+
+.t-payment-banner.cod .t-pay-title {
+  color: #ffffff;
+}
+
+.t-collect-amount {
+  font-size: 15px;
+  font-weight: 900;
+  display: block;
+  margin-top: 2px;
+  color: #ffffff;
+}
+
+/* 5. Return Shipper & Package Specs */
+.t-bottom-details-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 0.8fr;
+  border-bottom: 2px solid #000000;
+}
+
+.t-return-block {
+  padding: 6px 6px;
+  border-right: 2px solid #000000;
+  font-size: 9px;
+}
+
+.t-shipper-name {
+  display: block;
+  font-size: 10px;
+  font-weight: 900;
+  color: #000000;
+  margin-bottom: 1px;
+}
+
+.t-shipper-address {
+  font-size: 8.5px;
+  line-height: 1.2;
+  color: #000000;
+}
+
+.t-shipper-contact {
+  font-size: 8.5px;
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+.t-package-specs {
+  padding: 6px 6px;
+  font-size: 9px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5px;
+}
+
+/* 6. Box Contents */
+.t-box-contents-strip {
+  padding: 5px 6px;
+  border-bottom: 2px solid #000000;
+  font-size: 9px;
+}
+
+.t-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5px;
+}
+
+.t-item-line {
+  display: flex;
+  justify-content: space-between;
+  font-size: 8.5px;
+  color: #000000;
+}
+
+/* 7. Footer Notice */
+.t-footer-warning {
+  padding: 4px 6px;
+  text-align: center;
+  font-size: 8px;
+  font-weight: 900;
+  color: #000000;
+}
+
+.t-footer-sub {
+  font-size: 7.5px;
+  font-weight: normal;
+  margin-top: 1px;
+}
+
+/* ==========================================================================
+   PRINT MEDIA RULES FOR STRICT 1-PAGE 4x6 / 6x4 INCH THERMAL PRINTING
+   ========================================================================== */
+@page {
+  size: 4in 6in;
+  margin: 0mm !important;
+}
+
+@media print {
+  /* Complete page dimension lockdown: strictly 1 page of 4" x 6" */
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 4in !important;
+    height: 6in !important;
+    max-height: 6in !important;
+    overflow: hidden !important;
+    background: #ffffff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  /* 1. HIDE ALL SIBLING UI ELEMENTS TO COMPLETELY REMOVE FROM DOCUMENT FLOW */
+  .admin-sidebar,
+  .mobile-toggle-btn,
+  .sidebar-overlay,
+  .sl-page-header,
+  .sl-controls-panel,
+  .preview-top-toolbar,
+  .sl-toast,
+  .no-print,
+  nav,
+  header,
+  aside,
+  button {
+    display: none !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    border: none !important;
+  }
+
+  /* 2. COLLAPSE ALL ANCESTOR CONTAINERS TO EXACT 4x6 FIT WITHOUT PADDING OR MARGINS */
+  #root,
+  .admin-layout,
+  .admin-main,
+  .admin-content,
+  .shipping-labels-page,
+  .sl-workspace-grid,
+  .sl-preview-panel {
+    display: block !important;
+    position: static !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 4in !important;
+    height: 6in !important;
+    max-height: 6in !important;
+    overflow: hidden !important;
+    border: none !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+  }
+
+  /* 3. SHOW ONLY THE PRINT TARGET CONTAINER - EXACT 4x6 THERMAL LABEL */
+  .thermal-label-container,
+  .print-target {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    position: relative !important;
+    width: 4in !important;
+    height: 6in !important;
+    max-height: 6in !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0.08in !important;
+    border: 2px solid #000000 !important;
+    box-sizing: border-box !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+    overflow: hidden !important;
+    page-break-before: avoid !important;
+    page-break-after: avoid !important;
+    page-break-inside: avoid !important;
+    break-before: avoid !important;
+    break-after: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Preserve sharp thermal black headers, banners & barcode */
+  .t-carrier-banner {
+    background: #000000 !important;
+    color: #ffffff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .t-carrier-banner * {
+    color: #ffffff !important;
+  }
+
+  .t-pincode-highlight {
+    background: #000000 !important;
+    color: #ffffff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .t-payment-banner.cod {
+    background: #000000 !important;
+    color: #ffffff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .t-payment-banner.cod * {
+    color: #ffffff !important;
+  }
+
+  .t-payment-banner.prepaid {
+    background: #f1f5f9 !important;
+    color: #000000 !important;
+    border-top: 1px solid #000000 !important;
+    border-bottom: 2px solid #000000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .t-barcode-bars .bar {
+    background: #000000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+  .sl-workspace-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .thermal-label-container {
+    max-width: 100%;
+  }
+}

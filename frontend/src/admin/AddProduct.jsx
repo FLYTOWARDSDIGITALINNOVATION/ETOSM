@@ -9,6 +9,7 @@ const AddProduct = () => {
   const [categories, setCategories] = useState([]);
   const [form, setForm] = useState({
     name: "",
+    productId: "",
     category: "",
     subcategory: "",
     price: "",
@@ -40,6 +41,9 @@ const AddProduct = () => {
 
     const formData = new FormData();
     formData.append("name", form.name);
+    if (form.productId) {
+      formData.append("productId", form.productId.trim());
+    }
     formData.append("category", form.category);
     formData.append("subcategory", form.subcategory || "");
     formData.append("price", form.price);
@@ -101,14 +105,50 @@ const AddProduct = () => {
           <div className="form-section">
             <h3>Product Information</h3>
             
-            <div className="form-group">
-              <label>Product Name *</label>
-              <input
-                type="text"
-                placeholder="Enter product name"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-              />
+            <div className="form-row">
+              <div className="form-group">
+                <label>Product Name *</label>
+                <input
+                  type="text"
+                  placeholder="Enter product name"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                />
+              </div>
+
+              <div className="form-group">
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                  <label style={{ margin: 0 }}>Product ID (for Billing & Quotation)</label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const randomId = `PRD-${Math.floor(10000 + Math.random() * 90000)}`;
+                      setForm(prev => ({ ...prev, productId: randomId }));
+                    }}
+                    style={{
+                      background: "#f1f5f9",
+                      border: "1px solid #cbd5e1",
+                      borderRadius: "4px",
+                      padding: "2px 8px",
+                      fontSize: "12px",
+                      fontWeight: "600",
+                      color: "#475569",
+                      cursor: "pointer"
+                    }}
+                  >
+                    ⚡ Auto-Generate
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  placeholder="e.g. PRD-10024 or ET-BAT-12V"
+                  value={form.productId}
+                  onChange={(e) => setForm({ ...form, productId: e.target.value })}
+                />
+                <span style={{ fontSize: "11px", color: "#64748b", marginTop: "4px", display: "block" }}>
+                  Maintained for Billing, Quotations, and Storefront identification.
+                </span>
+              </div>
             </div>
 
             <div className="form-row">

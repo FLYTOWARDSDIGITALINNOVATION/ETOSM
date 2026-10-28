@@ -29,7 +29,15 @@ import ResetPasswordPage from "./pages/ResetPasswordPage"; // ✅ Import Reset P
 import AdminDashboard from "./admin/AdminDashboard"; // ✅ Import Admin Dashboard
 import AddCategory from "./admin/AddCategory";
 import AddProduct from "./admin/AddProduct";
-import RemoveProductPage from "./admin/RemoveProductPage";
+import ProductManagementPage from "./admin/ProductManagementPage";
+import RemoveProductPage from "./admin/ProductManagementPage";
+import CreateInvoicePage from "./admin/CreateInvoicePage";
+import PaidInvoicesPage from "./admin/PaidInvoicesPage";
+import PendingInvoicesPage from "./admin/PendingInvoicesPage";
+import QuotationManagementPage from "./admin/QuotationManagementPage";
+import BillingReportsPage from "./admin/BillingReportsPage";
+import CreditNotesPage from "./admin/CreditNotesPage";
+import ShippingLabelsPage from "./admin/ShippingLabelsPage";
 import AdminOrdersPage from "./admin/AdminOrdersPage";
 import AdminCustomersPage from "./admin/AdminCustomersPage"; // ✅ Import Admin Customers
 import AdminSupportPage from "./admin/AdminSupportPage"; // ✅ Import Admin Support
@@ -75,12 +83,21 @@ function App() {
 
             {/* Admin */}
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/products" element={<ProductManagementPage />} />
+            <Route path="/admin/create-invoice" element={<CreateInvoicePage />} />
+            <Route path="/admin/invoices" element={<CreateInvoicePage />} />
+            <Route path="/admin/paid-invoices" element={<PaidInvoicesPage />} />
+            <Route path="/admin/pending-invoices" element={<PendingInvoicesPage />} />
+            <Route path="/admin/quotations" element={<QuotationManagementPage />} />
             <Route path="/admin/add-category" element={<AddCategory />} />
             <Route path="/admin/add-product" element={<AddProduct />} />
-            <Route path="/admin/remove-product" element={<RemoveProductPage />} />
+            <Route path="/admin/remove-product" element={<ProductManagementPage />} />
             <Route path="/admin/edit-product/:id" element={<EditProductPage />} />
             <Route path="/admin/orders" element={<AdminOrdersPage />} />
             <Route path="/admin/customers" element={<AdminCustomersPage />} />
+            <Route path="/admin/billing-reports" element={<BillingReportsPage />} />
+            <Route path="/admin/credit-notes" element={<CreditNotesPage />} />
+            <Route path="/admin/shipping-labels" element={<ShippingLabelsPage />} />
             <Route path="/admin/support" element={<AdminSupportPage />} />
             <Route path="/admin/reviews" element={<AdminReviewsPage />} />
             <Route path="/admin/settings" element={<AdminSettings />} />
