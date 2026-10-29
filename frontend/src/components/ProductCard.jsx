@@ -53,6 +53,7 @@ const ProductCard = ({ product, variant, index = 0 }) => {
   // Catalog badge selection matching reference image
   const getCatalogBadge = () => {
     if (isOutOfStock) return { label: "Out of Stock", type: "out-of-stock" };
+    if (product.isBestseller) return { label: "Best Seller", type: "bestseller" };
     if (product.badge) {
       const b = String(product.badge).toLowerCase();
       if (b.includes("best") || b.includes("seller")) return { label: "Best Seller", type: "bestseller" };

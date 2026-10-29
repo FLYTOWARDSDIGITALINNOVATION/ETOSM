@@ -22,6 +22,7 @@ const AddProduct = () => {
   const [galleryImages, setGalleryImages] = useState([]);
   const [pdfFile, setPdfFile] = useState(null);
   const [specifications, setSpecifications] = useState([]);
+  const [isBestseller, setIsBestseller] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const adminEmail = "admin@gmail.com";
@@ -54,6 +55,7 @@ const AddProduct = () => {
     }
     formData.append("description", form.description);
     formData.append("isVisible", "true");
+    formData.append("isBestseller", isBestseller ? "true" : "false");
     formData.append("email", adminEmail);
     formData.append("image", image);
     if (pdfFile) {
@@ -239,6 +241,19 @@ const AddProduct = () => {
                   setForm({ ...form, description: e.target.value })
                 }
               />
+            </div>
+
+            <div className="form-group checkbox-group" style={{ display: "flex", alignItems: "center", gap: "10px", margin: "16px 0", background: "#fef3c7", padding: "12px 16px", borderRadius: "8px", border: "1px solid #fde68a" }}>
+              <input
+                type="checkbox"
+                id="isBestsellerAdd"
+                checked={isBestseller}
+                onChange={(e) => setIsBestseller(e.target.checked)}
+                style={{ width: "18px", height: "18px", accentColor: "#d97706", cursor: "pointer" }}
+              />
+              <label htmlFor="isBestsellerAdd" style={{ fontWeight: 700, color: "#92400e", cursor: "pointer", fontSize: "14px", margin: 0 }}>
+                ⭐ Feature in "Bestselling Products" Carousel (Home Page)
+              </label>
             </div>
 
             <div className="form-section-specs">

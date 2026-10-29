@@ -107,7 +107,7 @@ const Profile = () => {
 
       <div className="pro-page-bg">
         <div className="pro-back-wrapper">
-          <button className="pro-back-btn" onClick={() => navigate("/home")}>
+          <button className="pro-back-btn" onClick={() => navigate("/")}>
             <FaArrowLeft /> <span>Back to Store</span>
           </button>
         </div>

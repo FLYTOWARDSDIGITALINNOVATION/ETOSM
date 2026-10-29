@@ -48,23 +48,14 @@ const CollectionGrid = () => {
       <div className="etosm-categories-container container">
         {/* Main Section Header */}
         <div className="etosm-categories-header">
-          <h2 className="etosm-categories-title">Explore Our Product Categories</h2>
-
-          {/* User Requested Content Block: Directly below Explore Our Product Categories */}
           <div className="etosm-categories-seo-intro">
-            <span className="etosm-seo-tag">Product Categories</span>
+            <span className="etosm-seo-tag">Explore Our Product Categories</span>
             <h2 className="etosm-seo-h2">Find Electronic Components Online in India</h2>
             <p className="etosm-seo-desc">
               Looking for an electronic components store in India? Explore our range of battery
               packs, electronic components, amplifiers, battery management systems and power
               products. Find suitable options for your projects and business in one place.
             </p>
-            <div className="etosm-seo-cta">
-              <Link to="/all-products" className="etosm-seo-btn">
-                <span>View All Products</span>
-                <ArrowRight size={16} />
-              </Link>
-            </div>
           </div>
         </div>
 
@@ -95,6 +86,14 @@ const CollectionGrid = () => {
               <div className="card-bg-accent" style={{ background: cat.color }}></div>
             </Link>
           ))}
+        </div>
+
+        {/* View All Products CTA Button Centered Below Cards */}
+        <div className="etosm-seo-cta">
+          <Link to="/all-products" className="etosm-seo-btn">
+            <span>View All Products</span>
+            <ArrowRight size={16} />
+          </Link>
         </div>
       </div>
     </section>

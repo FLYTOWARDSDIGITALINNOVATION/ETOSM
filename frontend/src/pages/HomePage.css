@@ -239,7 +239,7 @@
 }
 
 .footer-col-title::before {
-  content: "";
+  display: none;
   position: absolute;
   left: -20px;
   top: 50%;

@@ -111,25 +111,25 @@
 .catalog-floating-bar {
   background: #ffffff;
   border-radius: 22px;
-  padding: 14px 22px;
+  padding: 14px 26px;
   box-shadow: 0 14px 38px -6px rgba(15, 23, 42, 0.08), 0 4px 12px -2px rgba(15, 23, 42, 0.04);
   border: 1px solid #f1f5f9;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 18px;
+  gap: 24px;
 }
 
 /* 1. Search input */
 .cat-search-wrap {
   position: relative;
-  width: 220px;
+  width: 320px;
   flex-shrink: 0;
 }
 
 .cat-search-icon {
   position: absolute;
-  left: 14px;
+  left: 16px;
   top: 50%;
   transform: translateY(-50%);
   color: #94a3b8;
@@ -138,10 +138,10 @@
 
 .cat-search-wrap input {
   width: 100%;
-  padding: 10px 32px 10px 40px;
+  padding: 12px 38px 12px 46px;
   border-radius: 9999px;
-  border: 1px solid #e2e8f0;
-  font-size: 13px;
+  border: 1.5px solid #e2e8f0;
+  font-size: 14px;
   color: #0f172a;
   outline: none;
   transition: all 0.2s ease;
@@ -155,7 +155,7 @@
 
 .cat-search-clear-btn {
   position: absolute;
-  right: 12px;
+  right: 14px;
   top: 50%;
   transform: translateY(-50%);
   background: none;
@@ -165,22 +165,24 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2px;
+  padding: 3px;
 }
 
 .cat-search-clear-btn:hover {
   color: #e3000f;
 }
 
-/* 2. Category Icon Pills Row */
+/* 2. Category Icon Pills Row - Spread evenly across the center area */
 .cat-icon-pills-row {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 12px;
+  justify-content: space-evenly;
+  flex: 1;
+  max-width: 900px;
+  gap: 20px;
   flex-wrap: nowrap;
   overflow-x: auto;
-  padding: 4px 2px;
+  padding: 4px 12px;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
 }
@@ -193,18 +195,20 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   background: none;
   border: none;
   cursor: pointer;
-  padding: 4px 6px;
-  min-width: 68px;
+  padding: 6px 10px;
+  min-width: 86px;
+  max-width: 130px;
+  flex-shrink: 0;
   transition: transform 0.2s ease;
 }
 
 .cat-pill-circle {
-  width: 48px;
-  height: 48px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   background: #ffffff;
   border: 1.5px solid #e2e8f0;
@@ -213,17 +217,17 @@
   justify-content: center;
   color: #475569;
   transition: all 0.22s ease;
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.03);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
 }
 
 .cat-pill-label {
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 600;
   color: #64748b;
   text-align: center;
   white-space: normal;
-  line-height: 1.2;
-  max-width: 86px;
+  line-height: 1.25;
+  max-width: 110px;
   transition: color 0.2s ease;
 }
 

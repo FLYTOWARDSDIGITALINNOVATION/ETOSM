@@ -80,6 +80,7 @@ mongoose
     await migrateSlugs();
     await migrateProductIds();
     await migrateProductVisibility();
+    await migrateBestsellers();
     await seedGoogleReviews();
     await seedAdminUser();
     await seedSubcategories();
@@ -192,6 +193,7 @@ const productSchema = new mongoose.Schema({
   ratingCount: { type: Number, default: 0 },
 
   isVisible: { type: Boolean, default: true },
+  isBestseller: { type: Boolean, default: false },
 
   sku: { type: Number, default: null },
   productId: { type: String, trim: true },
@@ -278,6 +280,15 @@ async function migrateProductVisibility() {
     }
   } catch (err) {
     console.error("Product visibility migration failed:", err);
+  }
+}
+
+async function migrateBestsellers() {
+  try {
+    // Ensure any products marked as bestsellers have isVisible: true
+    await Product.updateMany({ isBestseller: true }, { $set: { isVisible: true } });
+  } catch (err) {
+    console.error("migrateBestsellers error:", err);
   }
 }
 
@@ -1159,6 +1170,7 @@ app.post("/admin/product", verifyAdmin, upload.fields([{ name: 'image', maxCount
     gstPercent: req.body.gstPercent !== undefined ? Number(req.body.gstPercent) : 18,
     stock: req.body.stock !== undefined ? Number(req.body.stock) : 0,
     sku: req.body.sku !== undefined && req.body.sku !== "" ? Number(req.body.sku) : null,
+    isBestseller: req.body.isBestseller === true || req.body.isBestseller === "true",
     image: mainImage,
     images: galleryImages,
     pdfUrl: pdfFile,
@@ -1571,6 +1583,12 @@ app.put(
       if (!product) return res.status(404).json({ message: "Product not found" });
 
       const updateData = { ...req.body };
+      if (req.body.isBestseller !== undefined) {
+        updateData.isBestseller = req.body.isBestseller === true || req.body.isBestseller === "true";
+      }
+      if (req.body.isVisible !== undefined) {
+        updateData.isVisible = req.body.isVisible === true || req.body.isVisible === "true";
+      }
       if (req.body.gstPercent !== undefined) {
         updateData.gstPercent = Number(req.body.gstPercent);
       }
@@ -3265,6 +3283,71 @@ app.put("/admin/product/:id/toggle-visibility", verifyAdmin, async (req, res) =>
   }
 });
 
+// TOGGLE PRODUCT BESTSELLER STATUS (ADMIN)
+app.put("/admin/product/:id/toggle-bestseller", verifyAdmin, async (req, res) => {
+  try {
+    let query;
+    if (mongoose.Types.ObjectId.isValid(req.params.id)) {
+      query = { $or: [{ _id: req.params.id }, { productId: req.params.id }] };
+    } else {
+      query = { productId: req.params.id };
+    }
+
+    const current = await Product.findOne(query);
+    if (!current) return res.status(404).json({ message: "Product not found" });
+
+    const newStatus = req.body.isBestseller !== undefined ? Boolean(req.body.isBestseller) : !current.isBestseller;
+    
+    const updateFields = { isBestseller: newStatus };
+    if (newStatus) {
+      updateFields.isVisible = true; // Ensure visible on home page when selected as bestseller
+    }
+
+    // Use updateOne to bypass unrelated schema validation issues
+    await Product.updateOne({ _id: current._id }, { $set: updateFields });
+
+    res.json({
+      message: `Product ${newStatus ? "marked as Bestseller" : "removed from Bestsellers"}`,
+      product: { ...current.toObject(), ...updateFields }
+    });
+  } catch (err) {
+    console.error("Failed to toggle bestseller status:", err);
+    res.status(500).json({ message: "Failed to update bestseller status", error: err.message });
+  }
+});
+
+// INITIALIZE BESTSELLERS WITH CURRENT HOME PRODUCTS (ADMIN)
+app.post("/admin/products/bestsellers/initialize", verifyAdmin, async (req, res) => {
+  try {
+    const topProducts = await Product.find({ isVisible: { $ne: false } }).limit(10);
+    const ids = topProducts.map(p => p._id);
+    await Product.updateMany({ _id: { $in: ids } }, { $set: { isBestseller: true } });
+    const bestsellers = await Product.find({ isBestseller: true, isVisible: { $ne: false } });
+    res.json({
+      message: `Initialized ${ids.length} products as official bestsellers`,
+      bestsellers
+    });
+  } catch (err) {
+    console.error("Failed to initialize bestsellers:", err);
+    res.status(500).json({ message: "Failed to initialize bestsellers", error: err.message });
+  }
+});
+
+// GET BESTSELLER PRODUCTS (HOME PAGE CAROUSEL)
+app.get("/products/bestsellers", async (req, res) => {
+  try {
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+
+    const bestsellers = await Product.find({ isBestseller: true });
+    res.json(bestsellers);
+  } catch (err) {
+    console.error("Failed to fetch bestsellers:", err);
+    res.status(500).json({ message: "Failed to fetch bestsellers" });
+  }
+});
+
 // ONE-TIME ADMIN MIGRATION: Reset ALL products to isVisible: false
 app.put("/admin/reset-all-visibility", verifyAdmin, async (req, res) => {
   try {
@@ -3724,5 +3807,5 @@ app.post("/payment/razorpay/verify", async (req, res) => {
 
 
 /* ================= SERVER ================= */
-const PORT = process.env.PORT || 5007;
+const PORT = process.env.PORT || 5001;
 app.listen(PORT, "0.0.0.0", () => console.log(`ETOSM Server running on port ${PORT}`));

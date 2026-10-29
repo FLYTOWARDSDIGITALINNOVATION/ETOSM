@@ -98,7 +98,7 @@ const OrdersPage = () => {
     return (
         <div className="orders-container">
             {/* BACK BUTTON */}
-            <button className="back-home-btn" onClick={() => navigate("/home")}>
+            <button className="back-home-btn" onClick={() => navigate("/")}>
                 <FaArrowLeft /> Back to Shop
             </button>
 

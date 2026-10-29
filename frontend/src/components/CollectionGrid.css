@@ -67,11 +67,13 @@
   line-height: 1.72;
   color: #475569;
   max-width: 780px;
-  margin: 0 auto 20px;
+  margin: 0 auto;
 }
 
 .etosm-seo-cta {
-  margin-top: 4px;
+  margin-top: 36px;
+  display: flex;
+  justify-content: center;
 }
 
 .etosm-seo-btn {

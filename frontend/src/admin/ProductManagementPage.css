@@ -886,6 +886,24 @@
   border: 1px solid #fecaca;
 }
 
+.status-badge.bestseller-on {
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.status-badge.bestseller-off {
+  background: #f8fafc;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+.visibility-toggle-row.bestseller-row {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed #e2e8f0;
+}
+
 /* Switch Toggle (iOS style) */
 .switch-toggle {
   position: relative;
@@ -928,6 +946,10 @@
 
 .switch-toggle input:checked + .slider-round {
   background: #10b981;
+}
+
+.switch-toggle input:checked + .slider-round.gold {
+  background: #f59e0b;
 }
 
 .switch-toggle input:checked + .slider-round::before {

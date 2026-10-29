@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { WishlistProvider } from "./context/WishlistContext";
 import { CartProvider } from "./context/CartContext";
 import FloatingChat from "./components/FloatingChat";
@@ -29,6 +29,7 @@ import ResetPasswordPage from "./pages/ResetPasswordPage"; // ✅ Import Reset P
 import AdminDashboard from "./admin/AdminDashboard"; // ✅ Import Admin Dashboard
 import AddCategory from "./admin/AddCategory";
 import AddProduct from "./admin/AddProduct";
+import AdminBestsellersPage from "./admin/AdminBestsellersPage";
 import ProductManagementPage from "./admin/ProductManagementPage";
 import RemoveProductPage from "./admin/ProductManagementPage";
 import CreateInvoicePage from "./admin/CreateInvoicePage";
@@ -65,7 +66,7 @@ function App() {
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
-            <Route path="/home" element={<HomePage />} />
+            <Route path="/home" element={<Navigate to="/" replace />} />
             <Route path="/all-products" element={<AllProductsPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/wishlist" element={<WishlistPage />} />
@@ -84,6 +85,7 @@ function App() {
             {/* Admin */}
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/products" element={<ProductManagementPage />} />
+            <Route path="/admin/bestsellers" element={<AdminBestsellersPage />} />
             <Route path="/admin/create-invoice" element={<CreateInvoicePage />} />
             <Route path="/admin/invoices" element={<CreateInvoicePage />} />
             <Route path="/admin/paid-invoices" element={<PaidInvoicesPage />} />

@@ -106,7 +106,7 @@ const Header = ({ onSearch }) => {
     setIsDropdownVisible(false);
     const targetUrl = location.pathname === "/all-products"
       ? `/all-products?search=${encodeURIComponent(localSearch.trim())}`
-      : `/home?search=${encodeURIComponent(localSearch.trim())}`;
+      : `/all-products?search=${encodeURIComponent(localSearch.trim())}`;
     navigate(targetUrl);
   };
 
@@ -134,7 +134,7 @@ const Header = ({ onSearch }) => {
       <nav className="navbar container">
         {/* 2. Logo */}
         <div className="nav-left">
-          <Link to="/home" className="brand-logo">
+          <Link to="/" className="brand-logo">
             <img src="/logo1.png" alt="Etosm Logo" />
           </Link>
         </div>
@@ -143,21 +143,15 @@ const Header = ({ onSearch }) => {
         {isMobileMenuOpen ? (
           <ul className="nav-links active">
             <li>
-              <Link to="/home" className="nav-item">
+              <Link to="/" className="nav-item">
                 <FaHome className="nav-icon-small" /> Home
               </Link>
             </li>
             <li className="dropdown">
-              <span className="nav-item">
+              <Link to="/all-products" className="nav-item" onClick={() => setIsMobileMenuOpen(false)}>
                 <FaBox className="nav-icon-small" /> Products <FaChevronDown className="dropdown-caret" />
-              </span>
+              </Link>
               <ul className="dropdown-menu">
-                <li>
-                  <Link to="/all-products" className="dropdown-item" style={{ fontWeight: 'bold', color: '#e3000f' }}>
-                    <span className="item-dot" style={{ background: '#e3000f' }}></span> All Products Catalog
-                  </Link>
-                </li>
-                <li style={{ borderTop: '1px solid #f1f5f9', margin: '4px 0' }}></li>
                 {Array.isArray(categories) && categories
                   .filter(cat => cat.name !== "BATTERY PACKS") // capital letters BATTERY PACKS commented out
                   .map(cat => (
@@ -184,21 +178,15 @@ const Header = ({ onSearch }) => {
           <div className="nav-links-wrapper">
             <ul className="nav-links-main">
               <li>
-                <Link to="/home" className="nav-item">
+                <Link to="/" className="nav-item">
                   <FaHome className="nav-icon-small" /> Home
                 </Link>
               </li>
               <li className="dropdown">
-                <span className="nav-item">
+                <Link to="/all-products" className="nav-item">
                   <FaBox className="nav-icon-small" /> Products <FaChevronDown className="dropdown-caret" />
-                </span>
+                </Link>
                 <ul className="dropdown-menu">
-                  <li>
-                    <Link to="/all-products" className="dropdown-item" style={{ fontWeight: 'bold', color: '#e3000f' }}>
-                      <span className="item-dot" style={{ background: '#e3000f' }}></span> All Products Catalog
-                    </Link>
-                  </li>
-                  <li style={{ borderTop: '1px solid #f1f5f9', margin: '4px 0' }}></li>
                   {Array.isArray(categories) && categories
                   .filter(cat => cat.name !== "BATTERY PACKS") // capital letters BATTERY PACKS commented out
                   .map(cat => (

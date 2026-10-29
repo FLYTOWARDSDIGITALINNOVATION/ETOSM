@@ -38,7 +38,7 @@ const CartPage = () => {
       <div className={`container cart-container ${cart.length === 0 ? "is-empty" : ""}`}>
         {cart.length > 0 && (
           <>
-            <div className="continue-link" onClick={() => navigate("/home")}>
+            <div className="continue-link" onClick={() => navigate("/")}>
               <ChevronLeft size={16} /> Continue Shopping
             </div>
             <h1 className="cart-title">
@@ -56,7 +56,7 @@ const CartPage = () => {
             </p>
             <button
               className="classic-shop-btn"
-              onClick={() => navigate("/home")}
+              onClick={() => navigate("/")}
             >
               Fill Your Bag
             </button>

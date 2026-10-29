@@ -106,7 +106,7 @@ const AuthPage = () => {
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
 
-      window.location.href = data.user.isAdmin ? "/admin" : "/home";
+      window.location.href = data.user.isAdmin ? "/admin" : "/";
     } catch (err) {
       setError("Server not reachable");
     }
@@ -137,7 +137,7 @@ const AuthPage = () => {
 
         localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(data.user));
-        window.location.href = data.user.isAdmin ? "/admin" : "/home";
+        window.location.href = data.user.isAdmin ? "/admin" : "/";
       } catch (err) {
         setError("Google Login failed");
       }
@@ -149,7 +149,7 @@ const AuthPage = () => {
 
   return (
     <div className="auth-container">
-      <button className="back-btn-auth" onClick={() => navigate("/home")}>
+      <button className="back-btn-auth" onClick={() => navigate("/")}>
         <FaArrowLeft /> Back to Store
       </button>
 

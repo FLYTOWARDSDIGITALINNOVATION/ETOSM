@@ -61,6 +61,7 @@ const EditProductPage = () => {
           gstPercent: data.gstPercent !== undefined ? data.gstPercent : 18,
           salesPrice: salesPriceValue,
           sku: data.sku !== null && data.sku !== undefined ? data.sku : "",
+          isBestseller: !!data.isBestseller,
           discountStart: data.discountStart ? data.discountStart.slice(0, 16) : "",
           discountEnd: data.discountEnd ? data.discountEnd.slice(0, 16) : "",
         });
@@ -126,6 +127,7 @@ const EditProductPage = () => {
       }
       formData.append("stock", form.stock);
       formData.append("sku", form.sku !== undefined ? form.sku : "");
+      formData.append("isBestseller", form.isBestseller ? "true" : "false");
       const validSpecs = specifications.filter(spec => spec.label.trim() || spec.value.trim());
       formData.append("specifications", JSON.stringify(validSpecs));
     }
@@ -373,6 +375,19 @@ const EditProductPage = () => {
               onChange={handleChange}
               rows="5"
             />
+
+            <div className="form-group checkbox-group" style={{ display: "flex", alignItems: "center", gap: "10px", margin: "16px 0", background: "#fef3c7", padding: "12px 16px", borderRadius: "8px", border: "1px solid #fde68a" }}>
+              <input
+                type="checkbox"
+                id="isBestsellerEdit"
+                checked={!!form.isBestseller}
+                onChange={(e) => setForm({ ...form, isBestseller: e.target.checked })}
+                style={{ width: "18px", height: "18px", accentColor: "#d97706", cursor: "pointer" }}
+              />
+              <label htmlFor="isBestsellerEdit" style={{ fontWeight: 700, color: "#92400e", cursor: "pointer", fontSize: "14px", margin: 0 }}>
+                ⭐ Feature in "Bestselling Products" Carousel (Home Page)
+              </label>
+            </div>
 
             <div className="form-section-specs">
               <div className="specs-header">

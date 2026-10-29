@@ -201,7 +201,7 @@ const AllProductsPage = () => {
         <div className="catalog-floating-bar">
           {/* 1. Search Box */}
           <div className="cat-search-wrap">
-            <Search size={18} className="cat-search-icon" />
+            <Search size={20} className="cat-search-icon" />
             <input
               type="text"
               placeholder="Search for products..."
@@ -210,7 +210,7 @@ const AllProductsPage = () => {
             />
             {searchTerm && (
               <button className="cat-search-clear-btn" onClick={() => setSearchTerm("")} title="Clear search">
-                <X size={14} />
+                <X size={16} />
               </button>
             )}
           </div>

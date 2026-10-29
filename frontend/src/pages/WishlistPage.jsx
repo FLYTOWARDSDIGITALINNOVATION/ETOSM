@@ -18,7 +18,7 @@ const WishlistPage = () => {
         
 
 <div className="back-btn-container reveal-fade">
-  <Link to="/home" className="classic-boutique-btn">
+  <Link to="/" className="classic-boutique-btn">
     <ChevronLeft size={14} strokeWidth={3} /> 
     <span>Back to Shop</span>
   </Link>
@@ -35,7 +35,7 @@ const WishlistPage = () => {
               your favorite high-grip essentials for your collection.
             </p>
 
-            <Link to="/home" className="shop-collection-btn">
+            <Link to="/" className="shop-collection-btn">
                Explore Collection
             </Link>
           </div>

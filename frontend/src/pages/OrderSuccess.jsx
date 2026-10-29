@@ -90,7 +90,7 @@ const OrderSuccess = () => {
 
         {/* ── Action Buttons ── */}
         <div className="os-actions">
-          <button className="os-btn-primary" onClick={() => navigate('/home')}>
+          <button className="os-btn-primary" onClick={() => navigate('/')}>
             Continue Shopping <ArrowRight size={18} />
           </button>
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import {
   FaQuoteLeft,
@@ -65,6 +65,7 @@ const defaultFeaturedReviews = [
 
 export default function Home() {
   const [allProducts, setAllProducts] = useState([]);
+  const [bestsellers, setBestsellers] = useState([]);
   const [googleReviews, setGoogleReviews] = useState(defaultFeaturedReviews);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newName, setNewName] = useState("");
@@ -183,8 +184,22 @@ export default function Home() {
     minRating: 0
   });
 
-  useEffect(() => {
-    fetch(`${API_BASE_URL}/products/all`)
+  const fetchBestsellers = () => {
+    fetch(`${API_BASE_URL}/products/bestsellers?t=${Date.now()}`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to load bestsellers endpoint");
+        return res.json();
+      })
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setBestsellers(data);
+        }
+      })
+      .catch((err) => console.error("Failed to load bestsellers:", err));
+  };
+
+  const fetchAllProducts = () => {
+    fetch(`${API_BASE_URL}/products/all?t=${Date.now()}`)
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) {
@@ -197,7 +212,41 @@ export default function Home() {
         console.error("Failed to fetch products:", err);
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    // 1. Initial loads
+    fetchBestsellers();
+    fetchAllProducts();
+
+    // 2. Auto-update when returning to Home Page tab or when admin updates bestsellers
+    const refreshData = () => {
+      fetchBestsellers();
+      fetchAllProducts();
+    };
+    const onFocus = () => refreshData();
+    const onStorage = (e) => {
+      if (e.key === "etosm_bestsellers_updated") {
+        refreshData();
+      }
+    };
+    window.addEventListener("focus", onFocus);
+    window.addEventListener("storage", onStorage);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("storage", onStorage);
+    };
   }, []);
+
+  // Bestsellers list: ONLY show products explicitly marked as Bestsellers by admin!
+  const bestsellersList = useMemo(() => {
+    if (Array.isArray(bestsellers) && bestsellers.length > 0) {
+      return bestsellers;
+    }
+    return allProducts.filter(
+      (p) => p.isBestseller === true
+    );
+  }, [bestsellers, allProducts]);
 
   const handleFilterChange = (key, value) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -328,12 +377,12 @@ export default function Home() {
                 <p style={{ padding: "40px", width: "100%", textAlign: "center", color: "#64748b" }}>
                   Loading products...
                 </p>
-              ) : filteredProducts.length === 0 ? (
+              ) : bestsellersList.length === 0 ? (
                 <div className="no-results" style={{ width: "100%", textAlign: "center", padding: "40px" }}>
                   <h3>No products found</h3>
                 </div>
               ) : (
-                filteredProducts.map((product) => (
+                bestsellersList.map((product) => (
                   <div className="bestsellers-carousel-card" key={product._id}>
                     <ProductCard product={product} />
                   </div>

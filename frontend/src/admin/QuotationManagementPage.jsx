@@ -947,9 +947,7 @@ const QuotationManagementPage = () => {
 
             {/* Builder Grid */}
             <div className="builder-grid">
-              {/* Left Column: Form Details & Items */}
-              <div className="builder-left-col">
-                {/* 1. Meta Details Card */}
+              {/* 1. Meta Details Card */}
                 <div className="q-card">
                   <div className="q-card-header">
                     <h3>1. Quotation Metadata</h3>
@@ -1226,8 +1224,10 @@ const QuotationManagementPage = () => {
                   </div>
                 </div>
 
+              {/* Bottom Calculations & Settings Grid */}
+              <div className="builder-bottom-grid">
                 {/* 4. Terms & Notes */}
-                <div className="q-card">
+                <div className="q-card quotation-terms-card">
                   <div className="q-card-header">
                     <h3>4. Commercial Terms & Notes</h3>
                   </div>
@@ -1241,10 +1241,8 @@ const QuotationManagementPage = () => {
                     />
                   </div>
                 </div>
-              </div>
 
-              {/* Right Column: Financial Summary Box */}
-              <div className="builder-right-col">
+                {/* Right Column: Financial Summary Box */}
                 <div className="summary-sticky-card">
                   <h3 className="summary-title">Quotation Summary</h3>
 

@@ -63,6 +63,9 @@ const AdminLayout = ({ children }) => {
     if (path === "/admin/products") {
       return location.pathname === "/admin/products" || location.pathname === "/admin/remove-product";
     }
+    if (path === "/admin/bestsellers") {
+      return location.pathname === "/admin/bestsellers";
+    }
     if (path === "/admin/create-invoice") {
       return location.pathname === "/admin/create-invoice" || location.pathname === "/admin/invoices";
     }
@@ -128,6 +131,7 @@ const AdminLayout = ({ children }) => {
         { title: "Product Management", path: "/admin/products" },
         { title: "Add Product", path: "/admin/add-product" },
         { title: "Add Category", path: "/admin/add-category" },
+        { title: "Bestsellers", path: "/admin/bestsellers" },
       ],
     },
     {

@@ -39,7 +39,10 @@ export default function Footer() {
           <h4 className="footer-col-title">PRODUCTS</h4>
           <ul className="footer-links">
             {Array.isArray(categories) && categories.length > 0 ? (
-              categories.map(cat => (
+              categories
+                // Capital letters BATTERY PACKS commented out
+                .filter(cat => (cat.name || "").trim() !== "BATTERY PACKS")
+                .map(cat => (
                 <li key={cat._id}>
                   <Link to={`/category/${cat.name}`}>{cat.name}</Link>
                 </li>

@@ -22,7 +22,8 @@ import {
   Layers,
   ArrowUpDown,
   History,
-  Check
+  Check,
+  Star
 } from "lucide-react";
 import { jsPDF } from "jspdf";
 import AdminLayout from "./AdminLayout";
@@ -64,6 +65,7 @@ const ProductManagementPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [stockFilter, setStockFilter] = useState("all"); // "all", "in_stock", "low_stock", "out_of_stock"
+  const [bestsellerFilter, setBestsellerFilter] = useState("all"); // "all", "bestsellers", "standard"
   const [sortBy, setSortBy] = useState("newest"); // "newest", "name_asc", "price_asc", "price_desc", "stock_asc", "stock_desc"
 
   // Multi-selection for quotation/billing
@@ -191,6 +193,39 @@ const ProductManagementPage = () => {
     }
   };
 
+  // Bestseller toggle
+  const handleToggleBestseller = async (productId, currentBestseller) => {
+    const newStatus = !currentBestseller;
+    const currentToken = token || localStorage.getItem("token");
+    try {
+      let res = await fetch(`${API_BASE_URL}/admin/product/${productId}/toggle-bestseller`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${currentToken}`
+        },
+        body: JSON.stringify({ isBestseller: newStatus })
+      });
+      if (res.status === 404) {
+        res = await fetch(`${API_BASE_URL}/admin/product/${productId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${currentToken}`
+          },
+          body: JSON.stringify({ isBestseller: newStatus })
+        });
+      }
+      if (res.ok) {
+        setProducts(prev =>
+          prev.map(p => (p._id === productId ? { ...p, isBestseller: newStatus } : p))
+        );
+      }
+    } catch (err) {
+      console.error("Toggle bestseller error:", err);
+    }
+  };
+
   // Delete product
   const handleDelete = async (productId) => {
     if (!window.confirm("Are you sure you want to permanently delete this product?")) return;
@@ -277,6 +312,13 @@ const ProductManagementPage = () => {
           if ((product.stock || 0) > 0) return false;
         }
 
+        // Bestseller Filter
+        if (bestsellerFilter === "bestsellers") {
+          if (!product.isBestseller) return false;
+        } else if (bestsellerFilter === "standard") {
+          if (product.isBestseller) return false;
+        }
+
         return true;
       })
       .sort((a, b) => {
@@ -287,7 +329,7 @@ const ProductManagementPage = () => {
         if (sortBy === "stock_desc") return (b.stock || 0) - (a.stock || 0);
         return 0; // default newest/server order
       });
-  }, [products, searchTerm, selectedCategory, stockFilter, sortBy]);
+  }, [products, searchTerm, selectedCategory, stockFilter, bestsellerFilter, sortBy]);
 
   // KPI Calculations
   const kpis = useMemo(() => {
@@ -296,12 +338,15 @@ const ProductManagementPage = () => {
     let lowStock = 0;
     let outOfStock = 0;
     let totalValuation = 0;
+    let bestsellerCount = 0;
 
     products.forEach(p => {
       const stock = Number(p.stock) || 0;
       const price = Number(p.price) || 0;
       totalStock += stock;
       totalValuation += stock * price;
+
+      if (p.isBestseller) bestsellerCount++;
 
       if (stock > 10) inStock++;
       else if (stock > 0) lowStock++;
@@ -313,6 +358,7 @@ const ProductManagementPage = () => {
       inStock,
       lowStock,
       outOfStock,
+      bestsellerCount,
       totalValuation: Math.round(totalValuation)
     };
   }, [products]);
@@ -899,6 +945,16 @@ const ProductManagementPage = () => {
 
             <select
               className="pm-select"
+              value={bestsellerFilter}
+              onChange={(e) => setBestsellerFilter(e.target.value)}
+            >
+              <option value="all">Bestsellers: All</option>
+              <option value="bestsellers">⭐ Bestsellers on Home ({kpis.bestsellerCount})</option>
+              <option value="standard">Standard Products</option>
+            </select>
+
+            <select
+              className="pm-select"
               value={stockFilter}
               onChange={(e) => setStockFilter(e.target.value)}
             >
@@ -1095,6 +1151,21 @@ const ProductManagementPage = () => {
                           onChange={() => handleToggleVisibility(p._id, p.isVisible)}
                         />
                         <span className="slider-round"></span>
+                      </label>
+                    </div>
+
+                    {/* Bestseller Toggle */}
+                    <div className="visibility-toggle-row bestseller-row">
+                      <span className={`status-badge ${p.isBestseller ? "bestseller-on" : "bestseller-off"}`}>
+                        {p.isBestseller ? "⭐ Bestseller on Home" : "☆ Standard Product"}
+                      </span>
+                      <label className="switch-toggle bestseller-switch" title="Toggle Bestseller on Home Page">
+                        <input
+                          type="checkbox"
+                          checked={!!p.isBestseller}
+                          onChange={() => handleToggleBestseller(p._id, p.isBestseller)}
+                        />
+                        <span className="slider-round gold"></span>
                       </label>
                     </div>
                   </div>

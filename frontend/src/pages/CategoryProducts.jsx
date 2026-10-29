@@ -52,7 +52,7 @@ const CategoryProducts = () => {
     if (window.history.length > 1) {
       navigate(-1);
     } else {
-      navigate("/home");
+      navigate("/");
     }
   };
 

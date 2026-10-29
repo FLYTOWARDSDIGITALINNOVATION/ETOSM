@@ -3,8 +3,9 @@
    ========================================================================== */
 
 .quotation-page {
-  padding: 24px 32px 60px;
-  max-width: 1540px;
+  padding: 10px 10px 60px;
+  max-width: 1400px;
+  box-sizing: border-box;
   margin: 0 auto;
   font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
   color: #0f172a;
@@ -662,16 +663,47 @@
 }
 
 .builder-grid {
-  display: grid;
-  grid-template-columns: 1fr 360px;
-  gap: 24px;
-  align-items: flex-start;
-}
-
-.builder-left-col {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.builder-bottom-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: flex-start;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.quotation-terms-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+  overflow: hidden;
+}
+
+.quotation-terms-card .q-card-body {
+  padding: 16px 20px;
+}
+
+.quotation-terms-card .terms-textarea {
+  width: 100%;
+  min-height: 95px;
+  height: 105px;
+  padding: 10px 14px;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-family: inherit;
+  outline: none;
+  box-sizing: border-box;
+  resize: vertical;
 }
 
 .q-card {
@@ -845,15 +877,14 @@
   box-sizing: border-box;
 }
 
-/* Right Sticky Financial Summary */
+/* Financial Summary Card */
 .summary-sticky-card {
-  position: sticky;
-  top: 24px;
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 14px;
   padding: 24px;
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
 }
 
 .summary-title {
@@ -1420,7 +1451,7 @@
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .builder-grid {
+  .builder-bottom-grid {
     grid-template-columns: 1fr;
   }
 }
