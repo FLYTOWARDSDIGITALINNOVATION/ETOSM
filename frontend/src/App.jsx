@@ -53,8 +53,14 @@ import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 
 import AllProductsPage from "./pages/AllProductsPage";
+import { prewarmAppCache } from "./utils/dataCache";
+import API_BASE_URL from "./apiConfig";
 
 function App() {
+  useEffect(() => {
+    prewarmAppCache(API_BASE_URL);
+  }, []);
+
   return (
     <WishlistProvider>
       <CartProvider>

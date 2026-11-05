@@ -408,13 +408,14 @@
 @media (max-width: 820px) {
   .catalog-products-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
+    gap: 14px;
   }
 }
 
 @media (max-width: 520px) {
   .catalog-products-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
   }
 }
 
@@ -788,5 +789,100 @@
 
   .catalog-controls-outer {
     margin-top: -24px;
+  }
+
+  .catalog-content-container {
+    padding: 0 10px;
+  }
+
+  /* 2 Cards Per Row Mobile Styling */
+  .catalog-products-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+
+  .cat-product-card {
+    padding: 10px;
+    border-radius: 14px;
+  }
+
+  .cat-card-pill-badge {
+    top: 8px;
+    left: 8px;
+    padding: 2px 7px;
+    font-size: 9.5px;
+  }
+
+  .cat-card-img-wrap {
+    height: 120px;
+    padding: 6px;
+    margin-bottom: 6px;
+    border-radius: 10px;
+  }
+
+  .cat-card-title {
+    font-size: 12.5px;
+    height: 32px;
+    line-height: 1.25;
+    margin: 4px 0 2px 0;
+  }
+
+  .cat-card-category-link {
+    font-size: 10.5px;
+    margin-bottom: 4px;
+  }
+
+  .cat-card-price-row {
+    gap: 4px;
+    margin-bottom: 6px;
+  }
+
+  .cat-card-price {
+    font-size: 14.5px;
+  }
+
+  .cat-card-orig-price {
+    font-size: 11px;
+  }
+
+  .cat-card-rating-row {
+    gap: 4px;
+    margin-bottom: 8px;
+  }
+
+  .cat-card-stars svg {
+    width: 10px;
+    height: 10px;
+  }
+
+  .cat-card-rating-count {
+    font-size: 10.5px;
+  }
+
+  .cat-card-actions-row {
+    gap: 6px;
+  }
+
+  .cat-card-add-btn {
+    padding: 7px 8px;
+    font-size: 11px;
+    gap: 4px;
+  }
+
+  .cat-card-add-btn svg {
+    width: 11px;
+    height: 11px;
+  }
+
+  .cat-card-wish-btn {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    border-radius: 50%;
+  }
+
+  .cat-card-wish-btn svg {
+    width: 12px;
+    height: 12px;
   }
 }

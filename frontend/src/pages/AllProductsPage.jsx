@@ -20,6 +20,7 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import ProductCard from "../components/ProductCard";
 import API_BASE_URL from "../apiConfig";
+import { cacheGet, cacheSet } from "../utils/dataCache";
 import "./AllProductsPage.css";
 
 // Curated Category list matching the reference image layout
@@ -49,13 +50,13 @@ const getCategoryIcon = (catName) => {
 };
 
 const AllProductsPage = () => {
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
+  const [products, setProducts] = useState(() => cacheGet("all_products_catalog") || []);
+  const [categories, setCategories] = useState(() => cacheGet("all_categories_catalog") || []);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("default");
   const [viewMode, setViewMode] = useState("grid"); // "grid" | "list"
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !(cacheGet("all_products_catalog") && cacheGet("all_products_catalog").length > 0));
   const location = useLocation();
 
   useEffect(() => {
@@ -69,7 +70,10 @@ const AllProductsPage = () => {
   }, [location.search]);
 
   const fetchData = async () => {
-    setLoading(true);
+    // Only show loading indicator if no cached products exist
+    if (!cacheGet("all_products_catalog")) {
+      setLoading(true);
+    }
     try {
       const [prodRes, catRes] = await Promise.all([
         fetch(`${API_BASE_URL}/products/all`),
@@ -78,8 +82,14 @@ const AllProductsPage = () => {
       const prodData = await prodRes.json();
       const catData = await catRes.json();
 
-      if (Array.isArray(prodData)) setProducts(prodData);
-      if (Array.isArray(catData)) setCategories(catData);
+      if (Array.isArray(prodData)) {
+        setProducts(prodData);
+        cacheSet("all_products_catalog", prodData);
+      }
+      if (Array.isArray(catData)) {
+        setCategories(catData);
+        cacheSet("all_categories_catalog", catData);
+      }
     } catch (err) {
       console.error("Failed to load catalog products:", err);
     } finally {
@@ -245,7 +255,6 @@ const AllProductsPage = () => {
                 <option value="price-low">Price: Low to High</option>
                 <option value="price-high">Price: High to Low</option>
                 <option value="name">Name (A-Z)</option>
-                <option value="rating">Top Rated</option>
               </select>
               <ChevronDown size={14} className="cat-select-chevron" />
             </div>

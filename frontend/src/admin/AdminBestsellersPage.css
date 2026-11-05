@@ -501,6 +501,8 @@
 /* Catalog Table */
 .catalog-table-wrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
   border-radius: 10px;
   border: 1px solid #e2e8f0;
 }
@@ -669,6 +671,19 @@
 }
 
 /* Responsive */
+/* Laptop Responsive Rules (1024px - 1366px) */
+@media (min-width: 769px) and (max-width: 1366px) {
+  .active-bestsellers-grid {
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 14px;
+  }
+
+  .catalog-table th,
+  .catalog-table td {
+    padding: 10px 12px;
+  }
+}
+
 @media (max-width: 768px) {
   .bestsellers-header {
     flex-direction: column;

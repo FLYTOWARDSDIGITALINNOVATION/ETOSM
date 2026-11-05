@@ -32,8 +32,9 @@ import {
   TrendingUp,
   Percent
 } from "lucide-react";
-import { jsPDF } from "jspdf";
+import { generateEtosmInvoicePdf } from "../utils/invoicePdfGenerator";
 import AdminLayout from "./AdminLayout";
+import { cacheGet, cacheSet } from "../utils/dataCache";
 import "./PendingInvoicesPage.css";
 
 // Helper: Convert number to Indian currency words
@@ -67,7 +68,7 @@ const PendingInvoicesPage = () => {
   const token = localStorage.getItem("token");
 
   // State
-  const [invoices, setInvoices] = useState([]);
+  const [invoices, setInvoices] = useState(() => cacheGet("admin_pending_invoices") || []);
   const [stats, setStats] = useState({
     totalPendingCount: 0,
     unpaidCount: 0,
@@ -78,7 +79,7 @@ const PendingInvoicesPage = () => {
     totalOutstandingBalance: 0,
     totalOverdueAmount: 0
   });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !(cacheGet("admin_pending_invoices") && cacheGet("admin_pending_invoices").length > 0));
 
   // Search & Filters
   const [searchTerm, setSearchTerm] = useState("");
@@ -120,7 +121,7 @@ const PendingInvoicesPage = () => {
   // Fetch Pending Invoices
   const fetchPendingInvoices = async () => {
     try {
-      setLoading(true);
+      if (!cacheGet("admin_pending_invoices")) setLoading(true);
       const params = new URLSearchParams();
       if (statusFilter !== "all") params.append("status", statusFilter);
       if (dateFilter !== "all") params.append("dateFilter", dateFilter);
@@ -140,7 +141,9 @@ const PendingInvoicesPage = () => {
       }
 
       const data = await res.json();
-      setInvoices(Array.isArray(data.invoices) ? data.invoices : []);
+      const list = Array.isArray(data.invoices) ? data.invoices : [];
+      setInvoices(list);
+      cacheSet("admin_pending_invoices", list);
       if (data.stats) {
         setStats(data.stats);
       }
@@ -365,222 +368,12 @@ const PendingInvoicesPage = () => {
     showToast(`Exported ${filteredInvoices.length} pending invoices to CSV`);
   };
 
-  // Generate Vector PDF using jsPDF
-  const handleDownloadPdf = (inv) => {
+  // Generate Vector PDF using generateEtosmInvoicePdf
+  const handleDownloadPdf = async (inv) => {
     try {
-      const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-      const primaryRed = [227, 0, 15]; // ETOSM Red
-      const slateDark = [15, 23, 42]; // Slate 900
-      const borderGray = [226, 232, 240];
-
-      let y = 14;
-
-      // Top Header Banner
-      doc.setFillColor(...slateDark);
-      doc.rect(14, y, 182, 24, "F");
-
-      doc.setTextColor(255, 255, 255);
-      doc.setFont("Helvetica", "bold");
-      doc.setFontSize(15);
-      doc.text("ETOSM TECHNOLOGY", 20, y + 9);
-
-      doc.setFontSize(8.5);
-      doc.setFont("Helvetica", "normal");
-      doc.text("Lithium Battery Packs • Custom BMS • EV Electronics • Power Solutions", 20, y + 15);
-      doc.text("Office: Namakkal, Tamil Nadu-637202 | Phone: +91 88070 80216 | Email: support@etosmtechnology.in", 20, y + 20);
-
-      // Title Ribbon: PENDING / PARTIALLY PAID INVOICE
-      doc.setFillColor(...primaryRed);
-      doc.rect(14, y + 24, 182, 7, "F");
-      doc.setTextColor(255, 255, 255);
-      doc.setFont("Helvetica", "bold");
-      doc.setFontSize(10);
-      const ribbonText = inv.paymentStatus === "Partially Paid"
-        ? "TAX INVOICE (PARTIALLY PAID)"
-        : "TAX INVOICE (PAYMENT PENDING)";
-      doc.text(ribbonText, 20, y + 29);
-
-      y += 37;
-
-      // Meta Info Grid (Customer & Invoice)
-      doc.setDrawColor(...borderGray);
-      doc.setLineWidth(0.3);
-      doc.rect(14, y, 91, 38);
-      doc.rect(105, y, 91, 38);
-
-      // Customer Details (Left Box)
-      doc.setTextColor(...slateDark);
-      doc.setFont("Helvetica", "bold");
-      doc.setFontSize(9);
-      doc.text("BILLED TO / CUSTOMER DETAILS:", 18, y + 6);
-
-      doc.setFont("Helvetica", "bold");
-      doc.setFontSize(10);
-      doc.text(String(inv.customerName || "Customer"), 18, y + 12);
-
-      doc.setFont("Helvetica", "normal");
-      doc.setFontSize(8.5);
-      let custY = y + 17;
-      if (inv.customerCompany) {
-        doc.text(`Company: ${inv.customerCompany}`, 18, custY);
-        custY += 4.5;
-      }
-      if (inv.customerPhone) {
-        doc.text(`Phone: ${inv.customerPhone}`, 18, custY);
-        custY += 4.5;
-      }
-      if (inv.customerEmail) {
-        doc.text(`Email: ${inv.customerEmail}`, 18, custY);
-        custY += 4.5;
-      }
-      if (inv.customerGstin) {
-        doc.text(`GSTIN: ${inv.customerGstin}`, 18, custY);
-      }
-
-      // Invoice Details (Right Box)
-      doc.setFont("Helvetica", "bold");
-      doc.setFontSize(9);
-      doc.text("INVOICE & PAYMENT DETAILS:", 109, y + 6);
-
-      doc.setFont("Helvetica", "normal");
-      doc.setFontSize(8.5);
-      doc.text(`Invoice No:`, 109, y + 12);
-      doc.setFont("Helvetica", "bold");
-      doc.text(String(inv.invoiceNumber || "INV-0000"), 140, y + 12);
-
-      doc.setFont("Helvetica", "normal");
-      doc.text(`Invoice Date:`, 109, y + 17);
-      doc.text(inv.invoiceDate ? new Date(inv.invoiceDate).toLocaleDateString("en-IN") : "N/A", 140, y + 17);
-
-      doc.text(`Due Date:`, 109, y + 22);
-      doc.setFont("Helvetica", "bold");
-      doc.setTextColor(inv.isOverdue ? 227 : 15, inv.isOverdue ? 0 : 23, inv.isOverdue ? 15 : 42);
-      doc.text(inv.dueDate ? new Date(inv.dueDate).toLocaleDateString("en-IN") : "Immediate", 140, y + 22);
-
-      doc.setTextColor(...slateDark);
-      doc.setFont("Helvetica", "normal");
-      doc.text(`Payment Mode:`, 109, y + 27);
-      doc.text(String(inv.paymentMode || "Bank Transfer"), 140, y + 27);
-
-      doc.text(`Payment Status:`, 109, y + 32);
-      doc.setFont("Helvetica", "bold");
-      doc.setTextColor(227, 0, 15);
-      doc.text(String(inv.paymentStatus || "Pending").toUpperCase(), 140, y + 32);
-
-      y += 44;
-
-      // Itemized Table Header
-      doc.setFillColor(241, 245, 249);
-      doc.rect(14, y, 182, 7, "F");
-      doc.setDrawColor(...borderGray);
-      doc.rect(14, y, 182, 7);
-
-      doc.setTextColor(...slateDark);
-      doc.setFont("Helvetica", "bold");
-      doc.setFontSize(8);
-      doc.text("#", 17, y + 5);
-      doc.text("Item Description", 24, y + 5);
-      doc.text("Qty", 108, y + 5);
-      doc.text("Rate (INR)", 122, y + 5);
-      doc.text("GST", 148, y + 5);
-      doc.text("Amount (INR)", 170, y + 5);
-
-      y += 7;
-
-      // Table Rows
-      const items = Array.isArray(inv.items) && inv.items.length > 0
-        ? inv.items
-        : [{ name: "Electronic Components & Power Assembly", quantity: 1, unitPrice: inv.grandTotal, gstPercent: 18, totalAmount: inv.grandTotal }];
-
-      items.forEach((item, idx) => {
-        if (y > 240) {
-          doc.addPage();
-          y = 15;
-        }
-
-        doc.setFillColor(idx % 2 === 0 ? 255 : 249, idx % 2 === 0 ? 255 : 250, idx % 2 === 0 ? 255 : 251);
-        doc.rect(14, y, 182, 7, "F");
-        doc.setDrawColor(...borderGray);
-        doc.rect(14, y, 182, 7);
-
-        doc.setFont("Helvetica", "normal");
-        doc.setFontSize(8);
-        doc.text(String(idx + 1), 17, y + 5);
-
-        const itemName = item.name.length > 45 ? item.name.substring(0, 42) + "..." : item.name;
-        doc.text(itemName, 24, y + 5);
-
-        doc.text(String(item.quantity || 1), 110, y + 5);
-        doc.text(Number(item.unitPrice || 0).toFixed(2), 122, y + 5);
-        doc.text(`${item.gstPercent || 18}%`, 149, y + 5);
-        doc.setFont("Helvetica", "bold");
-        doc.text(Number(item.totalAmount || 0).toFixed(2), 170, y + 5);
-
-        y += 7;
-      });
-
-      y += 4;
-
-      // Summary Box: Total, Paid, Outstanding Balance
-      const summaryX = 110;
-      doc.setFillColor(248, 250, 252);
-      doc.rect(summaryX, y, 86, 38, "F");
-      doc.setDrawColor(...borderGray);
-      doc.rect(summaryX, y, 86, 38);
-
-      doc.setFont("Helvetica", "normal");
-      doc.setFontSize(8.5);
-      doc.setTextColor(...slateDark);
-      doc.text("Total Invoiced Amount:", summaryX + 4, y + 7);
-      doc.setFont("Helvetica", "bold");
-      doc.text(`INR ${Number(inv.grandTotal || 0).toLocaleString("en-IN")}`, summaryX + 52, y + 7);
-
-      doc.setFont("Helvetica", "normal");
-      doc.text("Amount Paid So Far:", summaryX + 4, y + 15);
-      doc.setFont("Helvetica", "bold");
-      doc.setTextColor(22, 101, 52); // green
-      doc.text(`INR ${Number(inv.amountPaid || 0).toLocaleString("en-IN")}`, summaryX + 52, y + 15);
-
-      // Red highlight for Outstanding Balance
-      doc.setFillColor(254, 242, 242);
-      doc.rect(summaryX + 2, y + 21, 82, 13, "F");
-      doc.setDrawColor(227, 0, 15);
-      doc.rect(summaryX + 2, y + 21, 82, 13);
-
-      doc.setTextColor(227, 0, 15);
-      doc.setFont("Helvetica", "bold");
-      doc.setFontSize(9);
-      doc.text("OUTSTANDING BALANCE:", summaryX + 4, y + 29);
-      doc.setFontSize(11);
-      doc.text(`INR ${Number(inv.balanceAmount || 0).toLocaleString("en-IN")}`, summaryX + 50, y + 29);
-
-      // Left Box: Bank Details for Remittance
-      doc.setDrawColor(...borderGray);
-      doc.rect(14, y, 92, 38);
-      doc.setFont("Helvetica", "bold");
-      doc.setFontSize(8.5);
-      doc.setTextColor(...slateDark);
-      doc.text("REMITTANCE & BANK TRANSFER DETAILS:", 18, y + 6);
-
-      doc.setFont("Helvetica", "normal");
-      doc.setFontSize(8);
-      const b = inv.bankDetails || {};
-      doc.text(`Bank Name: ${b.bankName || "State Bank of India"}`, 18, y + 12);
-      doc.text(`Account No: ${b.accountNumber || "38920192837"}`, 18, y + 17);
-      doc.text(`IFSC Code: ${b.ifscCode || "SBIN0001234"}`, 18, y + 22);
-      doc.text(`Branch: ${b.branch || "Coimbatore Main Branch"}`, 18, y + 27);
-      doc.text(`UPI ID: ${b.upiId || "etosm@sbi"}`, 18, y + 32);
-
-      y += 46;
-
-      // Amount in words
-      doc.setFont("Helvetica", "italic");
-      doc.setFontSize(8.5);
-      doc.setTextColor(71, 85, 105);
-      doc.text(`Outstanding Balance in words: ${numberToWordsINR(inv.balanceAmount || inv.grandTotal)}`, 14, y);
-
-      // Save PDF
-      doc.save(`ETOSM_Invoice_${inv.invoiceNumber}_Pending.pdf`);
+      const doc = await generateEtosmInvoicePdf(inv);
+      const cleanNum = (inv.invoiceNumber || "Invoice").replace(/[/\\?%*:|"<>]/g, "-");
+      doc.save(`Tax_Invoice_${cleanNum}_Pending.pdf`);
       showToast(`Invoice ${inv.invoiceNumber} PDF downloaded successfully!`);
     } catch (err) {
       console.error("PDF generation failed:", err);

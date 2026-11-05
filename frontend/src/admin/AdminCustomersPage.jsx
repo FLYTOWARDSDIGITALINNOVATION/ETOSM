@@ -312,6 +312,56 @@ const AdminCustomersPage = () => {
     if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
     return name.slice(0, 2).toUpperCase();
   };
+  const formatPhoneNumber = (phone) => {
+    if (!phone || phone === "N/A") return null;
+    const digits = String(phone).replace(/\D/g, "");
+    if (digits.length === 10) {
+      return `+91 ${digits.slice(0, 5)} ${digits.slice(5)}`;
+    }
+    if (digits.length === 12 && digits.startsWith("91")) {
+      const main = digits.slice(2);
+      return `+91 ${main.slice(0, 5)} ${main.slice(5)}`;
+    }
+    if (digits.length === 11 && digits.startsWith("0")) {
+      const main = digits.slice(1);
+      return `+91 ${main.slice(0, 5)} ${main.slice(5)}`;
+    }
+    return phone;
+  };
+
+  const getWaPhone = (phone) => {
+    if (!phone || phone === "N/A") return "";
+    const digits = String(phone).replace(/\D/g, "");
+    if (digits.length === 10) return `91${digits}`;
+    if (digits.length === 12 && digits.startsWith("91")) return digits;
+    if (digits.length === 11 && digits.startsWith("0")) return `91${digits.slice(1)}`;
+    return digits;
+  };
+
+  const formatFullAddress = (c) => {
+    if (!c) return "";
+    const parts = [];
+    if (c.address && c.address.trim()) {
+      const cleanAddr = c.address.replace(/[\s,]+$/, "").trim();
+      if (cleanAddr) parts.push(cleanAddr);
+    }
+    if (c.city && c.city.trim()) {
+      const cleanCity = c.city.replace(/[\s,]+$/, "").trim();
+      if (cleanCity && (!parts[0] || !parts[0].toLowerCase().includes(cleanCity.toLowerCase()))) {
+        parts.push(cleanCity);
+      }
+    }
+    if (c.state && c.state.trim() && c.state !== "Tamil Nadu") {
+      parts.push(c.state.trim());
+    }
+    let addrStr = parts.join(", ");
+    if (c.pincode && String(c.pincode).trim()) {
+      addrStr += (addrStr ? " - " : "") + String(c.pincode).trim();
+    }
+    addrStr = addrStr.replace(/,\s*,+/g, ", ").replace(/^[\s,]+|[\s,]+$/g, "");
+    return addrStr;
+  };
+
 
   return (
     <AdminLayout>
@@ -482,24 +532,25 @@ const AdminCustomersPage = () => {
               <table className="customers-table">
                 <thead>
                   <tr>
-                    <th>CUSTOMER & COMPANY</th>
-                    <th>MOBILE NUMBER</th>
-                    <th>FULL ADDRESS & LOCATION</th>
-                    <th>EMAIL & GSTIN</th>
-                    <th style={{ textAlign: "right" }}>PURCHASES</th>
-                    <th>ACCOUNT TYPE</th>
-                    <th style={{ textAlign: "center" }}>ACTIONS</th>
+                    <th className="col-customer">CUSTOMER & COMPANY</th>
+                    <th className="col-mobile">MOBILE NUMBER</th>
+                    <th className="col-address">FULL ADDRESS & LOCATION</th>
+                    <th className="col-email">EMAIL & GSTIN</th>
+                    <th className="col-purchases" style={{ textAlign: "right" }}>PURCHASES</th>
+                    <th className="col-type">ACCOUNT</th>
+                    <th className="col-actions" style={{ textAlign: "center" }}>ACTIONS</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredCustomers.map((c) => {
-                    const cleanPhone = (c.phone || "").replace(/\D/g, "");
-                    const waPhone = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
+                    const formattedPhone = formatPhoneNumber(c.phone);
+                    const waPhone = getWaPhone(c.phone);
+                    const fullAddress = formatFullAddress(c);
 
                     return (
                       <tr key={c._id || c.email}>
-                        {/* Name & Company */}
-                        <td>
+                        {/* 1. Name & Company */}
+                        <td className="col-customer">
                           <div className="customer-name-block">
                             <div className={`cust-avatar ${c.isCustom ? "custom-client" : c.isRegistered ? "registered-client" : "guest-client"}`}>
                               {getInitials(c.name)}
@@ -508,22 +559,23 @@ const AdminCustomersPage = () => {
                               <strong className="name-bold">{c.name}</strong>
                               {c.company && (
                                 <span className="company-text">
-                                  <Building size={12} /> {c.company}
+                                  <Building size={11} /> {c.company}
                                 </span>
                               )}
                             </div>
                           </div>
                         </td>
 
-                        {/* Mobile Number */}
-                        <td>
+                        {/* 2. Mobile Number (Uniform Tabular Alignment) */}
+                        <td className="col-mobile">
                           <div className="mobile-cell">
-                            {c.phone && c.phone !== "N/A" ? (
+                            {formattedPhone ? (
                               <>
-                                <a href={`tel:${c.phone}`} className="phone-link">
-                                  <Phone size={13} /> {c.phone}
+                                <a href={`tel:${formattedPhone}`} className="phone-link" title={`Call ${c.name}`}>
+                                  <Phone size={12} className="phone-icon" />
+                                  <span className="phone-digits">{formattedPhone}</span>
                                 </a>
-                                {cleanPhone && (
+                                {waPhone && (
                                   <a
                                     href={`https://wa.me/${waPhone}`}
                                     target="_blank"
@@ -531,7 +583,7 @@ const AdminCustomersPage = () => {
                                     className="whatsapp-quick-btn"
                                     title="Chat on WhatsApp"
                                   >
-                                    <MessageCircle size={14} />
+                                    <MessageCircle size={13} />
                                   </a>
                                 )}
                               </>
@@ -541,28 +593,27 @@ const AdminCustomersPage = () => {
                           </div>
                         </td>
 
-                        {/* Address */}
-                        <td>
+                        {/* 3. Full Address & Location (Complete view without truncation) */}
+                        <td className="col-address">
                           <div className="address-cell">
-                            {c.address ? (
-                              <span className="address-text" title={c.address}>
+                            {fullAddress ? (
+                              <div className="address-text">
                                 <MapPin size={13} className="pin-icon" />
-                                {c.address}
-                                {c.city && `, ${c.city}`}
-                                {c.pincode && ` - ${c.pincode}`}
-                              </span>
+                                <span className="address-full-string">{fullAddress}</span>
+                              </div>
                             ) : (
                               <span className="empty-text">No address stored</span>
                             )}
                           </div>
                         </td>
 
-                        {/* Email & GSTIN */}
-                        <td>
+                        {/* 4. Email & GSTIN */}
+                        <td className="col-email">
                           <div className="meta-email-cell">
                             {c.email ? (
-                              <a href={`mailto:${c.email}`} className="email-link">
-                                <Mail size={12} /> {c.email}
+                              <a href={`mailto:${c.email}`} className="email-link" title={c.email}>
+                                <Mail size={11} />
+                                <span className="email-text-wrap">{c.email}</span>
                               </a>
                             ) : (
                               <span className="empty-text">No email</span>
@@ -573,8 +624,8 @@ const AdminCustomersPage = () => {
                           </div>
                         </td>
 
-                        {/* Purchases */}
-                        <td style={{ textAlign: "right" }}>
+                        {/* 5. Purchases */}
+                        <td className="col-purchases" style={{ textAlign: "right" }}>
                           <div className="purchases-cell">
                             <strong className="spent-text">
                               ₹{Number(c.totalSpent || 0).toLocaleString("en-IN")}
@@ -585,61 +636,54 @@ const AdminCustomersPage = () => {
                           </div>
                         </td>
 
-                        {/* Type Badge */}
-                        <td>
+                        {/* 6. Account Type */}
+                        <td className="col-type">
                           <span className={`type-badge ${c.isCustom ? "saved" : c.isRegistered ? "registered" : "guest"}`}>
                             {c.isCustom ? "Saved Client" : c.isRegistered ? "Registered" : "Guest"}
                           </span>
                         </td>
 
-                        {/* Actions */}
-                        <td>
+                        {/* 7. Actions (Neat, aligned icon buttons in one view) */}
+                        <td className="col-actions">
                           <div className="table-actions-row">
-                            {/* Create Invoice Shortcut */}
                             <button
-                              className="action-pill-btn invoice"
+                              className="action-icon invoice"
                               onClick={() => navigate("/admin/create-invoice")}
                               title="Create Invoice for this Customer"
                             >
-                              <Receipt size={13} />
-                              <span>Invoice</span>
+                              <Receipt size={14} />
                             </button>
 
-                            {/* Create Quotation Shortcut */}
                             <button
-                              className="action-pill-btn quote"
+                              className="action-icon quote"
                               onClick={() => navigate("/admin/quotations")}
                               title="Create Quotation for this Customer"
                             >
-                              <FileCheck size={13} />
-                              <span>Quote</span>
+                              <FileCheck size={14} />
                             </button>
 
-                            {/* Edit Customer */}
                             <button
                               className="action-icon edit"
                               onClick={() => handleOpenEditModal(c)}
                               title="Edit Customer Details"
                             >
-                              <Edit3 size={15} />
+                              <Edit3 size={14} />
                             </button>
 
-                            {/* View Profile */}
                             <button
                               className="action-icon view"
                               onClick={() => setSelectedCustomer(c)}
-                              title="View Customer Profile"
+                              title="View Full Profile"
                             >
-                              <Eye size={15} />
+                              <Eye size={14} />
                             </button>
 
-                            {/* Delete */}
                             <button
                               className="action-icon delete"
                               onClick={() => handleDeleteCustomer(c)}
                               title="Delete Customer"
                             >
-                              <Trash2 size={15} />
+                              <Trash2 size={14} />
                             </button>
                           </div>
                         </td>

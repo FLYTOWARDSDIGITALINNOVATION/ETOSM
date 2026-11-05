@@ -349,6 +349,8 @@
 .pm-table-responsive {
   width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
 }
 
 .pm-table {
@@ -1260,6 +1262,29 @@
 /* --------------------------------------------------------------------------
    Responsive Design
    -------------------------------------------------------------------------- */
+@media (min-width: 769px) and (max-width: 1366px) {
+  .pm-controls-card {
+    padding: 14px 16px;
+    gap: 12px;
+  }
+
+  .pm-kpi-grid {
+    gap: 14px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+
+  .pm-table th,
+  .pm-table td {
+    padding: 12px 14px;
+  }
+}
+
+@media (max-width: 1180px) {
+  .pm-form-grid-3 {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+}
+
 @media (max-width: 1024px) {
   .products-grid,
   .pm-grid-view {

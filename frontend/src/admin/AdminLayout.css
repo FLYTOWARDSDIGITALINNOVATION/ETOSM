@@ -215,12 +215,15 @@
   transition: 0.3s;
   min-height: 100vh;
   width: calc(100% - 280px);
+  max-width: calc(100% - 280px);
   box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 .admin-main.sidebar-closed {
   margin-left: 80px;
   width: calc(100% - 80px);
+  max-width: calc(100% - 80px);
 }
 
 .admin-content {
@@ -228,6 +231,16 @@
   width: 100%;
   box-sizing: border-box;
   min-height: 100vh;
+}
+
+/* Global Admin Responsive Table Container */
+.table-container,
+.table-responsive,
+.admin-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
 }
 
 /* Custom Scrollbar for Sidebar */
@@ -247,6 +260,63 @@
 
 .sidebar-overlay {
   display: none;
+}
+
+/* Laptop Responsive Optimizations (1024px - 1366px screen resolutions) */
+@media (min-width: 769px) and (max-width: 1366px) {
+  .admin-sidebar {
+    width: 240px;
+  }
+
+  .admin-sidebar.closed {
+    width: 72px;
+  }
+
+  .sidebar-header {
+    padding: 20px 14px;
+  }
+
+  .sidebar-header h3 {
+    font-size: 13px;
+  }
+
+  .sidebar-nav {
+    padding: 16px 8px;
+    gap: 4px;
+  }
+
+  .nav-item {
+    padding: 10px 12px;
+    font-size: 13px;
+    gap: 10px;
+  }
+
+  .nav-subitem {
+    padding: 8px 12px;
+    font-size: 12.5px;
+  }
+
+  .admin-main {
+    margin-left: 240px;
+    width: calc(100% - 240px);
+    max-width: calc(100% - 240px);
+  }
+
+  .admin-main.sidebar-closed {
+    margin-left: 72px;
+    width: calc(100% - 72px);
+    max-width: calc(100% - 72px);
+  }
+
+  .admin-content {
+    padding: 20px 22px;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .admin-content {
+    padding: 16px 18px;
+  }
 }
 
 /* Responsive Design */

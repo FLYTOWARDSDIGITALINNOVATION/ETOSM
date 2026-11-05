@@ -31,8 +31,18 @@ const AdminDashboard = () => {
     categories: 0,
   });
 
-  const [loading, setLoading] = useState(true);
-  const [recentOrders, setRecentOrders] = useState([]);
+  const getInitialData = () => {
+    try {
+      const c = localStorage.getItem(CACHE_KEY);
+      if (!c) return null;
+      const { data, timestamp } = JSON.parse(c);
+      if (Date.now() - timestamp > CACHE_DURATION) return null;
+      return data;
+    } catch(e) { return null; }
+  };
+  const initDash = getInitialData();
+  const [loading, setLoading] = useState(() => !initDash);
+  const [recentOrders, setRecentOrders] = useState(() => initDash?.recentOrders || []);
 
   useEffect(() => {
     // Skip auth check if already done
@@ -70,9 +80,9 @@ const AdminDashboard = () => {
     );
   };
 
-  const fetchStats = async () => {
+  const fetchStats = async (isManual = false) => {
     try {
-      setLoading(true);
+      if (isManual || !getInitialData()) setLoading(true);
       const res = await fetch(`${API_BASE_URL}/admin/dashboard-stats`, {
         headers: { Authorization: `Bearer ${token}` },
       });

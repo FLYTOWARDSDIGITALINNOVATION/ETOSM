@@ -33,7 +33,7 @@ import {
   ShieldCheck,
   Tag
 } from "lucide-react";
-import { jsPDF } from "jspdf";
+import { generateEtosmInvoicePdf, printEtosmInvoicePdf } from "../utils/invoicePdfGenerator";
 import AdminLayout from "./AdminLayout";
 import "./CreateInvoicePage.css";
 
@@ -144,11 +144,11 @@ const CreateInvoicePage = () => {
 
   // Bank & Settlement Details
   const [bankDetails, setBankDetails] = useState({
-    bankName: "State Bank of India",
-    accountNumber: "38920192837",
-    ifscCode: "SBIN0001234",
-    branch: "Coimbatore Main Branch",
-    upiId: "etosm@sbi"
+    bankName: "INDIAN BANK",
+    accountNumber: "7776386819",
+    ifscCode: "IDIB000T038",
+    branch: "Tiruchengodu Branch",
+    upiId: "etosm@indianbk"
   });
 
   // Toast / feedback message
@@ -499,8 +499,14 @@ const CreateInvoicePage = () => {
       showToast("Please enter or select a customer name", "error");
       return null;
     }
-    if (items.length === 0 || !items.some((i) => i.name.trim() !== "")) {
-      showToast("Please add at least one product line item", "error");
+
+    // Filter out blank/unentered draft items so they never save to database
+    const validItems = (invoiceCalculations.items || []).filter(
+      (i) => i && (i.name || "").trim() !== "" && (i.name || "").trim().toLowerCase() !== "product item"
+    );
+
+    if (validItems.length === 0) {
+      showToast("Please add at least one product with a valid name", "error");
       return null;
     }
 
@@ -523,11 +529,11 @@ const CreateInvoicePage = () => {
         amountPaid: paymentStatus === "Partially Paid" ? (Number(amountPaidInput) || 0) : (paymentStatus === "Paid" ? invoiceCalculations.grandTotal : 0),
         balanceAmount: paymentStatus === "Partially Paid" ? Math.max(0, invoiceCalculations.grandTotal - (Number(amountPaidInput) || 0)) : (paymentStatus === "Paid" ? 0 : invoiceCalculations.grandTotal),
         deductStock: deductStock,
-        items: invoiceCalculations.items.map((i) => ({
+        items: validItems.map((i) => ({
           productId: i.productId,
           productRef: i.productRef,
-          name: i.name || "Product Item",
-          description: i.description,
+          name: i.name.trim(),
+          description: i.description || "",
           quantity: i.quantity,
           unitPrice: i.unitPrice,
           discountPercent: i.discountType === "percent" ? i.discountValue : 0,
@@ -571,8 +577,10 @@ const CreateInvoicePage = () => {
       }
 
       if (!quiet) {
-        showToast(`Invoice ${data.invoiceNumber} saved successfully!`);
+        showToast(`Invoice ${data.invoice?.invoiceNumber || data.invoiceNumber || invoiceNumber} saved successfully!`);
       }
+      fetchInvoicesHistory();
+      generateInvoiceNumber();
       return data;
     } catch (err) {
       console.error("Save invoice error:", err);
@@ -585,30 +593,42 @@ const CreateInvoicePage = () => {
 
   // Generate and Download PDF File
   const handleDownloadPdf = async (customInvoiceData = null) => {
-    const data = customInvoiceData || {
-      invoiceNumber,
-      invoiceDate,
-      dueDate,
-      placeOfSupply,
-      paymentMode,
-      paymentStatus,
-      customer,
-      items: invoiceCalculations.items,
-      grossSubtotal: invoiceCalculations.grossSubtotal,
-      totalDiscount: invoiceCalculations.totalDiscount,
-      taxableSubtotal: invoiceCalculations.taxableSubtotal,
-      totalTax: invoiceCalculations.totalTax,
-      isInterState,
-      cgstTotal: invoiceCalculations.cgstTotal,
-      sgstTotal: invoiceCalculations.sgstTotal,
-      igstTotal: invoiceCalculations.igstTotal,
-      shippingCharges: invoiceCalculations.shippingCharges,
-      roundOff: invoiceCalculations.roundOff,
-      grandTotal: invoiceCalculations.grandTotal,
-      amountInWords: invoiceCalculations.amountInWords,
-      notes,
-      bankDetails
-    };
+    const rawItems = customInvoiceData ? customInvoiceData.items : invoiceCalculations.items;
+    const validItems = (rawItems || []).filter(
+      (i) => i && (i.name || "").trim() !== "" && (i.name || "").trim().toLowerCase() !== "product item"
+    );
+
+    if (validItems.length === 0 && !customInvoiceData) {
+      showToast("Please enter at least one product name before generating PDF", "error");
+      return;
+    }
+
+    const data = customInvoiceData
+      ? { ...customInvoiceData, items: validItems.length > 0 ? validItems : customInvoiceData.items }
+      : {
+          invoiceNumber,
+          invoiceDate,
+          dueDate,
+          placeOfSupply,
+          paymentMode,
+          paymentStatus,
+          customer,
+          items: validItems,
+          grossSubtotal: invoiceCalculations.grossSubtotal,
+          totalDiscount: invoiceCalculations.totalDiscount,
+          taxableSubtotal: invoiceCalculations.taxableSubtotal,
+          totalTax: invoiceCalculations.totalTax,
+          isInterState,
+          cgstTotal: invoiceCalculations.cgstTotal,
+          sgstTotal: invoiceCalculations.sgstTotal,
+          igstTotal: invoiceCalculations.igstTotal,
+          shippingCharges: invoiceCalculations.shippingCharges,
+          roundOff: invoiceCalculations.roundOff,
+          grandTotal: invoiceCalculations.grandTotal,
+          amountInWords: invoiceCalculations.amountInWords,
+          notes,
+          bankDetails
+        };
 
     if (!data.customer?.name?.trim() && !customInvoiceData) {
       showToast("Please enter customer name before generating PDF", "error");
@@ -616,247 +636,81 @@ const CreateInvoicePage = () => {
     }
 
     try {
-      const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-      const primaryRed = [227, 0, 15]; // ETOSM Red
-      const slateDark = [15, 23, 42]; // Slate 900
-      const slateMuted = [100, 116, 139]; // Slate 500
-      const borderGray = [226, 232, 240];
-
-      let y = 14;
-
-      // 1. Top Header Banner
-      doc.setFillColor(...slateDark);
-      doc.rect(14, y, 182, 24, "F");
-
-      doc.setTextColor(255, 255, 255);
-      doc.setFont("Helvetica", "bold");
-      doc.setFontSize(15);
-      doc.text("ETOSM BATTERY & ELECTRONICS", 20, y + 9);
-
-      doc.setFontSize(8.5);
-      doc.setFont("Helvetica", "normal");
-      doc.text("Lithium Battery Packs • BMS Boards • EV Electronics • Industrial Solutions", 20, y + 15);
-      doc.text("GSTIN: 33AAAAE1234A1Z5 | Phone: +91 98765 43210 | Email: billing@etosm.com", 20, y + 20);
-
-      // Title Ribbon: TAX INVOICE
-      doc.setFillColor(...primaryRed);
-      doc.rect(136, y + 4, 54, 16, "F");
-      doc.setTextColor(255, 255, 255);
-      doc.setFont("Helvetica", "bold");
-      doc.setFontSize(11);
-      doc.text("TAX INVOICE", 145, y + 14);
-
-      y += 30;
-
-      // 2. Invoice Meta & Customer Details Grid
-      doc.setDrawColor(...borderGray);
-      doc.setLineWidth(0.3);
-
-      // Customer Details Box (Left)
-      doc.setFillColor(248, 250, 252);
-      doc.rect(14, y, 92, 36, "FD");
-
-      doc.setTextColor(...slateDark);
-      doc.setFontSize(9);
-      doc.setFont("Helvetica", "bold");
-      doc.text("BILLED TO / CUSTOMER DETAILS:", 18, y + 6);
-
-      doc.setFont("Helvetica", "normal");
-      doc.setFontSize(8.5);
-      doc.setTextColor(51, 65, 85);
-      doc.text(`Name: ${data.customer?.name || "N/A"}`, 18, y + 12);
-      doc.text(`Phone: ${data.customer?.phone || "N/A"}`, 18, y + 17);
-      doc.text(`Email: ${data.customer?.email || "N/A"}`, 18, y + 22);
-      if (data.customer?.company) {
-        doc.text(`Company: ${data.customer.company}`, 18, y + 27);
-      }
-      if (data.customer?.gstin) {
-        doc.text(`GSTIN: ${data.customer.gstin}`, 18, y + 32);
-      } else if (data.customer?.address) {
-        const addrSnippet = data.customer.address.length > 45 ? data.customer.address.substring(0, 42) + "..." : data.customer.address;
-        doc.text(`Address: ${addrSnippet}`, 18, y + 32);
-      }
-
-      // Invoice Details Box (Right)
-      doc.rect(110, y, 86, 36, "FD");
-      doc.setTextColor(...slateDark);
-      doc.setFont("Helvetica", "bold");
-      doc.setFontSize(9);
-      doc.text("INVOICE DETAILS:", 114, y + 6);
-
-      doc.setFont("Helvetica", "normal");
-      doc.setFontSize(8.5);
-      doc.setTextColor(51, 65, 85);
-      doc.text(`Invoice No: ${data.invoiceNumber || "N/A"}`, 114, y + 12);
-      doc.text(`Invoice Date: ${data.invoiceDate ? new Date(data.invoiceDate).toLocaleDateString("en-IN") : "N/A"}`, 114, y + 17);
-      doc.text(`Due Date: ${data.dueDate ? new Date(data.dueDate).toLocaleDateString("en-IN") : "N/A"}`, 114, y + 22);
-      doc.text(`Place of Supply: ${data.placeOfSupply || "Tamil Nadu (33)"}`, 114, y + 27);
-      doc.text(`Payment: ${data.paymentMode || "Bank"} (${data.paymentStatus || "Paid"})`, 114, y + 32);
-
-      y += 42;
-
-      // 3. Itemized Table
-      // Table Header
-      doc.setFillColor(...slateDark);
-      doc.rect(14, y, 182, 8, "F");
-      doc.setTextColor(255, 255, 255);
-      doc.setFont("Helvetica", "bold");
-      doc.setFontSize(7.5);
-
-      doc.text("#", 17, y + 5.5);
-      doc.text("ITEM DESCRIPTION & CODE", 26, y + 5.5);
-      doc.text("QTY", 102, y + 5.5);
-      doc.text("RATE (₹)", 116, y + 5.5);
-      doc.text("DISC", 134, y + 5.5);
-      doc.text("TAXABLE", 148, y + 5.5);
-      doc.text("GST", 168, y + 5.5);
-      doc.text("TOTAL (₹)", 180, y + 5.5);
-
-      y += 8;
-
-      // Table Rows
-      doc.setFont("Helvetica", "normal");
-      doc.setFontSize(8);
-      doc.setTextColor(30, 41, 59);
-
-      const printableItems = data.items || [];
-      printableItems.forEach((item, index) => {
-        if (y > 240) {
-          doc.addPage();
-          y = 16;
-        }
-
-        // Alternating row background
-        if (index % 2 === 1) {
-          doc.setFillColor(248, 250, 252);
-          doc.rect(14, y, 182, 9, "F");
-        }
-
-        doc.setDrawColor(...borderGray);
-        doc.line(14, y + 9, 196, y + 9);
-
-        doc.text(String(index + 1), 17, y + 6);
-
-        // Product Name & Product ID snippet
-        const nameText = item.name ? (item.name.length > 36 ? item.name.substring(0, 33) + "..." : item.name) : "Item";
-        const idBadge = item.productId ? ` [${item.productId}]` : "";
-        doc.text(`${nameText}${idBadge}`, 26, y + 6);
-
-        doc.text(String(item.quantity || 1), 104, y + 6);
-        doc.text(Number(item.unitPrice || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 }), 116, y + 6);
-        doc.text(Number(item.discountAmount || 0) > 0 ? `₹${Number(item.discountAmount).toFixed(0)}` : "-", 134, y + 6);
-        doc.text(Number(item.taxableAmount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 }), 148, y + 6);
-        doc.text(`${item.gstPercent || 18}%`, 168, y + 6);
-        doc.text(Number(item.totalAmount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 }), 180, y + 6);
-
-        y += 9;
-      });
-
-      y += 4;
-
-      // 4. Totals Summary & Bank Information
-      if (y > 215) {
-        doc.addPage();
-        y = 16;
-      }
-
-      // Bank Details Card (Left)
-      doc.setFillColor(248, 250, 252);
-      doc.rect(14, y, 96, 38, "FD");
-      doc.setFont("Helvetica", "bold");
-      doc.setFontSize(8.5);
-      doc.setTextColor(...slateDark);
-      doc.text("BANK & PAYMENT SETTLEMENT DETAILS:", 18, y + 6);
-
-      doc.setFont("Helvetica", "normal");
-      doc.setFontSize(8);
-      doc.setTextColor(51, 65, 85);
-      doc.text(`Bank Name: ${data.bankDetails?.bankName || "State Bank of India"}`, 18, y + 12);
-      doc.text(`A/C Number: ${data.bankDetails?.accountNumber || "38920192837"}`, 18, y + 17);
-      doc.text(`IFSC Code: ${data.bankDetails?.ifscCode || "SBIN0001234"}`, 18, y + 22);
-      doc.text(`Branch: ${data.bankDetails?.branch || "Coimbatore Branch"}`, 18, y + 27);
-      doc.text(`UPI VPA: ${data.bankDetails?.upiId || "etosm@sbi"}`, 18, y + 32);
-
-      // Calculations Breakdown Box (Right)
-      doc.rect(114, y, 82, 38, "FD");
-      doc.setFontSize(8);
-      doc.setTextColor(71, 85, 105);
-
-      const rX = 118;
-      const valX = 192;
-
-      doc.text("Gross Subtotal:", rX, y + 6);
-      doc.text(`₹${Number(data.grossSubtotal || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`, valX, y + 6, { align: "right" });
-
-      if (Number(data.totalDiscount || 0) > 0) {
-        doc.text("Total Discount:", rX, y + 11);
-        doc.text(`- ₹${Number(data.totalDiscount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`, valX, y + 11, { align: "right" });
-      }
-
-      doc.text("Taxable Value:", rX, y + 16);
-      doc.text(`₹${Number(data.taxableSubtotal || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`, valX, y + 16, { align: "right" });
-
-      if (data.isInterState) {
-        doc.text("IGST (18%):", rX, y + 21);
-        doc.text(`₹${Number(data.igstTotal || data.totalTax || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`, valX, y + 21, { align: "right" });
-      } else {
-        doc.text("CGST (9%) + SGST (9%):", rX, y + 21);
-        doc.text(`₹${Number(data.totalTax || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`, valX, y + 21, { align: "right" });
-      }
-
-      if (Number(data.shippingCharges || 0) > 0) {
-        doc.text("Shipping & Freight:", rX, y + 26);
-        doc.text(`₹${Number(data.shippingCharges).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`, valX, y + 26, { align: "right" });
-      }
-
-      // Grand Total Highlight
-      doc.setFillColor(...slateDark);
-      doc.rect(114, y + 29, 82, 9, "F");
-      doc.setTextColor(255, 255, 255);
-      doc.setFont("Helvetica", "bold");
-      doc.setFontSize(9);
-      doc.text("GRAND TOTAL:", rX, y + 35);
-      doc.text(`₹${Number(data.grandTotal || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`, valX, y + 35, { align: "right" });
-
-      y += 44;
-
-      // 5. Amount in Words Box
-      doc.setFillColor(241, 245, 249);
-      doc.rect(14, y, 182, 8, "F");
-      doc.setTextColor(...slateDark);
-      doc.setFont("Helvetica", "bold");
-      doc.setFontSize(8);
-      const words = data.amountInWords || numberToWordsINR(data.grandTotal || 0);
-      doc.text(`Amount in Words: ${words}`, 18, y + 5.5);
-
-      y += 14;
-
-      // 6. Terms & Signature
-      doc.setFontSize(7.5);
-      doc.setTextColor(100, 116, 139);
-      doc.setFont("Helvetica", "bold");
-      doc.text("TERMS & CONDITIONS:", 14, y);
-      doc.setFont("Helvetica", "normal");
-      doc.text("1. Goods once sold will not be taken back or exchanged.", 14, y + 4);
-      doc.text("2. Warranty valid only on production of this original invoice and serial numbers.", 14, y + 8);
-      doc.text("3. Subject to Coimbatore, Tamil Nadu jurisdiction.", 14, y + 12);
-
-      // Signatory
-      doc.setFont("Helvetica", "bold");
-      doc.setTextColor(...slateDark);
-      doc.text("For ETOSM BATTERY & ELECTRONICS", 136, y);
-      doc.setFont("Helvetica", "normal");
-      doc.text("Authorized Signatory", 146, y + 14);
-
-      // Save PDF file to browser
+      const doc = await generateEtosmInvoicePdf(data);
       const cleanInvNum = (data.invoiceNumber || "Invoice").replace(/[/\\?%*:|"<>]/g, "-");
-      doc.save(`Invoice_${cleanInvNum}.pdf`);
-      showToast(`Invoice PDF downloaded successfully!`);
+      doc.save(`Tax_Invoice_${cleanInvNum}.pdf`);
+      showToast("Invoice PDF downloaded successfully!");
     } catch (err) {
       console.error("PDF generation failed:", err);
       showToast("Failed to generate PDF document", "error");
     }
   };
+
+  // Print Official Tax Invoice PDF (Direct 2-Page Vector Invoice)
+  const handlePrintInvoice = async (customInvoiceData = null) => {
+    const rawItems = customInvoiceData ? customInvoiceData.items : invoiceCalculations.items;
+    const validItems = (rawItems || []).filter(
+      (i) => i && (i.name || "").trim() !== "" && (i.name || "").trim().toLowerCase() !== "product item"
+    );
+
+    if (validItems.length === 0 && !customInvoiceData) {
+      showToast("Please enter at least one product name before printing", "error");
+      return;
+    }
+
+    const data = customInvoiceData
+      ? { ...customInvoiceData, items: validItems.length > 0 ? validItems : customInvoiceData.items }
+      : {
+          invoiceNumber,
+          invoiceDate,
+          dueDate,
+          placeOfSupply,
+          paymentMode,
+          paymentStatus,
+          paymentTerms: "Immediate Payment",
+          customer,
+          items: validItems,
+          grossSubtotal: invoiceCalculations.grossSubtotal,
+          totalDiscount: invoiceCalculations.totalDiscount,
+          taxableSubtotal: invoiceCalculations.taxableSubtotal,
+          totalTax: invoiceCalculations.totalTax,
+          isInterState,
+          cgstTotal: invoiceCalculations.cgstTotal,
+          sgstTotal: invoiceCalculations.sgstTotal,
+          igstTotal: invoiceCalculations.igstTotal,
+          shippingCharges: invoiceCalculations.shippingCharges,
+          roundOff: invoiceCalculations.roundOff,
+          grandTotal: invoiceCalculations.grandTotal,
+          amountInWords: invoiceCalculations.amountInWords,
+          notes,
+          bankDetails
+        };
+
+    if (!data.customer?.name?.trim() && !customInvoiceData) {
+      showToast("Please enter customer name before printing", "error");
+      return;
+    }
+
+    try {
+      showToast("Opening Tax Invoice for print...", "info");
+      await printEtosmInvoicePdf(data);
+    } catch (err) {
+      console.error("PDF Print failed:", err);
+      showToast("Failed to prepare PDF for printing", "error");
+    }
+  };
+
+  // Intercept Ctrl+P to print the official Tax Invoice rather than browser webpage DOM
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "p") {
+        e.preventDefault();
+        handlePrintInvoice();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  });
 
   // Reset to New Blank Invoice
   const handleResetInvoice = () => {
@@ -993,23 +847,13 @@ const CreateInvoicePage = () => {
               <div className="inv-meta-grid">
                 <div className="inv-meta-field">
                   <label>Invoice Number</label>
-                  <div className="inv-input-with-action">
-                    <input
-                      type="text"
-                      value={invoiceNumber}
-                      onChange={(e) => setInvoiceNumber(e.target.value)}
-                      placeholder="e.g. INV-2026-0001"
-                      className="inv-mono-input"
-                    />
-                    <button
-                      type="button"
-                      className="inv-icon-action"
-                      onClick={generateInvoiceNumber}
-                      title="Auto-generate next invoice number"
-                    >
-                      <RefreshCw size={13} />
-                    </button>
-                  </div>
+                  <input
+                    type="text"
+                    value={invoiceNumber}
+                    onChange={(e) => setInvoiceNumber(e.target.value)}
+                    placeholder="e.g. INV-2026-0001"
+                    className="inv-mono-input"
+                  />
                 </div>
 
                 <div className="inv-meta-field">
@@ -1729,7 +1573,7 @@ const CreateInvoicePage = () => {
                     </button>
                     <button
                       className="inv-btn inv-btn-secondary"
-                      onClick={() => window.print()}
+                      onClick={() => handlePrintInvoice()}
                     >
                       <Printer size={15} /> Print
                     </button>

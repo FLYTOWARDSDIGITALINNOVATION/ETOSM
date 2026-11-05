@@ -2,6 +2,7 @@ import API_BASE_URL from '../apiConfig';
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
+import { cacheGet, cacheSet } from "../utils/dataCache";
 import { FaStar, FaShoppingCart, FaArrowLeft, FaCloud, FaExpand, FaPalette, FaBolt, FaHeartbeat, FaFilePdf } from "react-icons/fa";
 import { MdSecurity, MdAir, MdCompress, MdLocalLaundryService, MdCheckCircle } from "react-icons/md";
 import { jsPDF } from "jspdf";
@@ -148,14 +149,27 @@ const ProductDetailPage = () => {
   const navigate = useNavigate();
   const { addToCart } = useCart();
 
-  const [product, setProduct] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [currentImage, setCurrentImage] = useState("");
-  const [allImages, setAllImages] = useState([]);
+  const getInitialProduct = () => {
+    return (
+      cacheGet(`product_detail_${id}`) ||
+      cacheGet("all_products_catalog")?.find((p) => p._id === id || p.slug === id) ||
+      cacheGet("home_all_products")?.find((p) => p._id === id || p.slug === id) ||
+      null
+    );
+  };
+  const cachedInitial = getInitialProduct();
+
+  const [product, setProduct] = useState(cachedInitial);
+  const [loading, setLoading] = useState(!cachedInitial);
+  const [currentImage, setCurrentImage] = useState(() => cachedInitial?.image || "");
+  const [allImages, setAllImages] = useState(() =>
+    cachedInitial ? [cachedInitial.image, ...(cachedInitial.images || [])].filter(Boolean) : []
+  );
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
   // Fetch product from API
   useEffect(() => {
+    if (!getInitialProduct()) setLoading(true);
     fetch(`${API_BASE_URL}/products/${id}`)
       .then((res) => {
         if (!res.ok) throw new Error("Product not found");
@@ -163,6 +177,7 @@ const ProductDetailPage = () => {
       })
       .then((data) => {
         setProduct(data);
+        cacheSet(`product_detail_${id}`, data);
         const images = [data.image, ...(data.images || [])].filter(Boolean);
         setAllImages(images);
         setCurrentImage(data.image);

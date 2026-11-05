@@ -2129,45 +2129,6 @@ app.get("/admin/invoices", verifyAdmin, async (req, res) => {
   }
 });
 
-// GET SINGLE INVOICE (ADMIN)
-app.get("/admin/invoices/:id", verifyAdmin, async (req, res) => {
-  try {
-    const invoice = await Invoice.findById(req.params.id);
-    if (!invoice) return res.status(404).json({ message: "Invoice not found" });
-    res.json(invoice);
-  } catch (err) {
-    console.error("Failed to fetch invoice:", err);
-    res.status(500).json({ message: "Failed to fetch invoice" });
-  }
-});
-
-// UPDATE INVOICE / STATUS (ADMIN)
-app.put("/admin/invoices/:id", verifyAdmin, async (req, res) => {
-  try {
-    const updated = await Invoice.findByIdAndUpdate(
-      req.params.id,
-      { $set: req.body },
-      { new: true }
-    );
-    if (!updated) return res.status(404).json({ message: "Invoice not found" });
-    res.json(updated);
-  } catch (err) {
-    console.error("Failed to update invoice:", err);
-    res.status(500).json({ message: "Failed to update invoice" });
-  }
-});
-
-// DELETE INVOICE (ADMIN)
-app.delete("/admin/invoices/:id", verifyAdmin, async (req, res) => {
-  try {
-    await Invoice.findByIdAndDelete(req.params.id);
-    res.json({ message: "Invoice deleted successfully" });
-  } catch (err) {
-    console.error("Failed to delete invoice:", err);
-    res.status(500).json({ message: "Failed to delete invoice" });
-  }
-});
-
 // GET ALL PAID INVOICES WITH KPIS (ADMIN MODULE 3: Paid Invoices)
 app.get("/admin/invoices/paid", verifyAdmin, async (req, res) => {
   try {
@@ -2545,8 +2506,62 @@ app.get("/admin/invoices/pending", verifyAdmin, async (req, res) => {
   }
 });
 
+// GET SINGLE INVOICE (ADMIN)
+app.get("/admin/invoices/:id", verifyAdmin, async (req, res, next) => {
+  if (req.params.id === "paid" || req.params.id === "pending" || req.params.id === "next-number") {
+    return next();
+  }
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return res.status(400).json({ message: "Invalid invoice ID" });
+  }
+  try {
+    const invoice = await Invoice.findById(req.params.id);
+    if (!invoice) return res.status(404).json({ message: "Invoice not found" });
+    res.json(invoice);
+  } catch (err) {
+    console.error("Failed to fetch invoice:", err);
+    res.status(500).json({ message: "Failed to fetch invoice" });
+  }
+});
+
+// UPDATE INVOICE / STATUS (ADMIN)
+app.put("/admin/invoices/:id", verifyAdmin, async (req, res) => {
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return res.status(400).json({ message: "Invalid invoice ID" });
+  }
+  try {
+    const updated = await Invoice.findByIdAndUpdate(
+      req.params.id,
+      { $set: req.body },
+      { new: true }
+    );
+    if (!updated) return res.status(404).json({ message: "Invoice not found" });
+    res.json(updated);
+  } catch (err) {
+    console.error("Failed to update invoice:", err);
+    res.status(500).json({ message: "Failed to update invoice" });
+  }
+});
+
+// DELETE INVOICE (ADMIN)
+app.delete("/admin/invoices/:id", verifyAdmin, async (req, res) => {
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return res.status(400).json({ message: "Invalid invoice ID" });
+  }
+  try {
+    await Invoice.findByIdAndDelete(req.params.id);
+    res.json({ message: "Invoice deleted successfully" });
+  } catch (err) {
+    console.error("Failed to delete invoice:", err);
+    res.status(500).json({ message: "Failed to delete invoice" });
+  }
+});
+
 // RECORD PAYMENT / MANAGE PAYMENT STATUS (ADMIN MODULE 4)
 app.post("/admin/invoices/:id/record-payment", verifyAdmin, async (req, res) => {
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return res.status(400).json({ message: "Invalid invoice ID" });
+  }
   try {
     const {
       amount,

@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { jsPDF } from "jspdf";
 import AdminLayout from "./AdminLayout";
+import { cacheGet, cacheSet } from "../utils/dataCache";
 import "./ProductManagementPage.css";
 
 // Helper: Convert number to Indian currency words
@@ -57,9 +58,9 @@ const ProductManagementPage = () => {
   const token = localStorage.getItem("token");
 
   // Main state
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [products, setProducts] = useState(() => cacheGet("admin_products_management") || []);
+  const [categories, setCategories] = useState(() => cacheGet("all_categories_catalog") || []);
+  const [loading, setLoading] = useState(() => !(cacheGet("admin_products_management") && cacheGet("admin_products_management").length > 0));
 
   // Search & Filter
   const [searchTerm, setSearchTerm] = useState("");
@@ -109,12 +110,14 @@ const ProductManagementPage = () => {
 
   const fetchProducts = async () => {
     try {
-      setLoading(true);
+      if (!cacheGet("admin_products_management")) setLoading(true);
       const res = await fetch(`${API_BASE_URL}/admin/products-stats`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
-      setProducts(Array.isArray(data) ? data : []);
+      const pList = Array.isArray(data) ? data : [];
+      setProducts(pList);
+      cacheSet("admin_products_management", pList);
     } catch (err) {
       console.error("Failed to fetch products:", err);
     } finally {

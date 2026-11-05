@@ -469,6 +469,8 @@
 .pending-table-scroll {
   width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
 }
 
 .pending-table {
@@ -1442,9 +1444,17 @@
    RESPONSIVE DESIGN
    ========================================================================== */
 
-@media (max-width: 1200px) {
+@media (max-width: 1366px) {
   .pending-kpi-grid {
     grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+}
+
+@media (max-width: 1180px) {
+  .modal-form-grid,
+  .sheet-bottom-grid {
+    grid-template-columns: 1fr;
   }
 }
 

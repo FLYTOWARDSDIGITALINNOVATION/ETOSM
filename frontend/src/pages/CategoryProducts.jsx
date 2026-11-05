@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
 import Header from "../components/Header";
+import { cacheGet, cacheSet } from "../utils/dataCache";
 import "./CategoryProducts.css";
 
 const PRODUCTS_PER_PAGE = 30;
@@ -11,10 +12,11 @@ const CategoryProducts = () => {
   const { category } = useParams();
   const decodedCategory = decodeURIComponent(category || "").trim();
   const navigate = useNavigate();
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
+  const cacheKey = `cat_products_${decodedCategory.toLowerCase()}`;
+  const [products, setProducts] = useState(() => cacheGet(cacheKey) || []);
+  const [categories, setCategories] = useState(() => cacheGet("all_categories_catalog") || []);
   const [selectedSubcategory, setSelectedSubcategory] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !(cacheGet(cacheKey) && cacheGet(cacheKey).length > 0));
   const [currentPage, setCurrentPage] = useState(1);
 
   // Fetch all categories to get subcategories for the current category
@@ -27,13 +29,15 @@ const CategoryProducts = () => {
 
   // Fetch products for the active category
   useEffect(() => {
-    setLoading(true);
+    if (!cacheGet(cacheKey)) setLoading(true);
     setSelectedSubcategory(""); // Reset subcategory filter on category change
     setCurrentPage(1);          // Reset to page 1 on category change
     fetch(`${API_BASE_URL}/products/category/${encodeURIComponent(decodedCategory)}`)
       .then(res => res.json())
       .then(data => {
-        setProducts(data || []);
+        const pData = data || [];
+        setProducts(pData);
+        cacheSet(cacheKey, pData);
         setLoading(false);
       })
       .catch(err => {

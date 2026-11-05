@@ -1426,33 +1426,57 @@
   justify-content: space-between;
   align-items: flex-end;
   border-top: 1px solid #e2e8f0;
-  padding-top: 20px;
+  padding-top: 24px;
+  padding-bottom: 12px;
   font-size: 0.8rem;
   color: #64748b;
+  margin-top: 20px;
 }
 
 .sign-box {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 30px;
+  gap: 65px;
+  min-width: 180px;
 }
 
 .sign-box strong {
   color: #0f172a;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+}
+
+.sign-box span {
+  font-size: 0.78rem;
+  color: #475569;
 }
 
 /* ==========================================================================
    RESPONSIVE
    ========================================================================== */
 
-@media (max-width: 1200px) {
+@media (max-width: 1366px) {
   .q-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+}
+
+@media (max-width: 1180px) {
+  .builder-bottom-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .q-card-body.grid-3 {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .builder-bottom-grid {
-    grid-template-columns: 1fr;
+  .quotation-table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 }
 

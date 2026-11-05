@@ -32,6 +32,7 @@ import CollectionGrid from "../components/CollectionGrid";
 import ProductCard from "../components/ProductCard";
 import Footer from "../components/Footer";
 import API_BASE_URL from "../apiConfig";
+import { cacheGet, cacheSet } from "../utils/dataCache";
 
 import "./HomePage.css";
 
@@ -64,8 +65,8 @@ const defaultFeaturedReviews = [
 ];
 
 export default function Home() {
-  const [allProducts, setAllProducts] = useState([]);
-  const [bestsellers, setBestsellers] = useState([]);
+  const [allProducts, setAllProducts] = useState(() => cacheGet("home_all_products") || []);
+  const [bestsellers, setBestsellers] = useState(() => cacheGet("home_bestsellers") || []);
   const [googleReviews, setGoogleReviews] = useState(defaultFeaturedReviews);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newName, setNewName] = useState("");
@@ -73,8 +74,11 @@ export default function Home() {
   const [newRating, setNewRating] = useState(5);
   const [newComment, setNewComment] = useState("");
 
-  const [filteredProducts, setFilteredProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [filteredProducts, setFilteredProducts] = useState(() => {
+    const cached = cacheGet("home_all_products");
+    return cached && Array.isArray(cached) ? cached.filter((p) => p.isVisible !== false) : [];
+  });
+  const [loading, setLoading] = useState(() => !(cacheGet("home_all_products") && cacheGet("home_all_products").length > 0));
   const location = useLocation();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
@@ -185,7 +189,7 @@ export default function Home() {
   });
 
   const fetchBestsellers = () => {
-    fetch(`${API_BASE_URL}/products/bestsellers?t=${Date.now()}`)
+    fetch(`${API_BASE_URL}/products/bestsellers`)
       .then((res) => {
         if (!res.ok) throw new Error("Failed to load bestsellers endpoint");
         return res.json();
@@ -193,18 +197,24 @@ export default function Home() {
       .then((data) => {
         if (Array.isArray(data)) {
           setBestsellers(data);
+          cacheSet("home_bestsellers", data);
         }
       })
       .catch((err) => console.error("Failed to load bestsellers:", err));
   };
 
   const fetchAllProducts = () => {
-    fetch(`${API_BASE_URL}/products/all?t=${Date.now()}`)
+    if (!cacheGet("home_all_products")) {
+      setLoading(true);
+    }
+    fetch(`${API_BASE_URL}/products/all`)
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) {
           setAllProducts(data);
           setFilteredProducts(data.filter((p) => p.isVisible !== false));
+          cacheSet("home_all_products", data);
+          cacheSet("all_products_catalog", data);
         }
         setLoading(false);
       })

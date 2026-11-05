@@ -1,6 +1,6 @@
 import API_BASE_URL from '../apiConfig';
 import React, { useState } from "react";
-import { FaHeart, FaEye, FaShoppingCart, FaStar } from "react-icons/fa";
+import { FaHeart, FaEye, FaShoppingCart, FaStar, FaRegStar } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useWishlist } from "../context/WishlistContext";
 import { useCart } from "../context/CartContext";
@@ -113,15 +113,15 @@ const ProductCard = ({ product, variant, index = 0 }) => {
             )}
           </div>
 
-          {/* Rating */}
+          {/* Rating - Unfilled / Outline Stars */}
           <div className="cat-card-rating-row">
             <div className="cat-card-stars">
               {[...Array(5)].map((_, i) => (
-                <FaStar key={i} size={13} color="#f59e0b" />
+                <FaRegStar key={i} size={13} color="#cbd5e1" />
               ))}
             </div>
             <span className="cat-card-rating-count">
-              ({product.ratingCount || (10 + (index * 6) % 25)})
+              ({product.ratingCount || 0})
             </span>
           </div>
 

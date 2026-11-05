@@ -29,8 +29,9 @@ import {
   ExternalLink,
   Package
 } from "lucide-react";
-import { jsPDF } from "jspdf";
+import { generateEtosmInvoicePdf, printEtosmInvoicePdf } from "../utils/invoicePdfGenerator";
 import AdminLayout from "./AdminLayout";
+import { cacheGet, cacheSet } from "../utils/dataCache";
 import "./PaidInvoicesPage.css";
 
 // Helper: Convert number to Indian currency words
@@ -64,7 +65,7 @@ const PaidInvoicesPage = () => {
   const token = localStorage.getItem("token");
 
   // State
-  const [invoices, setInvoices] = useState([]);
+  const [invoices, setInvoices] = useState(() => cacheGet("admin_paid_invoices") || []);
   const [stats, setStats] = useState({
     totalCount: 0,
     totalRevenue: 0,
@@ -72,7 +73,7 @@ const PaidInvoicesPage = () => {
     thisMonthRevenue: 0,
     averageValue: 0
   });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !(cacheGet("admin_paid_invoices") && cacheGet("admin_paid_invoices").length > 0));
 
   // Search & Filters
   const [searchTerm, setSearchTerm] = useState("");
@@ -112,7 +113,7 @@ const PaidInvoicesPage = () => {
   // Fetch Paid Invoices
   const fetchPaidInvoices = async () => {
     try {
-      setLoading(true);
+      if (!cacheGet("admin_paid_invoices")) setLoading(true);
       const params = new URLSearchParams();
       if (paymentModeFilter !== "all") params.append("paymentMode", paymentModeFilter);
       if (dateFilter !== "all") params.append("dateFilter", dateFilter);
@@ -132,7 +133,9 @@ const PaidInvoicesPage = () => {
       }
 
       const data = await res.json();
-      setInvoices(Array.isArray(data.invoices) ? data.invoices : []);
+      const list = Array.isArray(data.invoices) ? data.invoices : [];
+      setInvoices(list);
+      cacheSet("admin_paid_invoices", list);
       if (data.stats) {
         setStats(data.stats);
       }
@@ -322,336 +325,10 @@ const PaidInvoicesPage = () => {
     showToast(`Exported ${filteredInvoices.length} paid invoices to CSV`);
   };
 
-  // Generate Vector PDF using jsPDF
-  const handleDownloadPdf = (inv) => {
+  // Generate Vector PDF using generateEtosmInvoicePdf
+  const handleDownloadPdf = async (inv) => {
     try {
-      const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-      const primaryRed = [227, 0, 15]; // ETOSM Red
-      const slateDark = [15, 23, 42]; // Slate 900
-      const borderGray = [226, 232, 240];
-
-      let y = 14;
-
-      // Top Header Banner
-      doc.setFillColor(...slateDark);
-      doc.rect(14, y, 182, 24, "F");
-
-      doc.setTextColor(255, 255, 255);
-      doc.setFont("Helvetica", "bold");
-      doc.setFontSize(15);
-      doc.text("ETOSM BATTERY & ELECTRONICS", 20, y + 9);
-
-      doc.setFontSize(8.5);
-      doc.setFont("Helvetica", "normal");
-      doc.text("Lithium Battery Packs • BMS Boards • EV Electronics • Industrial Solutions", 20, y + 15);
-      doc.text("GSTIN: 33AAAAE1234A1Z5 | Phone: +91 98765 43210 | Email: billing@etosm.com", 20, y + 20);
-
-      // Title Ribbon: TAX INVOICE
-      doc.setFillColor(...primaryRed);
-      doc.rect(136, y + 4, 54, 16, "F");
-      doc.setTextColor(255, 255, 255);
-      doc.setFont("Helvetica", "bold");
-      doc.setFontSize(11);
-      doc.text("TAX INVOICE", 145, y + 14);
-
-      y += 30;
-
-      // Customer & Invoice Details Cards
-      doc.setDrawColor(...borderGray);
-      doc.setLineWidth(0.3);
-
-      // Left: Customer Box
-      doc.setFillColor(248, 250, 252);
-      doc.rect(14, y, 92, 36, "FD");
-
-      doc.setTextColor(...slateDark);
-      doc.setFontSize(9);
-      doc.setFont("Helvetica", "bold");
-      doc.text("BILLED TO / CUSTOMER DETAILS:", 18, y + 6);
-
-      doc.setFont("Helvetica", "normal");
-      doc.setFontSize(8.5);
-      doc.setTextColor(51, 65, 85);
-      doc.text(`Name: ${inv.customerName || "Customer"}`, 18, y + 12);
-      doc.text(`Phone: ${inv.customerPhone || "N/A"}`, 18, y + 17);
-      doc.text(`Email: ${inv.customerEmail || "N/A"}`, 18, y + 22);
-      if (inv.customerCompany) {
-        doc.text(`Company: ${inv.customerCompany}`, 18, y + 27);
-      }
-      if (inv.customerGstin) {
-        doc.text(`GSTIN: ${inv.customerGstin}`, 18, y + 32);
-      } else if (inv.customerAddress) {
-        const addrSnippet =
-          inv.customerAddress.length > 45
-            ? inv.customerAddress.substring(0, 42) + "..."
-            : inv.customerAddress;
-        doc.text(`Address: ${addrSnippet}`, 18, y + 32);
-      }
-
-      // Right: Invoice Meta Box
-      doc.rect(110, y, 86, 36, "FD");
-      doc.setTextColor(...slateDark);
-      doc.setFont("Helvetica", "bold");
-      doc.setFontSize(9);
-      doc.text("INVOICE & PAYMENT DETAILS:", 114, y + 6);
-
-      doc.setFont("Helvetica", "normal");
-      doc.setFontSize(8.5);
-      doc.setTextColor(51, 65, 85);
-      doc.text(`Invoice No: ${inv.invoiceNumber || "N/A"}`, 114, y + 12);
-      doc.text(
-        `Invoice Date: ${inv.invoiceDate ? new Date(inv.invoiceDate).toLocaleDateString("en-IN") : "N/A"}`,
-        114,
-        y + 17
-      );
-      doc.text(`Place of Supply: ${inv.placeOfSupply || "Tamil Nadu (33)"}`, 114, y + 22);
-      doc.text(`Payment Mode: ${inv.paymentMode || "UPI / Online"}`, 114, y + 27);
-
-      // Paid Badge
-      doc.setFillColor(16, 185, 129); // Emerald green
-      doc.rect(114, y + 29, 32, 5, "F");
-      doc.setTextColor(255, 255, 255);
-      doc.setFont("Helvetica", "bold");
-      doc.setFontSize(7.5);
-      doc.text("PAID IN FULL", 117, y + 33);
-
-      y += 42;
-
-      // Itemized Table Header
-      doc.setFillColor(...slateDark);
-      doc.rect(14, y, 182, 8, "F");
-      doc.setTextColor(255, 255, 255);
-      doc.setFont("Helvetica", "bold");
-      doc.setFontSize(7.5);
-
-      doc.text("#", 17, y + 5.5);
-      doc.text("ITEM DESCRIPTION & CODE", 26, y + 5.5);
-      doc.text("QTY", 102, y + 5.5);
-      doc.text("RATE (₹)", 116, y + 5.5);
-      doc.text("DISC", 134, y + 5.5);
-      doc.text("TAXABLE", 148, y + 5.5);
-      doc.text("GST", 168, y + 5.5);
-      doc.text("TOTAL (₹)", 180, y + 5.5);
-
-      y += 8;
-
-      // Table Rows
-      doc.setFont("Helvetica", "normal");
-      doc.setFontSize(8);
-      doc.setTextColor(30, 41, 59);
-
-      const items = inv.items || [
-        {
-          name: "Standard Product Item",
-          quantity: 1,
-          unitPrice: inv.taxableSubtotal || inv.grandTotal,
-          taxableAmount: inv.taxableSubtotal || inv.grandTotal,
-          gstPercent: 18,
-          totalAmount: inv.grandTotal
-        }
-      ];
-
-      items.forEach((item, index) => {
-        if (y > 240) {
-          doc.addPage();
-          y = 16;
-        }
-
-        if (index % 2 === 1) {
-          doc.setFillColor(248, 250, 252);
-          doc.rect(14, y, 182, 9, "F");
-        }
-
-        doc.setDrawColor(...borderGray);
-        doc.line(14, y + 9, 196, y + 9);
-
-        doc.text(String(index + 1), 17, y + 6);
-        const nameText = item.name
-          ? item.name.length > 36
-            ? item.name.substring(0, 33) + "..."
-            : item.name
-          : "Item";
-        const idBadge = item.productId ? ` [${item.productId}]` : "";
-        doc.text(`${nameText}${idBadge}`, 26, y + 6);
-
-        doc.text(String(item.quantity || 1), 104, y + 6);
-        doc.text(
-          Number(item.unitPrice || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 }),
-          116,
-          y + 6
-        );
-        doc.text(
-          Number(item.discountAmount || 0) > 0 ? `₹${Number(item.discountAmount).toFixed(0)}` : "-",
-          134,
-          y + 6
-        );
-        doc.text(
-          Number(item.taxableAmount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 }),
-          148,
-          y + 6
-        );
-        doc.text(`${item.gstPercent || 18}%`, 168, y + 6);
-        doc.text(
-          Number(item.totalAmount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 }),
-          180,
-          y + 6
-        );
-
-        y += 9;
-      });
-
-      y += 4;
-
-      if (y > 215) {
-        doc.addPage();
-        y = 16;
-      }
-
-      // Bank Details Card (Left)
-      doc.setFillColor(248, 250, 252);
-      doc.rect(14, y, 96, 38, "FD");
-      doc.setFont("Helvetica", "bold");
-      doc.setFontSize(8.5);
-      doc.setTextColor(...slateDark);
-      doc.text("BANK & PAYMENT SETTLEMENT DETAILS:", 18, y + 6);
-
-      doc.setFont("Helvetica", "normal");
-      doc.setFontSize(8);
-      doc.setTextColor(51, 65, 85);
-      doc.text(
-        `Bank Name: ${inv.bankDetails?.bankName || "State Bank of India"}`,
-        18,
-        y + 12
-      );
-      doc.text(
-        `A/C Number: ${inv.bankDetails?.accountNumber || "38920192837"}`,
-        18,
-        y + 17
-      );
-      doc.text(
-        `IFSC Code: ${inv.bankDetails?.ifscCode || "SBIN0001234"}`,
-        18,
-        y + 22
-      );
-      doc.text(
-        `Branch: ${inv.bankDetails?.branch || "Coimbatore Branch"}`,
-        18,
-        y + 27
-      );
-      doc.text(`UPI VPA: ${inv.bankDetails?.upiId || "etosm@sbi"}`, 18, y + 32);
-
-      // Calculations Breakdown Box (Right)
-      doc.rect(114, y, 82, 38, "FD");
-      doc.setFontSize(8);
-      doc.setTextColor(71, 85, 105);
-
-      const rX = 118;
-      const valX = 192;
-
-      doc.text("Gross Subtotal:", rX, y + 6);
-      doc.text(
-        `₹${Number(inv.grossSubtotal || inv.taxableSubtotal || 0).toLocaleString("en-IN", {
-          minimumFractionDigits: 2
-        })}`,
-        valX,
-        y + 6,
-        { align: "right" }
-      );
-
-      if (Number(inv.totalDiscount || 0) > 0) {
-        doc.text("Total Discount:", rX, y + 11);
-        doc.text(
-          `- ₹${Number(inv.totalDiscount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`,
-          valX,
-          y + 11,
-          { align: "right" }
-        );
-      }
-
-      doc.text("Taxable Value:", rX, y + 16);
-      doc.text(
-        `₹${Number(inv.taxableSubtotal || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`,
-        valX,
-        y + 16,
-        { align: "right" }
-      );
-
-      if (inv.isInterState) {
-        doc.text("IGST (18%):", rX, y + 21);
-        doc.text(
-          `₹${Number(inv.igstTotal || inv.totalTax || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`,
-          valX,
-          y + 21,
-          { align: "right" }
-        );
-      } else {
-        doc.text("CGST (9%) + SGST (9%):", rX, y + 21);
-        doc.text(
-          `₹${Number(inv.totalTax || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`,
-          valX,
-          y + 21,
-          { align: "right" }
-        );
-      }
-
-      if (Number(inv.shippingCharges || 0) > 0) {
-        doc.text("Shipping & Freight:", rX, y + 26);
-        doc.text(
-          `₹${Number(inv.shippingCharges).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`,
-          valX,
-          y + 26,
-          { align: "right" }
-        );
-      }
-
-      // Grand Total Highlight
-      doc.setFillColor(...slateDark);
-      doc.rect(114, y + 29, 82, 9, "F");
-      doc.setTextColor(255, 255, 255);
-      doc.setFont("Helvetica", "bold");
-      doc.setFontSize(9);
-      doc.text("GRAND TOTAL:", rX, y + 35);
-      doc.text(
-        `₹${Number(inv.grandTotal || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`,
-        valX,
-        y + 35,
-        { align: "right" }
-      );
-
-      y += 44;
-
-      // Amount in Words
-      doc.setFillColor(241, 245, 249);
-      doc.rect(14, y, 182, 8, "F");
-      doc.setTextColor(...slateDark);
-      doc.setFont("Helvetica", "bold");
-      doc.setFontSize(8);
-      const words = numberToWordsINR(inv.grandTotal || 0);
-      doc.text(`Amount in Words: ${words}`, 18, y + 5.5);
-
-      y += 14;
-
-      // Terms & Signature
-      doc.setFontSize(7.5);
-      doc.setTextColor(100, 116, 139);
-      doc.setFont("Helvetica", "bold");
-      doc.text("TERMS & CONDITIONS:", 14, y);
-      doc.setFont("Helvetica", "normal");
-      doc.text("1. Payment verified & received in full for this invoice.", 14, y + 4);
-      doc.text(
-        "2. Warranty valid only on production of this original invoice and serial numbers.",
-        14,
-        y + 8
-      );
-      doc.text("3. Subject to Coimbatore, Tamil Nadu jurisdiction.", 14, y + 12);
-
-      // Signatory
-      doc.setFont("Helvetica", "bold");
-      doc.setTextColor(...slateDark);
-      doc.text("For ETOSM BATTERY & ELECTRONICS", 136, y);
-      doc.setFont("Helvetica", "normal");
-      doc.text("Authorized Signatory (Paid & Verified)", 136, y + 14);
-
+      const doc = await generateEtosmInvoicePdf(inv);
       const cleanNum = (inv.invoiceNumber || "Invoice").replace(/[/\\?%*:|"<>]/g, "-");
       doc.save(`Paid_Invoice_${cleanNum}.pdf`);
       showToast(`Invoice PDF downloaded for ${inv.invoiceNumber}`);
@@ -1078,7 +755,7 @@ const PaidInvoicesPage = () => {
                   </button>
                   <button
                     className="pi-btn pi-btn-secondary"
-                    onClick={() => window.print()}
+                    onClick={() => printEtosmInvoicePdf(reviewInvoice)}
                   >
                     <Printer size={14} /> Print
                   </button>

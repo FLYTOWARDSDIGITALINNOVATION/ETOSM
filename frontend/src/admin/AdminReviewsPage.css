@@ -51,3 +51,24 @@
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 650px;
+}
+
+@media (min-width: 769px) and (max-width: 1366px) {
+  .data-table th,
+  .data-table td {
+    padding: 12px 14px;
+    font-size: 13px;
+  }
+}

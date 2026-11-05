@@ -172,6 +172,13 @@
 }
 
 /* Responsive */
+@media (max-width: 1024px) {
+  .category-form-section {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
 @media (max-width: 768px) {
   .category-form-section {
     grid-template-columns: 1fr;

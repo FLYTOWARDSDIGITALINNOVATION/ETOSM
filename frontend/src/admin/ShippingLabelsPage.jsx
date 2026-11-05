@@ -7,7 +7,6 @@ import {
   Package,
   Truck,
   MapPin,
-  Barcode,
   QrCode,
   FileText,
   Search,
@@ -277,36 +276,17 @@ const ShippingLabelsPage = () => {
       color: #ffffff !important;
     }
     .t-tracking-block {
-      padding: 6px 6px !important;
+      padding: 8px 10px !important;
       border-bottom: 2px solid #000000 !important;
-      text-align: center !important;
+      background: #ffffff !important;
     }
     .t-tracking-meta {
       display: flex !important;
       justify-content: space-between !important;
-      font-size: 9.5px !important;
+      align-items: center !important;
+      font-size: 10px !important;
       font-weight: 800 !important;
-      margin-bottom: 4px !important;
-    }
-    .t-barcode-bars {
-      display: flex !important;
-      justify-content: center !important;
-      align-items: flex-end !important;
-      height: 42px !important;
-      gap: 2px !important;
-      margin: 3px 0 2px 0 !important;
-    }
-    .t-barcode-bars .bar {
-      background: #000000 !important;
-      height: 100% !important;
-    }
-    .t-barcode-bars .bar.thin { width: 2px !important; }
-    .t-barcode-bars .bar.medium { width: 4px !important; }
-    .t-barcode-bars .bar.thick { width: 6px !important; }
-    .t-barcode-text {
-      font-size: 10.5px !important;
-      font-weight: 800 !important;
-      letter-spacing: 0.08em !important;
+      margin-bottom: 0 !important;
     }
     .t-ship-to-section {
       padding: 8px 8px !important;
@@ -507,157 +487,145 @@ const ShippingLabelsPage = () => {
     doc.setFontSize(11);
     doc.text(`PIN: ${d.receiverPincode || "637202"}`, 2.8, 0.38);
 
-    // 2. AWB & BARCODE BOX
+    // 2. AWB & TRACKING DETAILS (NO BARCODE)
     doc.setDrawColor(0, 0, 0);
     doc.line(0.08, 0.58, 3.92, 0.58);
 
     doc.setTextColor(0, 0, 0);
-    doc.setFontSize(8);
+    doc.setFontSize(9.5);
     doc.setFont("Helvetica", "bold");
-    doc.text(`AWB / TRACKING #: ${d.trackingNumber}`, 0.18, 0.72);
+    doc.text(`AWB / TRACKING #: ${d.trackingNumber}`, 0.18, 0.74);
     doc.setFont("Helvetica", "normal");
-    doc.text(`Doc Ref: ${d.documentNumber} | Date: ${d.shipDate}`, 0.18, 0.84);
-
-    // Synthetic Barcode Lines (crisp vector bars suitable for 203 DPI thermal printers)
-    let barX = 0.18;
-    const barY = 0.92;
-    const barHeight = 0.42;
-    const digits = String(d.trackingNumber).replace(/\D/g, "") || "8807080216";
-
-    for (let i = 0; i < 48; i++) {
-      const isThick = digits.charCodeAt(i % digits.length) % 2 === 0;
-      const barWidth = isThick ? 0.035 : 0.018;
-      doc.setFillColor(0, 0, 0);
-      doc.rect(barX, barY, barWidth, barHeight, "F");
-      barX += barWidth + 0.03;
-      if (barX > 3.75) break;
-    }
-
     doc.setFontSize(8.5);
-    doc.setFont("Helvetica", "bold");
-    doc.text(`* ${d.trackingNumber} *`, 1.35, 1.44);
+    doc.text(`Doc Ref: #${d.documentNumber} | Date: ${d.shipDate}`, 0.18, 0.88);
 
-    // Divider
-    doc.line(0.08, 1.5, 3.92, 1.5);
+    // Divider after Section 2
+    const sec2Bottom = 0.96;
+    doc.line(0.08, sec2Bottom, 3.92, sec2Bottom);
 
     // 3. SHIP TO / CONSIGNEE (PRIMARY DELIVERY BLOCK)
-    doc.setFillColor(240, 240, 240);
-    doc.rect(0.08, 1.5, 3.84, 0.22, "F");
+    doc.setFillColor(242, 242, 242);
+    doc.rect(0.08, sec2Bottom, 3.84, 0.22, "F");
     doc.setFontSize(9);
     doc.setFont("Helvetica", "bold");
-    doc.text("DELIVER TO / SHIP TO:", 0.18, 1.65);
+    doc.text("DELIVER TO / SHIP TO:", 0.18, sec2Bottom + 0.15);
 
     // Consignee Name (Big & Bold)
-    doc.setFontSize(13);
+    doc.setFontSize(14);
     doc.setFont("Helvetica", "bold");
-    doc.text(String(d.receiverName).toUpperCase(), 0.18, 1.9);
+    doc.text(String(d.receiverName).toUpperCase(), 0.18, 1.36);
 
-    doc.setFontSize(9);
+    doc.setFontSize(9.5);
     doc.setFont("Helvetica", "normal");
-    let shipY = 2.05;
+    let shipY = 1.52;
     if (d.receiverCompany) {
       doc.text(String(d.receiverCompany), 0.18, shipY);
-      shipY += 0.14;
+      shipY += 0.16;
     }
 
     const splitAddr = doc.splitTextToSize(String(d.receiverAddress || "Address"), 3.5);
     doc.text(splitAddr, 0.18, shipY);
-    shipY += splitAddr.length * 0.14;
+    shipY += splitAddr.length * 0.15;
 
     doc.setFont("Helvetica", "bold");
     doc.text(`${d.receiverCity || ""}, ${d.receiverState || "Tamil Nadu"}`, 0.18, shipY);
-    shipY += 0.16;
 
-    // Large PINCODE Box
+    // Large PINCODE Box & Phone
     doc.setFillColor(0, 0, 0);
-    doc.rect(0.18, shipY, 1.8, 0.32, "F");
+    doc.rect(0.18, 2.02, 1.8, 0.32, "F");
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(14);
-    doc.text(`PIN: ${d.receiverPincode}`, 0.25, shipY + 0.23);
+    doc.text(`PIN: ${d.receiverPincode}`, 0.25, 2.24);
 
     doc.setTextColor(0, 0, 0);
-    doc.setFontSize(10);
-    doc.text(`Phone: ${d.receiverPhone}`, 2.1, shipY + 0.21);
+    doc.setFontSize(10.5);
+    doc.setFont("Helvetica", "bold");
+    doc.text(`PHONE: ${d.receiverPhone}`, 2.15, 2.23);
 
-    // Divider
-    doc.line(0.08, 3.0, 3.92, 3.0);
+    const sec3Bottom = 2.45;
+    doc.line(0.08, sec3Bottom, 3.92, sec3Bottom);
 
     // 4. COD / PREPAID STATUS BLOCK
-    doc.setFillColor(d.isCOD ? 0 : 235, d.isCOD ? 0 : 235, d.isCOD ? 0 : 235);
-    doc.rect(0.08, 3.0, 3.84, 0.44, "F");
+    const sec4Height = 0.45;
+    doc.setFillColor(d.isCOD ? 0 : 238, d.isCOD ? 0 : 238, d.isCOD ? 0 : 238);
+    doc.rect(0.08, sec3Bottom, 3.84, sec4Height, "F");
 
     if (d.isCOD) {
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(14);
       doc.setFont("Helvetica", "bold");
-      doc.text("CASH ON DELIVERY (COD)", 0.2, 3.25);
-      doc.setFontSize(13);
-      doc.text(`COLLECT: INR ${Number(d.collectAmount).toLocaleString("en-IN")}`, 0.2, 3.39);
+      doc.text("CASH ON DELIVERY (COD)", 0.2, sec3Bottom + 0.26);
+      doc.setFontSize(12.5);
+      doc.text(`COLLECT: INR ${Number(d.collectAmount).toLocaleString("en-IN")}`, 0.2, sec3Bottom + 0.40);
     } else {
       doc.setTextColor(0, 0, 0);
-      doc.setFontSize(15);
+      doc.setFontSize(14);
       doc.setFont("Helvetica", "bold");
-      doc.text("PREPAID - DO NOT COLLECT CASH", 0.2, 3.3);
+      doc.text("PREPAID - DO NOT COLLECT CASH", 0.2, sec3Bottom + 0.29);
     }
 
-    // Divider
-    doc.line(0.08, 3.44, 3.92, 3.44);
+    const sec4Bottom = sec3Bottom + sec4Height;
+    doc.line(0.08, sec4Bottom, 3.92, sec4Bottom);
 
-    // 5. SHIPPER / RETURN TO (BOTTOM LEFT) & PACKAGE DETAILS (BOTTOM RIGHT)
+    // 5. SHIPPER / RETURN TO & PACKAGE DETAILS
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(8);
     doc.setFont("Helvetica", "bold");
-    doc.text("RETURN IF UNDELIVERED TO:", 0.18, 3.6);
+    doc.text("RETURN IF UNDELIVERED TO:", 0.18, sec4Bottom + 0.16);
 
-    doc.setFontSize(9);
-    doc.text(d.shipperName, 0.18, 3.75);
+    doc.setFontSize(9.5);
+    doc.text(d.shipperName, 0.18, sec4Bottom + 0.32);
 
     doc.setFontSize(7.5);
     doc.setFont("Helvetica", "normal");
+    let retY = sec4Bottom + 0.46;
     const splitReturn = doc.splitTextToSize(
       `${d.shipperAddress}, ${d.shipperCity}, ${d.shipperState} - ${d.shipperPincode}`,
-      2.1
+      2.15
     );
-    doc.text(splitReturn, 0.18, 3.9);
-    doc.text(`Phone: ${d.shipperPhone}`, 0.18, 4.2);
-    doc.text(`GST: ${d.shipperGstin}`, 0.18, 4.32);
+    doc.text(splitReturn, 0.18, retY);
+    retY += splitReturn.length * 0.13 + 0.04;
+    doc.text(`Phone: ${d.shipperPhone}`, 0.18, retY);
+    retY += 0.13;
+    doc.text(`GST: ${d.shipperGstin}`, 0.18, retY);
 
     // Package details on Right
-    doc.line(2.4, 3.44, 2.4, 4.45);
-    doc.setFontSize(7.5);
+    const sec5Bottom = 4.25;
+    doc.line(2.4, sec4Bottom, 2.4, sec5Bottom);
+    doc.setFontSize(8);
     doc.setFont("Helvetica", "bold");
-    doc.text("PACKAGE DETAILS:", 2.5, 3.6);
+    doc.text("PACKAGE DETAILS:", 2.5, sec4Bottom + 0.16);
     doc.setFont("Helvetica", "normal");
-    doc.text(`Weight: ${d.weightKg} kg`, 2.5, 3.76);
-    doc.text(`Dims: ${d.dimensions}`, 2.5, 3.9);
-    doc.text(`Packages: ${d.packageCount}`, 2.5, 4.04);
-    doc.text(`Order: ${d.documentNumber}`, 2.5, 4.18);
+    doc.text(`Weight: ${d.weightKg} kg`, 2.5, sec4Bottom + 0.34);
+    doc.text(`Dims: ${d.dimensions}`, 2.5, sec4Bottom + 0.50);
+    doc.text(`Packages: ${d.packageCount}`, 2.5, sec4Bottom + 0.66);
+    doc.text(`Order: ${d.documentNumber}`, 2.5, sec4Bottom + 0.82);
 
-    // Divider
-    doc.line(0.08, 4.45, 3.92, 4.45);
+    doc.line(0.08, sec5Bottom, 3.92, sec5Bottom);
 
     // 6. ITEM CONTENTS SUMMARY TABLE
-    doc.setFontSize(7.5);
+    doc.setFontSize(8);
     doc.setFont("Helvetica", "bold");
-    doc.text("BOX CONTENTS / PACKING SLIP:", 0.18, 4.6);
+    doc.text("BOX CONTENTS / PACKING SLIP:", 0.18, sec5Bottom + 0.18);
 
     doc.setFont("Helvetica", "normal");
-    doc.setFontSize(7);
-    let itemY = 4.75;
+    doc.setFontSize(7.5);
+    let itemY = sec5Bottom + 0.35;
     (d.items || []).slice(0, 3).forEach((item, idx) => {
-      const title = `${idx + 1}. ${String(item.name).substring(0, 36)} ${item.sku ? `(${item.sku})` : ""}`;
+      const title = `${idx + 1}. ${String(item.name).substring(0, 44)} ${item.sku ? `(${item.sku})` : ""}`;
       doc.text(title, 0.18, itemY);
       doc.text(`Qty: ${item.quantity || 1}`, 3.4, itemY);
-      itemY += 0.14;
+      itemY += 0.16;
     });
 
-    // Divider
-    doc.line(0.08, 5.25, 3.92, 5.25);
+    const sec6Bottom = 5.25;
+    doc.line(0.08, sec6Bottom, 3.92, sec6Bottom);
 
-    // 7. FOOTER NOTICE (BOLD THERMAL ATTENTION)
-    doc.setFontSize(7.5);
+    // 7. FOOTER NOTICE
+    doc.setFontSize(7);
     doc.setFont("Helvetica", "bold");
-    doc.text(String(d.handlingInstructions), 0.18, 5.45);
+    const splitInstr = doc.splitTextToSize(String(d.handlingInstructions), 3.65);
+    doc.text(splitInstr, 0.18, 5.44);
 
     doc.setFont("Helvetica", "normal");
     doc.setFontSize(6.5);
@@ -977,50 +945,12 @@ const ShippingLabelsPage = () => {
                 </div>
               </div>
 
-              {/* 2. TRACKING & BARCODE */}
+              {/* 2. TRACKING BLOCK */}
               <div className="t-tracking-block">
                 <div className="t-tracking-meta">
                   <span className="t-track-bold">AWB / TRACKING #: {labelData.trackingNumber || "N/A"}</span>
                   <span className="t-doc-ref">DOC: #{labelData.documentNumber || "N/A"} | DATE: {labelData.shipDate || ""}</span>
                 </div>
-
-                {/* Pure CSS/SVG Thermal-Clean Barcode Representation */}
-                <div className="t-barcode-bars" aria-hidden="true">
-                  <div className="bar thin"></div>
-                  <div className="bar thick"></div>
-                  <div className="bar thin"></div>
-                  <div className="bar medium"></div>
-                  <div className="bar thin"></div>
-                  <div className="bar thick"></div>
-                  <div className="bar thin"></div>
-                  <div className="bar thin"></div>
-                  <div className="bar thick"></div>
-                  <div className="bar medium"></div>
-                  <div className="bar thin"></div>
-                  <div className="bar thick"></div>
-                  <div className="bar thin"></div>
-                  <div className="bar medium"></div>
-                  <div className="bar thick"></div>
-                  <div className="bar thin"></div>
-                  <div className="bar thick"></div>
-                  <div className="bar thin"></div>
-                  <div className="bar thin"></div>
-                  <div className="bar thick"></div>
-                  <div className="bar thin"></div>
-                  <div className="bar thick"></div>
-                  <div className="bar thin"></div>
-                  <div className="bar medium"></div>
-                  <div className="bar thin"></div>
-                  <div className="bar thick"></div>
-                  <div className="bar medium"></div>
-                  <div className="bar thin"></div>
-                  <div className="bar thick"></div>
-                  <div className="bar thin"></div>
-                  <div className="bar thin"></div>
-                  <div className="bar thick"></div>
-                  <div className="bar thin"></div>
-                </div>
-                <div className="t-barcode-text">* {labelData.trackingNumber || "AWB"} *</div>
               </div>
 
               {/* 3. PRIMARY SHIP-TO CONSIGNEE SECTION */}

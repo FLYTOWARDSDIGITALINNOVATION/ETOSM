@@ -237,6 +237,59 @@
 }
 
 /* Responsive Design */
+/* Laptop Responsive Design (1024px - 1366px) */
+@media (min-width: 769px) and (max-width: 1366px) {
+  .dashboard-header {
+    padding: 22px 24px;
+    margin-bottom: 24px;
+    border-radius: 16px;
+  }
+
+  .dashboard-header h1 {
+    font-size: 24px;
+  }
+
+  .stats-grid {
+    gap: 16px;
+    margin-bottom: 28px;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  }
+
+  .stat-card {
+    padding: 22px 20px;
+    border-radius: 18px;
+  }
+
+  .stat-content h3 {
+    font-size: 26px;
+  }
+
+  .actions-grid {
+    gap: 14px;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  }
+
+  .action-btn {
+    padding: 20px 14px;
+    border-radius: 16px;
+    font-size: 13px;
+  }
+
+  .recent-section {
+    padding: 24px 22px;
+    border-radius: 18px;
+  }
+
+  .recent-section h2 {
+    font-size: 18px;
+    margin-bottom: 20px;
+  }
+
+  .data-table td {
+    padding: 14px 12px;
+  }
+}
+
 @media (max-width: 768px) {
 
   .dashboard-header {
@@ -266,4 +319,4 @@
   .data-table {
     min-width: 600px; /* To allow scrolling on small screens */
   }
-}
+}
