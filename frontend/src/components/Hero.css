@@ -251,10 +251,7 @@
     height: auto;
     min-height: auto;
     background-color: #ffffff;
-    background-image: url('/hero-bg-mobile.jpg?v=2');
-    background-size: cover;
-    background-position: center top;
-    background-repeat: no-repeat;
+    background-image: none;
     padding: 36px 16px 44px;
   }
   .hero-content-wrapper {

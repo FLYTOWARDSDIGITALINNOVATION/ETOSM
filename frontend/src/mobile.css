@@ -125,6 +125,8 @@
     margin-top: 80px !important;
     padding: 40px 5% 30px !important;
     min-height: unset !important;
+    background-image: none !important;
+    background-color: #ffffff !important;
   }
 
   .hero-main-title {
