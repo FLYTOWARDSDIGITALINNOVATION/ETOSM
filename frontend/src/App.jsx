@@ -44,6 +44,7 @@ import AdminCustomersPage from "./admin/AdminCustomersPage"; // ✅ Import Admin
 import AdminSupportPage from "./admin/AdminSupportPage"; // ✅ Import Admin Support
 import AdminReviewsPage from "./admin/AdminReviewsPage";
 import AdminSettings from "./admin/AdminSettings"; // ✅ Import Admin Settings
+import AdminShippingSettings from "./admin/AdminShippingSettings";
 import OrdersPage from "./pages/OrdersPage"; // ✅ Import Orders Page
 import CustomerService from "./pages/CustomerService"; // ✅ Import Customer Service Page
 import Profile from "./pages/Profile";
@@ -106,6 +107,8 @@ function App() {
             <Route path="/admin/billing-reports" element={<BillingReportsPage />} />
             <Route path="/admin/credit-notes" element={<CreditNotesPage />} />
             <Route path="/admin/shipping-labels" element={<ShippingLabelsPage />} />
+            <Route path="/admin/store-settings" element={<AdminShippingSettings />} />
+            <Route path="/admin/shipping-settings" element={<AdminShippingSettings />} />
             <Route path="/admin/support" element={<AdminSupportPage />} />
             <Route path="/admin/reviews" element={<AdminReviewsPage />} />
             <Route path="/admin/settings" element={<AdminSettings />} />

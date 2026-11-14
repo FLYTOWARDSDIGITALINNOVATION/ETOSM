@@ -178,6 +178,7 @@ const productSchema = new mongoose.Schema({
   image: String,
   images: [String],
   slug: { type: String, unique: true, sparse: true },
+  hsnCode: { type: String, default: "", trim: true },
   gstPercent: { type: Number, default: 18 },
   pdfUrl: { type: String, default: "" },
 
@@ -218,9 +219,9 @@ productSchema.pre("save", async function () {
 
   if (!this.productId) {
     if (this.sku) {
-      this.productId = `PRD-${this.sku}`;
+      this.productId = `SKU-${this.sku}`;
     } else {
-      this.productId = `PRD-${Math.floor(10000 + Math.random() * 90000)}`;
+      this.productId = `SKU-${Math.floor(10000 + Math.random() * 90000)}`;
     }
   }
 });
@@ -251,15 +252,26 @@ async function migrateProductIds() {
   try {
     const ProductModel = mongoose.model("Product");
     const products = await ProductModel.find({
-      $or: [{ productId: { $exists: false } }, { productId: "" }, { productId: null }]
+      $or: [
+        { productId: { $exists: false } },
+        { productId: "" },
+        { productId: null },
+        { productId: { $regex: /^PRD-/i } }
+      ]
     });
     for (let product of products) {
-      const pid = product.sku ? `PRD-${product.sku}` : `PRD-${product._id.toString().slice(-5).toUpperCase()}`;
-      product.productId = pid;
+      let rawCode = product.sku ? String(product.sku) : "";
+      if (!rawCode && product.productId) {
+        rawCode = product.productId.replace(/^PRD-?/i, "");
+      }
+      if (!rawCode && product._id) {
+        rawCode = product._id.toString().slice(-5).toUpperCase();
+      }
+      product.productId = `SKU-${rawCode}`;
       await product.save();
     }
     if (products.length > 0) {
-      console.log(`Migrated ${products.length} products with standard Product IDs.`);
+      console.log(`Migrated ${products.length} products to standard SKU IDs.`);
     }
   } catch (err) {
     console.error("ProductId migration failed:", err);
@@ -520,9 +532,17 @@ const Support = mongoose.model("Support", supportSchema);
 
 // SETTINGS
 const settingsSchema = new mongoose.Schema({
-  expressShippingPrice: { type: Number, default: 9.99 },
-  standardShippingPrice: { type: Number, default: 0 }
-});
+  companyName: { type: String, default: "ETOSM TECHNOLOGY" },
+  companyEmail: { type: String, default: "" },
+  invoicePrefix: { type: String, default: "INV" },
+  creditNotePrefix: { type: String, default: "CN" },
+  expressShippingPrice: { type: Number, default: 190 },
+  standardShippingPrice: { type: Number, default: 80 },
+  bankName: { type: String, default: "INDIAN BANK" },
+  accountNumber: { type: String, default: "7776386819" },
+  ifscCode: { type: String, default: "IDIB000T038" },
+  upiId: { type: String, default: "etosm@indianbk" }
+}, { strict: false });
 const Settings = mongoose.model("Settings", settingsSchema);
 
 // QUOTATION / BILLING SCHEMA (Admin Module 5: Quotation Management)
@@ -1070,7 +1090,7 @@ app.put("/admin/settings", verifyAdmin, async (req, res) => {
     if (!settings) {
       settings = await Settings.create(req.body);
     } else {
-      settings = await Settings.findOneAndUpdate({}, req.body, { new: true });
+      settings = await Settings.findOneAndUpdate({}, { $set: req.body }, { new: true, upsert: true });
     }
     res.json(settings);
   } catch (err) {
@@ -1158,9 +1178,9 @@ app.post("/admin/product", verifyAdmin, upload.fields([{ name: 'image', maxCount
   let genProductId = req.body.productId ? String(req.body.productId).trim() : "";
   if (!genProductId) {
     if (req.body.sku) {
-      genProductId = `PRD-${req.body.sku}`;
+      genProductId = `SKU-${req.body.sku}`;
     } else {
-      genProductId = `PRD-${Math.floor(10000 + Math.random() * 90000)}`;
+      genProductId = `SKU-${Math.floor(10000 + Math.random() * 90000)}`;
     }
   }
 
@@ -1998,10 +2018,12 @@ app.delete("/admin/quotations/:id", verifyAdmin, async (req, res) => {
 // GET NEXT INVOICE NUMBER
 app.get("/admin/invoices/next-number", verifyAdmin, async (req, res) => {
   try {
+    const settings = await Settings.findOne();
+    const prefix = settings && settings.invoicePrefix ? settings.invoicePrefix.trim() : "INV";
     const year = new Date().getFullYear();
     const count = await Invoice.countDocuments();
     const padded = String(count + 1).padStart(4, "0");
-    const nextNumber = `INV-${year}-${padded}`;
+    const nextNumber = `${prefix}-${year}-${padded}`;
     res.json({ nextNumber });
   } catch (err) {
     console.error("Failed to generate next invoice number:", err);
@@ -2974,9 +2996,11 @@ app.get("/admin/billing-reports", verifyAdmin, async (req, res) => {
 // GET NEXT CREDIT NOTE NUMBER
 app.get("/admin/credit-notes/next-number", verifyAdmin, async (req, res) => {
   try {
+    const settings = await Settings.findOne();
+    const prefix = settings && settings.creditNotePrefix ? settings.creditNotePrefix.trim() : "CN";
     const year = new Date().getFullYear();
     const count = await CreditNote.countDocuments();
-    const nextNumber = `CN-${year}-${String(count + 1).padStart(4, "0")}`;
+    const nextNumber = `${prefix}-${year}-${String(count + 1).padStart(4, "0")}`;
     res.json({ nextNumber });
   } catch (err) {
     console.error("Failed to generate credit note number:", err);

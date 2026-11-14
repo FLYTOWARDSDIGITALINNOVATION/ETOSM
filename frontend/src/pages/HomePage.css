@@ -224,12 +224,14 @@
 }
 
 .footer-col-title {
+  display: block;
   font-size: 0.9rem;
   font-weight: 800;
   letter-spacing: 2px;
   margin-bottom: 25px;
   position: relative;
   text-transform: uppercase;
+  color: #ffffff;
   transition: color 0.3s ease, transform 0.3s ease;
 }
 
@@ -253,7 +255,7 @@
 .footer-contact-text {
   font-size: 0.9rem;
   line-height: 1.8;
-  color: #a0a0a0;
+  color: #ffffff;
   max-width: 250px;
 }
 
@@ -278,7 +280,7 @@
 }
 
 .footer-links a {
-  color: #a0a0a0;
+  color: #ffffff;
   text-decoration: none;
   font-size: 0.9rem;
   transition: color 0.3s ease, transform 0.3s ease;
@@ -1464,12 +1466,13 @@
   margin: 0;
 }
 
-/* Reviews 3-Card Grid */
+/* Reviews 2-Card Grid */
 .reviews-cards-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 26px;
-  margin-bottom: 30px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 28px;
+  max-width: 960px;
+  margin: 0 auto 30px;
 }
 
 .customer-review-card {

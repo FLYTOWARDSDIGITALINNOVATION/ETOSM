@@ -250,8 +250,12 @@
     margin-top: 85px; /* Mobile header offset */
     height: auto;
     min-height: auto;
-    background-position: 80% center;
-    padding: 35px 16px 40px;
+    background-color: #ffffff;
+    background-image: url('/hero-bg-mobile.jpg?v=2');
+    background-size: cover;
+    background-position: center top;
+    background-repeat: no-repeat;
+    padding: 36px 16px 44px;
   }
   .hero-content-wrapper {
     justify-content: center;
@@ -260,12 +264,12 @@
     max-width: 100%;
     align-items: center;
     text-align: center;
-    background: rgba(255, 255, 255, 0.94);
-    backdrop-filter: blur(10px);
-    padding: 24px 20px;
-    border-radius: 16px;
-    border: 1px solid rgba(226, 232, 240, 0.8);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    background: transparent;
+    padding: 0;
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
+    backdrop-filter: none;
   }
   .hero-description {
     margin: 0 auto 24px;

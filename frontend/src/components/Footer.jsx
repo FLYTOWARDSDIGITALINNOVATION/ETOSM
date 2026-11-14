@@ -16,7 +16,7 @@ export default function Footer() {
     <footer className="footer-site">
       <div className="footer-container">
         <div className="footer-column brand-col">
-          <h4 className="footer-col-title">ETOSM TECHNOLOGY</h4>
+          <span className="footer-col-title">ETOSM TECHNOLOGY</span>
           <p className="footer-address">
             Indian Electronics Design &amp; Manufacturing<br />
             Power Electronics | BMS | Audio<br />
@@ -25,7 +25,7 @@ export default function Footer() {
         </div>
 
         <div className="footer-column">
-          <h4 className="footer-col-title">QUICK LINKS</h4>
+          <span className="footer-col-title">QUICK LINKS</span>
           <ul className="footer-links">
             <li><Link to="/">Home</Link></li>
             <li><Link to="/about">About Us</Link></li>
@@ -36,7 +36,7 @@ export default function Footer() {
         </div>
 
         <div className="footer-column">
-          <h4 className="footer-col-title">PRODUCTS</h4>
+          <span className="footer-col-title">PRODUCTS</span>
           <ul className="footer-links">
             {Array.isArray(categories) && categories.length > 0 ? (
               categories
@@ -54,7 +54,7 @@ export default function Footer() {
         </div>
 
         <div className="footer-column">
-          <h4 className="footer-col-title">GET IN TOUCH</h4>
+          <span className="footer-col-title">GET IN TOUCH</span>
           <p className="footer-contact-text">
             If you have any enquiries, please do not hesitate to contact us.<br /><br />
             Email: support@etosmtechnology.in<br />

@@ -757,7 +757,46 @@
   font-size: 13px;
 }
 
-/* GST Select */
+/* GST Input Control (Manual Input) */
+.inv-gst-control {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  overflow: hidden;
+  background: white;
+  width: 100%;
+  min-width: 75px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.inv-gst-control:focus-within {
+  border-color: #e3000f;
+  box-shadow: 0 0 0 2px rgba(227, 0, 15, 0.1);
+}
+
+.gst-input {
+  width: 100%;
+  border: none;
+  padding: 6px 6px 6px 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  outline: none;
+  min-width: 0;
+  background: transparent;
+}
+
+.gst-suffix {
+  background: #f1f5f9;
+  border-left: 1px solid #cbd5e1;
+  padding: 6px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #475569;
+  user-select: none;
+}
+
 .inv-item-select.gst {
   padding: 6px 8px;
   border: 1px solid #cbd5e1;

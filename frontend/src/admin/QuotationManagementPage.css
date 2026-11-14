@@ -1280,13 +1280,15 @@
   font-size: 1.15rem;
   font-weight: 800;
   color: #0f172a;
-  margin: 0 0 2px 0;
+  margin: 0 0 8px 0;
+  letter-spacing: 0.02em;
 }
 
 .sheet-subtext {
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   color: #64748b;
-  margin: 2px 0;
+  margin: 3px 0;
+  line-height: 1.45;
 }
 
 .sheet-quote-meta h3 {

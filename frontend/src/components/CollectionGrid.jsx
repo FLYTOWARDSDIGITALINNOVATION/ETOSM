@@ -18,8 +18,8 @@ const categories = [
     title: "BMS",
     subtitle: "Hardware BMS & Smart BMS",
     icon: "🔋",
-    link: "/category/BATTERY MANAGEMENT SYSTEM",
-    tag: "BATTERY MANAGEMENT SYSTEM",
+    link: "/category/BMS",
+    tag: "BMS",
     color: "#1b4332",
   },
   {
@@ -66,7 +66,7 @@ const CollectionGrid = () => {
               <div className="card-tag">{cat.tag}</div>
               <div className="card-icon">{cat.icon}</div>
               <div className="card-content">
-                <h4 className="card-title">{cat.title}</h4>
+                <h3 className="card-title">{cat.title}</h3>
                 <p className="card-subtitle">{cat.subtitle}</p>
               </div>
               <div className="card-arrow">

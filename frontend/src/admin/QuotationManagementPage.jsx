@@ -1,6 +1,6 @@
 import API_BASE_URL from "../apiConfig";
 import React, { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   FileText,
   Plus,
@@ -35,6 +35,7 @@ import {
 import { jsPDF } from "jspdf";
 import AdminLayout from "./AdminLayout";
 import { cacheGet, cacheSet } from "../utils/dataCache";
+import { GST_STATES } from "../utils/gstStates";
 import "./QuotationManagementPage.css";
 
 // Helper: Convert number to Indian currency words
@@ -65,6 +66,7 @@ function numberToWordsINR(num) {
 
 const QuotationManagementPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const token = localStorage.getItem("token");
 
   // Mode: "list" or "create" / "edit"
@@ -187,13 +189,22 @@ const QuotationManagementPage = () => {
   const fetchProductsAndCustomers = async () => {
     try {
       const [prodRes, custRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/products?limit=100`),
+        fetch(`${API_BASE_URL}/admin/products-stats`, { headers: { Authorization: `Bearer ${token}` } })
+          .catch(() => fetch(`${API_BASE_URL}/products/all`)),
         fetch(`${API_BASE_URL}/admin/customers`, { headers: { Authorization: `Bearer ${token}` } })
       ]);
 
-      if (prodRes.ok) {
+      if (prodRes && prodRes.ok) {
         const pData = await prodRes.json();
-        setProductsCatalog(Array.isArray(pData.products) ? pData.products : Array.isArray(pData) ? pData : []);
+        const pList = Array.isArray(pData) ? pData : Array.isArray(pData.products) ? pData.products : [];
+        setProductsCatalog(pList);
+      } else {
+        // Fallback to /products/all
+        const fbRes = await fetch(`${API_BASE_URL}/products/all`);
+        if (fbRes.ok) {
+          const fbData = await fbRes.json();
+          setProductsCatalog(Array.isArray(fbData) ? fbData : Array.isArray(fbData.products) ? fbData.products : []);
+        }
       }
       if (custRes.ok) {
         const cData = await custRes.json();
@@ -323,24 +334,35 @@ const QuotationManagementPage = () => {
     showToast(`Loaded details for customer "${cust.name}"`);
   };
 
+  // Auto-open builder and select customer if navigated from Customer Management
+  useEffect(() => {
+    if (location.state?.customer) {
+      setViewMode("builder");
+      handleSelectCustomer(location.state.customer);
+    }
+  }, [location.state]);
+
   // Add Item to Line Items
   const handleAddItem = (product = null) => {
     if (product) {
-      setItems((prev) => [
-        ...prev,
-        {
-          productId: product.productId || product._id || "",
-          productRef: product._id || "",
-          name: product.name || "Product Item",
-          description: product.description ? product.description.substring(0, 100) : "",
-          sku: product.sku ? String(product.sku) : "",
-          quantity: 1,
-          unitPrice: Number(product.price) || 0,
-          discountPercent: 0,
-          discountAmount: 0,
-          gstPercent: Number(product.gstPercent) || 18
+      const newItem = {
+        productId: product.productId || product._id || "",
+        productRef: product._id || "",
+        name: product.name || "Product Item",
+        description: product.description ? String(product.description).trim() : "",
+        sku: product.sku ? String(product.sku) : "",
+        quantity: 1,
+        unitPrice: Number(product.price) || 0,
+        discountPercent: 0,
+        discountAmount: 0,
+        gstPercent: Number(product.gstPercent) || 18
+      };
+      setItems((prev) => {
+        if (prev.length === 1 && (!prev[0].name || !prev[0].name.trim()) && Number(prev[0].unitPrice || 0) === 0) {
+          return [newItem];
         }
-      ]);
+        return [...prev, newItem];
+      });
       setShowCatalogModal(false);
       showToast(`Added "${product.name}" to quotation!`);
     } else {
@@ -472,6 +494,14 @@ const QuotationManagementPage = () => {
   const handleSaveQuotation = async (forcedStatus = null) => {
     if (!formData.customerName.trim()) {
       showToast("Please enter customer name", "error");
+      return;
+    }
+
+    const validLineItems = calculations.items.filter(
+      (i) => i && (i.name || "").trim() !== "" && (i.name || "").trim().toLowerCase() !== "product item"
+    );
+    if (validLineItems.length === 0) {
+      showToast("Please enter or select at least one product name in line items", "error");
       return;
     }
 
@@ -717,13 +747,13 @@ const QuotationManagementPage = () => {
       doc.setFont("Helvetica", "bold");
       doc.setFontSize(11);
       doc.setTextColor(...slateDark);
-      doc.text("ETOSM TECHNOLOGY", 14, 27);
+      doc.text("ETOSM TECHNOLOGY", 14, 26.5);
 
       doc.setFont("Helvetica", "normal");
-      doc.setFontSize(7.5);
+      doc.setFontSize(7.2);
       doc.setTextColor(...mutedText);
-      doc.text("Lithium Battery Packs • Custom BMS • EV Electronics", 14, 31.5);
-      doc.text("Office: Namakkal, Tamil Nadu-637202 | support@etosmtechnology.in", 14, 35.5);
+      doc.text("2/167, Merkukadu, Ramapuram, Tiruchengodu, Namakkal, Tamil Nadu - 637202", 14, 32);
+      doc.text("Mobile: +91 88070 80216 | Email: support@etosmtechnology.in", 14, 36.5);
 
       // Right: PRICE QUOTATION and Meta Details
       doc.setFont("Helvetica", "bold");
@@ -838,46 +868,89 @@ const QuotationManagementPage = () => {
         : [{ name: "Electronic Component Assembly", quantity: 1, unitPrice: Number(q.grandTotal || 0), gstPercent: 18, totalAmount: Number(q.grandTotal || 0) }];
 
       qItems.forEach((item, idx) => {
-        const hasDesc = !!item.description;
-        const rowHeight = hasDesc ? 10 : 7.5;
+        const rawName = String(item.name || item.productName || item.title || item.description || "Electronics Component / Product").trim();
+        const rawDesc = String(item.description || "").trim();
+        const hasDesc = rawDesc !== "" && rawDesc.toLowerCase() !== rawName.toLowerCase();
 
+        // Dynamically wrap product name to 80mm column width
+        doc.setFont("Helvetica", "bold");
+        doc.setFontSize(8.2);
+        const titleLines = doc.splitTextToSize(rawName, 80);
+
+        // Dynamically wrap description without truncation
+        doc.setFont("Helvetica", "normal");
+        doc.setFontSize(7.2);
+        const descLines = hasDesc ? doc.splitTextToSize(rawDesc, 80) : [];
+
+        const titleLineH = 4.0;
+        const descLineH = 3.5;
+        const titleH = titleLines.length * titleLineH;
+        const descH = descLines.length > 0 ? (1.5 + descLines.length * descLineH) : 0;
+        const rowHeight = Math.max(9.5, titleH + descH + 4.5);
+
+        // Page boundary check
+        if (tableY + rowHeight > 230) {
+          doc.addPage();
+          tableY = 20;
+          doc.setFillColor(...slateDark);
+          doc.rect(14, tableY, 182, 7.5, "F");
+          doc.setTextColor(255, 255, 255);
+          doc.setFont("Helvetica", "bold");
+          doc.setFontSize(8);
+          doc.text("#", 18, tableY + 5.2);
+          doc.text("Item Description", 28, tableY + 5.2);
+          doc.text("Qty", 115, tableY + 5.2, { align: "center" });
+          doc.text("Rate (Rs.)", 145, tableY + 5.2, { align: "right" });
+          doc.text("GST", 166, tableY + 5.2, { align: "right" });
+          doc.text("Total (Rs.)", 192, tableY + 5.2, { align: "right" });
+          tableY += 7.5;
+        }
+
+        // Draw row background and bottom border line
         doc.setFillColor(255, 255, 255);
         doc.rect(14, tableY, 182, rowHeight, "F");
         doc.setDrawColor(...borderGray);
         doc.setLineWidth(0.2);
         doc.line(14, tableY + rowHeight, 196, tableY + rowHeight);
 
-        // #
+        const firstLineY = tableY + 5.0;
+
+        // # (Index)
         doc.setFont("Helvetica", "normal");
         doc.setFontSize(8);
         doc.setTextColor(...bodyText);
-        doc.text(String(idx + 1), 18, tableY + 5);
+        doc.text(String(idx + 1), 18, firstLineY);
 
-        // Item Name & Description
+        // Item Name (Full multi-line wrapping if needed)
         doc.setFont("Helvetica", "bold");
+        doc.setFontSize(8.2);
         doc.setTextColor(...slateDark);
-        const itemName = item.name.length > 48 ? item.name.substring(0, 45) + "..." : item.name;
-        doc.text(itemName, 28, tableY + 5);
+        titleLines.forEach((tLine, tIdx) => {
+          doc.text(tLine, 28, firstLineY + (tIdx * titleLineH));
+        });
 
-        if (hasDesc) {
+        // Item Description (Full multi-line clean wrapping, no ellipsis cut)
+        if (descLines.length > 0) {
           doc.setFont("Helvetica", "normal");
-          doc.setFontSize(7);
+          doc.setFontSize(7.2);
           doc.setTextColor(...mutedText);
-          const itDesc = item.description.length > 60 ? item.description.substring(0, 58) + "..." : item.description;
-          doc.text(itDesc, 28, tableY + 8.5);
+          const descStartY = firstLineY + titleH + 0.8;
+          descLines.forEach((dLine, dIdx) => {
+            doc.text(dLine, 28, descStartY + (dIdx * descLineH));
+          });
         }
 
-        // Qty, Rate, GST, Total
+        // Qty, Rate, GST, Total (aligned at firstLineY)
         doc.setFont("Helvetica", "normal");
         doc.setFontSize(8);
         doc.setTextColor(...bodyText);
-        doc.text(String(item.quantity || 1), 115, tableY + 5, { align: "center" });
-        doc.text(`Rs. ${Number(item.unitPrice || 0).toLocaleString("en-IN")}`, 145, tableY + 5, { align: "right" });
-        doc.text(`${item.gstPercent || 18}%`, 166, tableY + 5, { align: "right" });
+        doc.text(String(item.quantity || 1), 115, firstLineY, { align: "center" });
+        doc.text(`Rs. ${Number(item.unitPrice || 0).toLocaleString("en-IN")}`, 145, firstLineY, { align: "right" });
+        doc.text(`${item.gstPercent || 18}%`, 166, firstLineY, { align: "right" });
 
         doc.setFont("Helvetica", "bold");
         doc.setTextColor(...slateDark);
-        doc.text(`Rs. ${Number(item.totalAmount || 0).toLocaleString("en-IN")}`, 192, tableY + 5, { align: "right" });
+        doc.text(`Rs. ${Number(item.totalAmount || 0).toLocaleString("en-IN")}`, 192, firstLineY, { align: "right" });
 
         tableY += rowHeight;
       });
@@ -886,6 +959,10 @@ const QuotationManagementPage = () => {
       // 4. BOTTOM SECTION (Terms on Left, Financials on Right)
       // =======================================================================
       let bottomY = tableY + 8;
+      if (bottomY > 220) {
+        doc.addPage();
+        bottomY = 20;
+      }
 
       // Left Box: Terms & Conditions Box
       const defaultTerms = "1. Quotation prices are valid for 30 days from date of issue.\n2. Taxes as applicable at the time of invoicing.\n3. Delivery timeline: 3-5 business days upon PO confirmation.";
@@ -1123,14 +1200,11 @@ const QuotationManagementPage = () => {
                         value={formData.placeOfSupply}
                         onChange={(e) => setFormData({ ...formData, placeOfSupply: e.target.value })}
                       >
-                        <option value="33 - Tamil Nadu">33 - Tamil Nadu (CGST + SGST)</option>
-                        <option value="29 - Karnataka">29 - Karnataka (IGST)</option>
-                        <option value="32 - Kerala">32 - Kerala (IGST)</option>
-                        <option value="36 - Telangana">36 - Telangana (IGST)</option>
-                        <option value="37 - Andhra Pradesh">37 - Andhra Pradesh (IGST)</option>
-                        <option value="27 - Maharashtra">27 - Maharashtra (IGST)</option>
-                        <option value="07 - Delhi">07 - Delhi (IGST)</option>
-                        <option value="Other Interstate">Other Interstate (IGST)</option>
+                        {GST_STATES.map((st) => (
+                          <option key={st.code} value={`${st.code} - ${st.name}`}>
+                            {st.code} - {st.name} ({st.type})
+                          </option>
+                        ))}
                       </select>
                     </div>
                   </div>
@@ -1264,15 +1338,46 @@ const QuotationManagementPage = () => {
                           </tr>
                         </thead>
                         <tbody>
+                          <datalist id="quotation-products-datalist">
+                            {productsCatalog.map((p) => (
+                              <option key={p._id} value={p.name}>
+                                {p.category ? `[${p.category}] ` : ""}₹{p.price} {p.sku ? `(SKU: ${p.sku})` : ""}
+                              </option>
+                            ))}
+                          </datalist>
                           {items.map((item, idx) => (
                             <tr key={idx}>
                               <td>
                                 <input
                                   type="text"
                                   className="item-input bold"
-                                  placeholder="Product / Service Name *"
+                                  placeholder="Product / Service Name * (type or pick from catalog)"
                                   value={item.name}
-                                  onChange={(e) => handleItemChange(idx, "name", e.target.value)}
+                                  list="quotation-products-datalist"
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    handleItemChange(idx, "name", val);
+                                    const matched = productsCatalog.find(
+                                      (p) => (p.name || "").trim().toLowerCase() === val.trim().toLowerCase()
+                                    );
+                                    if (matched) {
+                                      setItems((prev) => {
+                                        const updated = [...prev];
+                                        updated[idx] = {
+                                          ...updated[idx],
+                                          name: matched.name,
+                                          productId: matched.productId || matched._id || "",
+                                          productRef: matched._id || "",
+                                          unitPrice: Number(matched.price) || 0,
+                                          description: matched.description ? String(matched.description).trim() : (updated[idx].description || ""),
+                                          sku: matched.sku ? String(matched.sku) : (updated[idx].sku || ""),
+                                          gstPercent: Number(matched.gstPercent) || 18
+                                        };
+                                        return updated;
+                                      });
+                                      showToast(`Selected "${matched.name}" (₹${matched.price})`);
+                                    }
+                                  }}
                                   required
                                 />
                                 <input
@@ -1314,17 +1419,19 @@ const QuotationManagementPage = () => {
                                 />
                               </td>
                               <td>
-                                <select
+                                <input
+                                  type="number"
+                                  min="0"
+                                  max="100"
+                                  step="any"
                                   className="item-input center"
-                                  value={item.gstPercent}
-                                  onChange={(e) => handleItemChange(idx, "gstPercent", Number(e.target.value))}
-                                >
-                                  <option value={0}>0%</option>
-                                  <option value={5}>5%</option>
-                                  <option value={12}>12%</option>
-                                  <option value={18}>18%</option>
-                                  <option value={28}>28%</option>
-                                </select>
+                                  placeholder="18"
+                                  value={item.gstPercent === 0 ? "0" : (item.gstPercent ?? "")}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    handleItemChange(idx, "gstPercent", val === "" ? "" : Number(val));
+                                  }}
+                                />
                               </td>
                               <td style={{ textAlign: "right" }}>
                                 <span className="item-row-total">
@@ -1480,9 +1587,13 @@ const QuotationManagementPage = () => {
                     <button
                       className="q-btn secondary full"
                       onClick={() => {
+                        const validItems = calculations.items.filter(
+                          (i) => i && ((i.name || "").trim() !== "" || Number(i.unitPrice || 0) > 0)
+                        );
+                        const itemsToPreview = validItems.length > 0 ? validItems : calculations.items;
                         const previewObj = {
                           ...formData,
-                          items: calculations.items,
+                          items: itemsToPreview,
                           grossSubtotal: calculations.grossSubtotal,
                           totalDiscount: calculations.totalDiscount,
                           taxableSubtotal: calculations.taxableSubtotal,
@@ -2034,8 +2145,8 @@ const QuotationManagementPage = () => {
                   <div className="sheet-logo-info">
                     <img src="/logo1.png" alt="ETOSM" style={{ height: "36px", marginBottom: "8px" }} />
                     <p className="sheet-company-title">ETOSM TECHNOLOGY</p>
-                    <p className="sheet-subtext">Lithium Battery Packs • Custom BMS • EV Electronics</p>
-                    <p className="sheet-subtext">Office: Namakkal, Tamil Nadu-637202 | support@etosmtechnology.in</p>
+                    <p className="sheet-subtext">2/167, Merkukadu, Ramapuram, Tiruchengodu, Namakkal, Tamil Nadu - 637202</p>
+                    <p className="sheet-subtext">Mobile: +91 88070 80216 | Email: support@etosmtechnology.in</p>
                   </div>
                   <div className="sheet-quote-meta">
                     <h3>PRICE QUOTATION</h3>
@@ -2051,9 +2162,9 @@ const QuotationManagementPage = () => {
                 <div className="sheet-client-strip">
                   <div className="client-block">
                     <h4>QUOTATION FOR:</h4>
-                    <strong>{previewQuotation.customerName}</strong>
+                    <strong>{previewQuotation.customerName || previewQuotation.clientName || previewQuotation.userName || "Valued Client"}</strong>
                     {previewQuotation.customerCompany && <p>{previewQuotation.customerCompany}</p>}
-                    {previewQuotation.customerAddress && <p>{previewQuotation.customerAddress}</p>}
+                    <p>{previewQuotation.customerAddress || (previewQuotation.placeOfSupply ? `${previewQuotation.placeOfSupply}, India` : "Tamil Nadu, India")}</p>
                     {previewQuotation.customerPhone && <p>Phone: {previewQuotation.customerPhone}</p>}
                     {previewQuotation.customerEmail && <p>Email: {previewQuotation.customerEmail}</p>}
                     {previewQuotation.customerGstin && <p>GSTIN: {previewQuotation.customerGstin}</p>}
@@ -2073,19 +2184,24 @@ const QuotationManagementPage = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {(previewQuotation.items || []).map((it, idx) => (
-                      <tr key={idx}>
-                        <td>{idx + 1}</td>
-                        <td>
-                          <strong>{it.name}</strong>
-                          {it.description && <span className="it-desc">{it.description}</span>}
-                        </td>
-                        <td style={{ textAlign: "center" }}>{it.quantity}</td>
-                        <td style={{ textAlign: "right" }}>₹{Number(it.unitPrice || 0).toLocaleString("en-IN")}</td>
-                        <td style={{ textAlign: "right" }}>{it.gstPercent || 18}%</td>
-                        <td style={{ textAlign: "right" }}>₹{Number(it.totalAmount || 0).toLocaleString("en-IN")}</td>
-                      </tr>
-                    ))}
+                    {(previewQuotation.items || []).map((it, idx) => {
+                      const itemTitle = (it.name || it.productName || it.title || it.description || "").trim() || "Product / Electronic Component";
+                      return (
+                        <tr key={idx}>
+                          <td>{idx + 1}</td>
+                          <td>
+                            <strong>{itemTitle}</strong>
+                            {it.description && it.description !== itemTitle && (
+                              <span className="it-desc">{it.description}</span>
+                            )}
+                          </td>
+                          <td style={{ textAlign: "center" }}>{it.quantity}</td>
+                          <td style={{ textAlign: "right" }}>₹{Number(it.unitPrice || 0).toLocaleString("en-IN")}</td>
+                          <td style={{ textAlign: "right" }}>{it.gstPercent || 18}%</td>
+                          <td style={{ textAlign: "right" }}>₹{Number(it.totalAmount || 0).toLocaleString("en-IN")}</td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
 

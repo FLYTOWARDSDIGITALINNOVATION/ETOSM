@@ -474,27 +474,82 @@
   white-space: nowrap;
 }
 
-.action-icon {
+.table-actions-row .action-icon {
   width: 28px;
   height: 28px;
+  padding: 0 !important;
   border-radius: 6px;
-  border: 1px solid transparent;
+  border: 1px solid #e2e8f0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  background: transparent;
+  background: #ffffff;
   transition: all 0.15s ease;
+  box-sizing: border-box;
+  flex-shrink: 0;
 }
 
-.action-icon.view { color: #2563eb; }
-.action-icon.view:hover { background: #eff6ff; }
-.action-icon.print { color: #16a34a; }
-.action-icon.print:hover { background: #dcfce7; }
-.action-icon.status { color: #d97706; }
-.action-icon.status:hover { background: #fef3c7; }
-.action-icon.delete { color: #dc2626; }
-.action-icon.delete:hover { background: #fee2e2; }
+.table-actions-row .action-icon svg {
+  display: block;
+  flex-shrink: 0;
+}
+
+/* 1. View button (Green) */
+.table-actions-row .action-icon.view {
+  color: #15803d;
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+.table-actions-row .action-icon.view:hover {
+  background: #15803d;
+  color: #ffffff;
+  border-color: #15803d;
+  transform: translateY(-1px);
+}
+
+/* 2. Download / Print button (Teal / Blue) */
+.table-actions-row .action-icon.print {
+  color: #0284c7;
+  background: #f0f9ff;
+  border-color: #bae6fd;
+}
+.table-actions-row .action-icon.print:hover {
+  background: #0284c7;
+  color: #ffffff;
+  border-color: #0284c7;
+  transform: translateY(-1px);
+}
+
+/* 3. Status Change button (Amber / Warm Gold) */
+.table-actions-row .action-icon.status-change,
+.table-actions-row .action-icon.status {
+  color: #d97706 !important;
+  background: #fffbeb !important;
+  border-color: #fde68a !important;
+  padding: 0 !important;
+  border-radius: 6px !important;
+}
+.table-actions-row .action-icon.status-change:hover,
+.table-actions-row .action-icon.status:hover {
+  background: #d97706 !important;
+  color: #ffffff !important;
+  border-color: #d97706 !important;
+  transform: translateY(-1px);
+}
+
+/* 4. Delete button (Red) */
+.table-actions-row .action-icon.delete {
+  color: #dc2626;
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+.table-actions-row .action-icon.delete:hover {
+  background: #dc2626;
+  color: #ffffff;
+  border-color: #dc2626;
+  transform: translateY(-1px);
+}
 
 /* ==========================================
    MODAL DIALOGS

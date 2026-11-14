@@ -245,7 +245,12 @@ const AdminOrdersPage = () => {
           <div className="order-modal-overlay">
             <div className="order-modal">
               <div className="modal-header">
-                <h3>Order Details</h3>
+                <div>
+                  <h3>Order Details</h3>
+                  <p className="order-slip-meta" style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#64748b' }}>
+                    <strong>Date:</strong> {selectedOrder.createdAt ? new Date(selectedOrder.createdAt).toLocaleDateString('en-IN') : new Date().toLocaleDateString('en-IN')} &nbsp;|&nbsp; <strong>Order ID:</strong> #{selectedOrder.invoiceNumber || String(selectedOrder._id).slice(-8).toUpperCase()}
+                  </p>
+                </div>
                 <div className="no-print" style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                   <button 
                     onClick={() => window.print()}

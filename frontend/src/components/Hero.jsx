@@ -48,7 +48,7 @@ const Hero = () => {
               <ArrowRight size={16} />
             </button>
             <Link to="/about" className="hero-btn-secondary">
-              Learn More
+              Explore Our Company
             </Link>
           </div>
 

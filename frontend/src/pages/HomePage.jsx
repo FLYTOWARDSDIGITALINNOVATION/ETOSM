@@ -13,10 +13,6 @@ import {
 import {
   ShieldCheck,
   Zap,
-  Snowflake,
-  Activity,
-  Users,
-  Settings,
   Layers,
   FileText,
   Headphones,
@@ -127,8 +123,9 @@ export default function Home() {
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
-          // Merge API reviews while keeping the 2 PDF specified reviews first
-          setGoogleReviews([...defaultFeaturedReviews.slice(0, 2), ...data]);
+          const existingNames = new Set(defaultFeaturedReviews.map((r) => r.name.toLowerCase().trim()));
+          const uniqueData = data.filter((r) => !existingNames.has((r.name || "").toLowerCase().trim()));
+          setGoogleReviews([...defaultFeaturedReviews.slice(0, 2), ...uniqueData]);
         }
       })
       .catch((err) => console.error("Failed to load Google reviews:", err));
@@ -363,7 +360,7 @@ export default function Home() {
         <div className="container">
           {/* Section 3 Header (Matching Reference Image & PDF) */}
           <div className="bestsellers-header-block">
-            <span className="bestsellers-badge">— BESTSELLERS —</span>
+            <span className="bestsellers-badge">BESTSELLERS</span>
             <h2 className="bestsellers-title">Bestselling Products</h2>
             <p className="bestsellers-description">
               Discover our popular electronic products for different power and electronic
@@ -485,78 +482,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Reference Image: Engineering Standards & Capabilities Banner */}
-          <div className="engineering-standards-box">
-            <div className="standards-left">
-              <h3>Why Choose ETOSM Technology?</h3>
-              <p>
-                We combine engineering expertise with a commitment to quality, delivering electronic
-                components that meet your performance and reliability needs.
-              </p>
-            </div>
-            <div className="standards-grid">
-              <div className="standard-item">
-                <div className="std-icon-wrap">
-                  <ShieldCheck size={22} />
-                </div>
-                <div className="std-item-text">
-                  <strong>Quality Products</strong>
-                  <span>Reliable and tested for consistent performance</span>
-                </div>
-              </div>
-
-              <div className="standard-item">
-                <div className="std-icon-wrap">
-                  <Snowflake size={22} />
-                </div>
-                <div className="std-item-text">
-                  <strong>Thermal Management</strong>
-                  <span>Efficient cooling for longer life</span>
-                </div>
-              </div>
-
-              <div className="standard-item">
-                <div className="std-icon-wrap">
-                  <ShieldCheck size={22} />
-                </div>
-                <div className="std-item-text">
-                  <strong>Safety & Reliability</strong>
-                  <span>Built with global safety standards</span>
-                </div>
-              </div>
-
-              <div className="standard-item">
-                <div className="std-icon-wrap">
-                  <Activity size={22} />
-                </div>
-                <div className="std-item-text">
-                  <strong>EMI Control</strong>
-                  <span>Reduced interference for stable operation</span>
-                </div>
-              </div>
-
-              <div className="standard-item">
-                <div className="std-icon-wrap">
-                  <Users size={22} />
-                </div>
-                <div className="std-item-text">
-                  <strong>Engineering Support</strong>
-                  <span>Our team is here to help you find the right solution</span>
-                </div>
-              </div>
-
-              <div className="standard-item">
-                <div className="std-icon-wrap">
-                  <Settings size={22} />
-                </div>
-                <div className="std-item-text">
-                  <strong>Custom Solutions</strong>
-                  <span>Tailored products for your unique needs</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
           {/* Section 4 CTA: Explore Our Products */}
           <div className="why-choose-cta">
             <Link to="/all-products" className="why-choose-btn">
@@ -583,15 +508,14 @@ export default function Home() {
             </p>
           </div>
 
-          {/* Reviews Cards Grid (Matching Reference Image) */}
+          {/* Reviews Cards Grid (2 Cards) */}
           <div className="reviews-cards-grid">
-            {googleReviews.slice(0, 3).map((rev) => renderReviewCard(rev, rev._id || rev.id))}
+            {googleReviews.slice(0, 2).map((rev) => renderReviewCard(rev, rev._id || rev.id))}
           </div>
 
-          {/* Carousel Pagination Dots from Reference Image */}
+          {/* Carousel Pagination Dots */}
           <div className="reviews-carousel-dots">
             <span className="dot active"></span>
-            <span className="dot"></span>
             <span className="dot"></span>
           </div>
 

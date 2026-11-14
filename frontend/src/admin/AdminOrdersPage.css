@@ -702,55 +702,171 @@
 }
 
 /* ================= PRINT STYLES ================= */
+@page {
+  size: A4 portrait;
+  margin: 10mm 14mm;
+}
+
 @media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  html,
+  body {
+    overflow: visible !important;
+    height: auto !important;
+    min-height: auto !important;
+    background: #ffffff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  #root,
+  .admin-layout,
+  .admin-main,
+  .admin-content {
+    overflow: visible !important;
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: block !important;
+    position: static !important;
+    background: #ffffff !important;
+  }
+
   .admin-sidebar,
   .mobile-toggle-btn,
   .sidebar-overlay,
   .admin-orders-page,
-  .orders-container {
+  .orders-container,
+  .no-print,
+  .close-btn {
     display: none !important;
-  }
-
-  .admin-layout {
-    display: block !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    width: 0 !important;
     padding: 0 !important;
     margin: 0 !important;
-  }
-
-  .admin-main {
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 100% !important;
-  }
-
-  .admin-content {
-    padding: 0 !important;
   }
 
   .order-modal-overlay {
-    position: relative !important;
-    background: transparent !important;
-    backdrop-filter: none !important;
+    position: static !important;
     display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
     padding: 0 !important;
     margin: 0 !important;
-    width: 100% !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
     z-index: auto !important;
   }
 
   .order-modal {
-    box-shadow: none !important;
-    max-height: none !important;
+    position: static !important;
+    display: block !important;
     width: 100% !important;
     max-width: 100% !important;
-    border-radius: 0 !important;
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    overflow-y: visible !important;
+    box-shadow: none !important;
     border: none !important;
+    border-radius: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
-    overflow: visible !important;
+    background: #ffffff !important;
   }
 
-  .no-print {
-    display: none !important;
+  .modal-header {
+    border-bottom: 2px solid #0f172a !important;
+    padding: 0 0 10px 0 !important;
+    margin-bottom: 14px !important;
+    display: block !important;
+  }
+
+  .modal-header h3 {
+    font-size: 20px !important;
+    color: #0f172a !important;
+    font-weight: 800 !important;
+    margin: 0 !important;
+  }
+
+  .order-slip-meta {
+    font-size: 13px !important;
+    color: #475569 !important;
+    margin-top: 4px !important;
+  }
+
+  .modal-content {
+    padding: 0 !important;
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  .modal-section {
+    margin-bottom: 12px !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .modal-section h4 {
+    color: #0f172a !important;
+    font-size: 12.5px !important;
+    font-weight: 800 !important;
+    margin: 0 0 6px 0 !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    padding-bottom: 4px !important;
+    letter-spacing: 0.04em !important;
+  }
+
+  .address-box,
+  .payment-box,
+  .product-box {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    padding: 10px 14px !important;
+    font-size: 12.5px !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .address-box p,
+  .payment-box p,
+  .product-box p {
+    margin: 3px 0 !important;
+    color: #1e293b !important;
+    line-height: 1.4 !important;
+  }
+
+  .price-breakdown {
+    margin-top: 8px !important;
+  }
+
+  .price-row {
+    font-size: 12.5px !important;
+    margin-bottom: 3px !important;
+    color: #1e293b !important;
+  }
+
+  .price-row.total {
+    font-size: 14.5px !important;
+    font-weight: 800 !important;
+    color: #b91c1c !important;
+    border-top: 1.5px solid #0f172a !important;
+    padding-top: 6px !important;
+    margin-top: 6px !important;
   }
 }

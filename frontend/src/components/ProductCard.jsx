@@ -191,25 +191,29 @@ const ProductCard = ({ product, variant, index = 0 }) => {
         >
           {product.name}
         </h4>
-        {product.sku != null && product.sku !== "" && (
-          <div style={{ marginTop: '2px', marginBottom: '4px' }}>
-            <span style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '4px',
-              fontSize: '11px',
-              color: '#64748b',
-              fontWeight: '500',
-              background: '#f8fafc',
-              border: '1px solid #e2e8f0',
-              borderRadius: '4px',
-              padding: '1px 6px'
-            }}>
-              <span style={{ color: '#94a3b8', fontWeight: '400' }}>SKU:</span>
-              <span style={{ color: '#1e293b', fontWeight: '700' }}>{product.sku}</span>
-            </span>
-          </div>
-        )}
+        {(() => {
+          const rawSku = product.sku ?? product.productId;
+          const displaySku = rawSku ? String(rawSku).replace(/^PRD-?/i, "").replace(/^SKU-?/i, "").trim() : "";
+          if (!displaySku) return null;
+          return (
+            <div style={{ marginTop: '3px', marginBottom: '5px' }}>
+              <span style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                fontSize: '11.5px',
+                background: '#e2e8f0',
+                border: '1px solid #94a3b8',
+                borderRadius: '4px',
+                padding: '2px 7px',
+                lineHeight: '1.2'
+              }}>
+                <span style={{ color: '#0f172a', fontWeight: '800' }}>SKU:</span>
+                <span style={{ color: '#000000', fontWeight: '900' }}>{displaySku}</span>
+              </span>
+            </div>
+          );
+        })()}
         <div className="rating-container">
           <div className="stars">
             {[...Array(5)].map((_, i) => (

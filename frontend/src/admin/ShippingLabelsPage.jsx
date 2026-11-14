@@ -50,7 +50,7 @@ const ShippingLabelsPage = () => {
     documentNumber: "ORD-1001",
     trackingNumber: "ET" + Math.floor(1000000000 + Math.random() * 9000000000),
     carrier: "Delhivery Express",
-    serviceType: "Standard Air Express",
+    serviceType: "Business Parcel",
     shipDate: new Date().toISOString().split("T")[0],
     isCOD: false,
     collectAmount: 0,
@@ -77,7 +77,7 @@ const ShippingLabelsPage = () => {
     items: [
       { name: "Li-Ion 18650 Battery Cells 2500mAh", sku: "BAT-18650", quantity: 4 }
     ],
-    handlingInstructions: "HANDLE WITH CARE • SENSITIVE ELECTRONICS & BATTERY CELLS • DO NOT DROP"
+    handlingInstructions: "HANDLE WITH CARE • SENSITIVE ELECTRONICS • DO NOT DROP"
   });
 
   // Toast
@@ -482,7 +482,7 @@ const ShippingLabelsPage = () => {
     doc.text(String(d.carrier).toUpperCase(), 0.18, 0.35);
 
     doc.setFontSize(9);
-    doc.text(String(d.serviceType || "STANDARD AIR").toUpperCase(), 0.18, 0.5);
+    doc.text(String(d.serviceType || "BUSINESS PARCEL").toUpperCase(), 0.18, 0.5);
 
     doc.setFontSize(11);
     doc.text(`PIN: ${d.receiverPincode || "637202"}`, 2.8, 0.38);
@@ -508,7 +508,7 @@ const ShippingLabelsPage = () => {
     doc.rect(0.08, sec2Bottom, 3.84, 0.22, "F");
     doc.setFontSize(9);
     doc.setFont("Helvetica", "bold");
-    doc.text("DELIVER TO / SHIP TO:", 0.18, sec2Bottom + 0.15);
+    doc.text("SHIP TO:", 0.18, sec2Bottom + 0.15);
 
     // Consignee Name (Big & Bold)
     doc.setFontSize(14);
@@ -545,27 +545,21 @@ const ShippingLabelsPage = () => {
     const sec3Bottom = 2.45;
     doc.line(0.08, sec3Bottom, 3.92, sec3Bottom);
 
-    // 4. COD / PREPAID STATUS BLOCK
-    const sec4Height = 0.45;
-    doc.setFillColor(d.isCOD ? 0 : 238, d.isCOD ? 0 : 238, d.isCOD ? 0 : 238);
-    doc.rect(0.08, sec3Bottom, 3.84, sec4Height, "F");
-
+    // 4. COD BLOCK (Prepaid banner omitted as requested)
+    let sec4Bottom = sec3Bottom;
     if (d.isCOD) {
+      const sec4Height = 0.45;
+      doc.setFillColor(0, 0, 0);
+      doc.rect(0.08, sec3Bottom, 3.84, sec4Height, "F");
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(14);
       doc.setFont("Helvetica", "bold");
       doc.text("CASH ON DELIVERY (COD)", 0.2, sec3Bottom + 0.26);
       doc.setFontSize(12.5);
       doc.text(`COLLECT: INR ${Number(d.collectAmount).toLocaleString("en-IN")}`, 0.2, sec3Bottom + 0.40);
-    } else {
-      doc.setTextColor(0, 0, 0);
-      doc.setFontSize(14);
-      doc.setFont("Helvetica", "bold");
-      doc.text("PREPAID - DO NOT COLLECT CASH", 0.2, sec3Bottom + 0.29);
+      sec4Bottom = sec3Bottom + sec4Height;
+      doc.line(0.08, sec4Bottom, 3.92, sec4Bottom);
     }
-
-    const sec4Bottom = sec3Bottom + sec4Height;
-    doc.line(0.08, sec4Bottom, 3.92, sec4Bottom);
 
     // 5. SHIPPER / RETURN TO & PACKAGE DETAILS
     doc.setTextColor(0, 0, 0);
@@ -590,7 +584,7 @@ const ShippingLabelsPage = () => {
     doc.text(`GST: ${d.shipperGstin}`, 0.18, retY);
 
     // Package details on Right
-    const sec5Bottom = 4.25;
+    const sec5Bottom = d.isCOD ? 4.25 : 3.80;
     doc.line(2.4, sec4Bottom, 2.4, sec5Bottom);
     doc.setFontSize(8);
     doc.setFont("Helvetica", "bold");
@@ -622,14 +616,10 @@ const ShippingLabelsPage = () => {
     doc.line(0.08, sec6Bottom, 3.92, sec6Bottom);
 
     // 7. FOOTER NOTICE
-    doc.setFontSize(7);
+    doc.setFontSize(7.5);
     doc.setFont("Helvetica", "bold");
     const splitInstr = doc.splitTextToSize(String(d.handlingInstructions), 3.65);
-    doc.text(splitInstr, 0.18, 5.44);
-
-    doc.setFont("Helvetica", "normal");
-    doc.setFontSize(6.5);
-    doc.text("Thermal Shipping Slip • Verified by EToSM Logistics Dispatch", 0.18, 5.75);
+    doc.text(splitInstr, 0.18, 5.55);
 
     doc.save(`EToSM_ThermalLabel_6x4_${d.documentNumber}.pdf`);
     showToast(`Downloaded 6x4 Thermal Shipping Label for #${d.documentNumber}`);
@@ -937,7 +927,7 @@ const ShippingLabelsPage = () => {
               <div className="t-carrier-banner">
                 <div className="t-carrier-info">
                   <h2 className="t-carrier-name">{(labelData.carrier || "DELIVERY EXPRESS").toUpperCase()}</h2>
-                  <span className="t-service-type">{(labelData.serviceType || "STANDARD AIR").toUpperCase()}</span>
+                  <span className="t-service-type">{(labelData.serviceType || "BUSINESS PARCEL").toUpperCase()}</span>
                 </div>
                 <div className="t-routing-hub">
                   <span className="t-hub-label">HUB / PIN</span>
@@ -955,7 +945,7 @@ const ShippingLabelsPage = () => {
 
               {/* 3. PRIMARY SHIP-TO CONSIGNEE SECTION */}
               <div className="t-ship-to-section">
-                <span className="t-section-label">DELIVER TO / SHIP TO:</span>
+                <span className="t-section-label">SHIP TO:</span>
                 <h3 className="t-receiver-name">{(labelData.receiverName || "CUSTOMER").toUpperCase()}</h3>
 
                 {labelData.receiverCompany && (
@@ -980,19 +970,15 @@ const ShippingLabelsPage = () => {
                 </div>
               </div>
 
-              {/* 4. COD OR PREPAID BANNER */}
-              <div className={`t-payment-banner ${labelData.isCOD ? "cod" : "prepaid"}`}>
-                {labelData.isCOD ? (
+              {/* 4. COD BANNER (Prepaid banner omitted as requested) */}
+              {labelData.isCOD && (
+                <div className="t-payment-banner cod">
                   <div className="t-cod-content">
                     <span className="t-pay-title">CASH ON DELIVERY (COD)</span>
                     <strong className="t-collect-amount">COLLECT: ₹{Number(labelData.collectAmount).toLocaleString("en-IN")}</strong>
                   </div>
-                ) : (
-                  <div className="t-prepaid-content">
-                    <span className="t-pay-title">PREPAID - DO NOT COLLECT CASH</span>
-                  </div>
-                )}
-              </div>
+                </div>
+              )}
 
               {/* 5. RETURN SENDER INFO & PACKAGE SPECS */}
               <div className="t-bottom-details-grid">
@@ -1032,9 +1018,6 @@ const ShippingLabelsPage = () => {
               {/* 7. THERMAL FOOTER WARNING */}
               <div className="t-footer-warning">
                 <strong>{labelData.handlingInstructions}</strong>
-                <div className="t-footer-sub">
-                  Official Thermal Shipping Slip • EToSM Technology Logistics
-                </div>
               </div>
             </div>
           </div>

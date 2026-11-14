@@ -1,6 +1,6 @@
 import API_BASE_URL from "../apiConfig";
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   FileText,
   Plus,
@@ -34,6 +34,7 @@ import {
   Tag
 } from "lucide-react";
 import { generateEtosmInvoicePdf, printEtosmInvoicePdf } from "../utils/invoicePdfGenerator";
+import { GST_STATES } from "../utils/gstStates";
 import AdminLayout from "./AdminLayout";
 import "./CreateInvoicePage.css";
 
@@ -65,6 +66,7 @@ function numberToWordsINR(num) {
 
 const CreateInvoicePage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const token = localStorage.getItem("token");
 
   // View tabs: "create" or "history"
@@ -183,13 +185,14 @@ const CreateInvoicePage = () => {
   const loadInitialData = async () => {
     try {
       setLoadingInitial(true);
-      const [prodRes, custRes] = await Promise.all([
+      const [prodRes, custRes, settingsRes] = await Promise.all([
         fetch(`${API_BASE_URL}/admin/products-stats`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
         fetch(`${API_BASE_URL}/admin/customers`, {
           headers: { Authorization: `Bearer ${token}` }
-        })
+        }),
+        fetch(`${API_BASE_URL}/settings`)
       ]);
 
       if (prodRes.ok) {
@@ -198,7 +201,24 @@ const CreateInvoicePage = () => {
       }
       if (custRes.ok) {
         const custData = await custRes.json();
-        setCustomers(Array.isArray(custData) ? custData : []);
+        const custList = Array.isArray(custData)
+          ? custData
+          : Array.isArray(custData.customers)
+          ? custData.customers
+          : [];
+        setCustomers(custList);
+      }
+      if (settingsRes && settingsRes.ok) {
+        const sData = await settingsRes.json();
+        if (sData) {
+          setBankDetails((prev) => ({
+            ...prev,
+            bankName: sData.bankName || prev.bankName,
+            accountNumber: sData.accountNumber || prev.accountNumber,
+            ifscCode: sData.ifscCode || prev.ifscCode,
+            upiId: sData.upiId || prev.upiId
+          }));
+        }
       }
     } catch (err) {
       console.error("Failed to load catalog/customers data:", err);
@@ -265,15 +285,16 @@ const CreateInvoicePage = () => {
 
   // Filtered customers for search dropdown
   const filteredCustomers = useMemo(() => {
-    if (!customerSearch.trim()) return customers.slice(0, 8);
-    const q = customerSearch.toLowerCase();
+    if (!customerSearch.trim()) return customers.slice(0, 50);
+    const q = customerSearch.toLowerCase().trim();
     return customers.filter(
       (c) =>
         (c.name && c.name.toLowerCase().includes(q)) ||
-        (c.phone && c.phone.includes(q)) ||
+        (c.phone && String(c.phone).includes(q)) ||
         (c.email && c.email.toLowerCase().includes(q)) ||
-        (c.company && c.company.toLowerCase().includes(q))
-    ).slice(0, 10);
+        (c.company && c.company.toLowerCase().includes(q)) ||
+        (c.city && c.city.toLowerCase().includes(q))
+    ).slice(0, 50);
   }, [customers, customerSearch]);
 
   // Select customer from dropdown
@@ -291,10 +312,27 @@ const CreateInvoicePage = () => {
       address: fullAddr,
       gstin: c.gstin || ""
     });
+
+    if (c.state) {
+      const matchState = GST_STATES.find(
+        (s) => s.name.toLowerCase() === c.state.toLowerCase() || c.state.includes(s.code) || c.state.toLowerCase().includes(s.name.toLowerCase())
+      );
+      if (matchState) {
+        setPlaceOfSupply(`${matchState.code} - ${matchState.name}`);
+      }
+    }
+
     setCustomerSearch(c.name || "");
     setCustomerDropdownOpen(false);
     showToast(`Customer "${c.name}" selected`);
   };
+
+  // Auto-fill customer if navigated from Customer Management
+  useEffect(() => {
+    if (location.state?.customer) {
+      handleSelectCustomer(location.state.customer);
+    }
+  }, [location.state]);
 
   const handleClearCustomer = () => {
     setCustomer({
@@ -313,7 +351,7 @@ const CreateInvoicePage = () => {
   const handleAddProductFromCatalog = (prod) => {
     const unitPrice = Number(prod.price) || 0;
     const gst = Number(prod.gstPercent) || 18;
-    const prodId = prod.productId || (prod.sku ? `PRD-${prod.sku}` : `PRD-${prod._id.toString().slice(-5).toUpperCase()}`);
+    const prodId = prod.sku ? `SKU-${prod.sku}` : (prod.productId ? prod.productId.replace(/^PRD-?/i, "SKU-") : `SKU-${prod._id.toString().slice(-5).toUpperCase()}`);
 
     const newItem = {
       id: `item-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
@@ -321,6 +359,7 @@ const CreateInvoicePage = () => {
       productRef: prod._id,
       name: prod.name || "",
       description: prod.description || "",
+      hsnCode: prod.hsnCode || prod.hsn || "",
       availableStock: Number(prod.stock) || 0,
       quantity: 1,
       unitPrice: unitPrice,
@@ -850,9 +889,11 @@ const CreateInvoicePage = () => {
                   <input
                     type="text"
                     value={invoiceNumber}
-                    onChange={(e) => setInvoiceNumber(e.target.value)}
-                    placeholder="e.g. INV-2026-0001"
+                    readOnly
+                    placeholder="Auto-generated (Locked)"
                     className="inv-mono-input"
+                    style={{ backgroundColor: "#f8fafc", cursor: "not-allowed", color: "#334155" }}
+                    title="Invoice Number is auto-generated and locked to protect sequence integrity"
                   />
                 </div>
 
@@ -880,14 +921,11 @@ const CreateInvoicePage = () => {
                     value={placeOfSupply}
                     onChange={(e) => setPlaceOfSupply(e.target.value)}
                   >
-                    <option value="33 - Tamil Nadu">33 - Tamil Nadu (CGST + SGST)</option>
-                    <option value="29 - Karnataka">29 - Karnataka (IGST)</option>
-                    <option value="32 - Kerala">32 - Kerala (IGST)</option>
-                    <option value="37 - Andhra Pradesh">37 - Andhra Pradesh (IGST)</option>
-                    <option value="36 - Telangana">36 - Telangana (IGST)</option>
-                    <option value="27 - Maharashtra">27 - Maharashtra (IGST)</option>
-                    <option value="07 - Delhi">07 - Delhi (IGST)</option>
-                    <option value="99 - Other State">Other Inter-State (IGST)</option>
+                    {GST_STATES.map((st) => (
+                      <option key={st.code} value={`${st.code} - ${st.name}`}>
+                        {st.code} - {st.name} ({st.type})
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -949,15 +987,46 @@ const CreateInvoicePage = () => {
                   <span className="inv-tag">Step 1: Select or enter customer</span>
                 </div>
 
-                {customer.name && (
-                  <button
-                    className="inv-btn-text"
-                    onClick={handleClearCustomer}
-                    title="Clear customer details"
-                  >
-                    <X size={14} /> Clear Selection
-                  </button>
-                )}
+                <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+                  {customers.length > 0 && (
+                    <div className="customer-select-quick" style={{ minWidth: "240px" }}>
+                      <select
+                        value={customer._id || ""}
+                        onChange={(e) => {
+                          const found = customers.find((c) => c._id === e.target.value);
+                          if (found) handleSelectCustomer(found);
+                        }}
+                        style={{
+                          padding: "6px 12px",
+                          borderRadius: "6px",
+                          border: "1px solid #cbd5e1",
+                          fontSize: "0.85rem",
+                          background: "#fff",
+                          cursor: "pointer",
+                          color: "#1e293b",
+                          fontWeight: "500"
+                        }}
+                      >
+                        <option value="">⚡ Quick Select Customer ({customers.length})...</option>
+                        {customers.map((c) => (
+                          <option key={c._id} value={c._id}>
+                            {c.name} {c.company ? `(${c.company})` : ""} - {c.phone || c.email}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {customer.name && (
+                    <button
+                      className="inv-btn-text"
+                      onClick={handleClearCustomer}
+                      title="Clear customer details"
+                    >
+                      <X size={14} /> Clear Selection
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Customer Searchable Picker Dropdown */}
@@ -1297,21 +1366,24 @@ const CreateInvoicePage = () => {
                           </span>
                         </td>
 
-                        {/* GST Rate */}
+                        {/* GST Rate (Manual Input) */}
                         <td>
-                          <select
-                            className="inv-item-select gst"
-                            value={item.gstPercent}
-                            onChange={(e) =>
-                              handleUpdateItem(index, "gstPercent", Number(e.target.value))
-                            }
-                          >
-                            <option value="0">0% GST</option>
-                            <option value="5">5% GST</option>
-                            <option value="12">12% GST</option>
-                            <option value="18">18% Standard</option>
-                            <option value="28">28% High</option>
-                          </select>
+                          <div className="inv-gst-control">
+                            <input
+                              type="number"
+                              min="0"
+                              max="100"
+                              step="any"
+                              className="gst-input"
+                              placeholder="0"
+                              value={item.gstPercent === 0 ? "0" : (item.gstPercent ?? "")}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                handleUpdateItem(index, "gstPercent", val === "" ? "" : Number(val));
+                              }}
+                            />
+                            <span className="gst-suffix">%</span>
+                          </div>
                           <span className="inv-gst-sub">
                             + ₹{item.gstAmount.toFixed(2)}
                           </span>
@@ -1355,58 +1427,16 @@ const CreateInvoicePage = () => {
 
             {/* Bottom Calculations & Settings Grid */}
             <div className="inv-bottom-grid">
-              {/* Left Column: Settlement & Terms */}
+              {/* Left Column: Terms & Notes */}
               <div className="inv-card inv-terms-card">
                 <div className="inv-card-title" style={{ marginBottom: "12px" }}>
-                  <CreditCard size={18} color="#e3000f" />
-                  <h3>Payment Settlement & Bank Info</h3>
+                  <FileText size={18} color="#e3000f" />
+                  <h3>Terms & Conditions / Customer Notes</h3>
                 </div>
 
-                <div className="inv-bank-grid">
-                  <div className="inv-field">
-                    <label>Bank Name</label>
-                    <input
-                      type="text"
-                      value={bankDetails.bankName}
-                      onChange={(e) => setBankDetails({ ...bankDetails, bankName: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="inv-field">
-                    <label>Account Number</label>
-                    <input
-                      type="text"
-                      value={bankDetails.accountNumber}
-                      onChange={(e) => setBankDetails({ ...bankDetails, accountNumber: e.target.value })}
-                      className="inv-mono-input"
-                    />
-                  </div>
-
-                  <div className="inv-field">
-                    <label>IFSC Code</label>
-                    <input
-                      type="text"
-                      value={bankDetails.ifscCode}
-                      onChange={(e) => setBankDetails({ ...bankDetails, ifscCode: e.target.value.toUpperCase() })}
-                      className="inv-mono-input"
-                    />
-                  </div>
-
-                  <div className="inv-field">
-                    <label>UPI ID (VPA)</label>
-                    <input
-                      type="text"
-                      value={bankDetails.upiId}
-                      onChange={(e) => setBankDetails({ ...bankDetails, upiId: e.target.value })}
-                      className="inv-mono-input"
-                    />
-                  </div>
-                </div>
-
-                <div className="inv-field" style={{ marginTop: "12px" }}>
-                  <label>Terms & Conditions / Customer Notes</label>
+                <div className="inv-field">
                   <textarea
-                    rows="3"
+                    rows="5"
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder="Enter warranty and payment terms..."
@@ -1780,8 +1810,7 @@ const CreateInvoicePage = () => {
                     const price = Number(p.price) || 0;
                     const stock = Number(p.stock) || 0;
                     const prodId =
-                      p.productId ||
-                      (p.sku ? `PRD-${p.sku}` : `PRD-${p._id.toString().slice(-5).toUpperCase()}`);
+                      p.sku ? `SKU-${p.sku}` : (p.productId ? p.productId.replace(/^PRD-?/i, "SKU-") : `SKU-${p._id.toString().slice(-5).toUpperCase()}`);
 
                     return (
                       <div

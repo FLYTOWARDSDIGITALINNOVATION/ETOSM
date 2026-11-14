@@ -25,6 +25,7 @@ import {
   Tag
 } from "lucide-react";
 import jsPDF from "jspdf";
+import { generateEtosmCreditNotePdf, printEtosmCreditNotePdf } from "../utils/invoicePdfGenerator";
 import AdminLayout from "./AdminLayout";
 import "./CreditNotesPage.css";
 
@@ -433,203 +434,28 @@ const CreditNotesPage = () => {
     }
   };
 
-  // Generate Vector PDF
-  const handleDownloadPDF = (cn) => {
-    const doc = new jsPDF("p", "mm", "a4");
-
-    // Header Band
-    doc.setFillColor(227, 0, 15);
-    doc.rect(0, 0, 210, 8, "F");
-
-    // Company Header
-    doc.setTextColor(15, 23, 42);
-    doc.setFont("Helvetica", "bold");
-    doc.setFontSize(20);
-    doc.text("EToSM TECHNOLOGY", 14, 22);
-
-    doc.setFont("Helvetica", "normal");
-    doc.setFontSize(8.5);
-    doc.setTextColor(100, 116, 139);
-    doc.text("2/167, Merkukadu, Ramapuram, Tiruchengodu, Namakkal, Tamil Nadu - 637202", 14, 28);
-    doc.text("Phone: +91 88070 80216 | Email: support@etosmtechnology.in | GSTIN: 33AAACE1234F1Z5", 14, 33);
-
-    // Title Block
-    doc.setFillColor(248, 250, 252);
-    doc.rect(14, 40, 182, 10, "F");
-    doc.setDrawColor(226, 232, 240);
-    doc.rect(14, 40, 182, 10);
-    doc.setFont("Helvetica", "bold");
-    doc.setFontSize(13);
-    doc.setTextColor(227, 0, 15);
-    doc.text("CREDIT NOTE", 18, 47);
-
-    doc.setFontSize(9);
-    doc.setTextColor(71, 85, 105);
-    doc.text(`STATUS: ${String(cn.status || "Issued").toUpperCase()}`, 155, 47);
-
-    // Left: Customer Box | Right: Credit Note Meta
-    let y = 56;
-    doc.setFillColor(248, 250, 252);
-    doc.rect(14, y, 88, 38, "F");
-    doc.rect(14, y, 88, 38);
-
-    doc.setFont("Helvetica", "bold");
-    doc.setFontSize(9);
-    doc.setTextColor(15, 23, 42);
-    doc.text("CREDIT ISSUED TO:", 18, y + 6);
-
-    doc.setFontSize(10);
-    doc.setTextColor(227, 0, 15);
-    doc.text(String(cn.customerName || "Customer"), 18, y + 12);
-
-    doc.setFont("Helvetica", "normal");
-    doc.setFontSize(8.5);
-    doc.setTextColor(51, 65, 85);
-    let custY = y + 17;
-    if (cn.customerCompany) {
-      doc.text(`Company: ${cn.customerCompany}`, 18, custY);
-      custY += 4.5;
+  // Generate Official Vector PDF (Matching Create Invoice Vector Layout)
+  const handleDownloadPDF = async (cn) => {
+    try {
+      showToast("Generating official Credit Note PDF...", "info");
+      const doc = await generateEtosmCreditNotePdf(cn);
+      doc.save(`EToSM_CreditNote_${(cn.creditNoteNumber || "CN").replace(/[/\\?%*:|"<>]/g, "-")}.pdf`);
+      showToast(`Downloaded Credit Note #${cn.creditNoteNumber} PDF`);
+    } catch (err) {
+      console.error("PDF generation failed:", err);
+      showToast("Failed to generate PDF document", "error");
     }
-    if (cn.customerPhone) {
-      doc.text(`Phone: ${cn.customerPhone}`, 18, custY);
-      custY += 4.5;
+  };
+
+  // Direct Print Official Credit Note PDF
+  const handlePrintCreditNote = async (cn) => {
+    try {
+      showToast("Opening Credit Note for print...", "info");
+      await printEtosmCreditNotePdf(cn);
+    } catch (err) {
+      console.error("Print failed:", err);
+      showToast("Failed to print Credit Note", "error");
     }
-    if (cn.customerGstin) {
-      doc.text(`GSTIN: ${cn.customerGstin}`, 18, custY);
-    }
-
-    // Right: Credit Note Meta Box
-    doc.setFillColor(248, 250, 252);
-    doc.rect(108, y, 88, 38, "F");
-    doc.rect(108, y, 88, 38);
-
-    doc.setFont("Helvetica", "bold");
-    doc.setFontSize(9);
-    doc.setTextColor(15, 23, 42);
-    doc.text("CREDIT NOTE DETAILS:", 112, y + 6);
-
-    doc.setFont("Helvetica", "normal");
-    doc.setFontSize(8.5);
-    doc.text("Credit Note No:", 112, y + 12);
-    doc.setFont("Helvetica", "bold");
-    doc.text(String(cn.creditNoteNumber), 146, y + 12);
-
-    doc.setFont("Helvetica", "normal");
-    doc.text("Date of Issue:", 112, y + 17);
-    doc.text(cn.creditNoteDate ? new Date(cn.creditNoteDate).toLocaleDateString("en-IN") : "N/A", 146, y + 17);
-
-    doc.text("Original Invoice #:", 112, y + 22);
-    doc.setFont("Helvetica", "bold");
-    doc.text(String(cn.invoiceNumber || "Standalone / Manual"), 146, y + 22);
-
-    doc.setFont("Helvetica", "normal");
-    doc.text("Reason:", 112, y + 27);
-    doc.setTextColor(227, 0, 15);
-    doc.text(String(cn.reason || "Goods Returned"), 146, y + 27);
-
-    doc.setTextColor(51, 65, 85);
-    doc.text("Place of Supply:", 112, y + 32);
-    doc.text(String(cn.placeOfSupply || "Tamil Nadu (33)"), 146, y + 32);
-
-    y += 46;
-
-    // Line Items Table Header
-    doc.setFillColor(241, 245, 249);
-    doc.rect(14, y, 182, 7, "F");
-    doc.setDrawColor(226, 232, 240);
-    doc.rect(14, y, 182, 7);
-
-    doc.setFont("Helvetica", "bold");
-    doc.setFontSize(8);
-    doc.setTextColor(71, 85, 105);
-    doc.text("#", 17, y + 5);
-    doc.text("ITEM DESCRIPTION & SKU", 26, y + 5);
-    doc.text("QTY", 105, y + 5);
-    doc.text("UNIT PRICE (INR)", 122, y + 5);
-    doc.text("GST RATE", 152, y + 5);
-    doc.text("TOTAL (INR)", 175, y + 5);
-
-    y += 7;
-    doc.setFont("Helvetica", "normal");
-
-    (cn.items || []).forEach((item, idx) => {
-      doc.setFillColor(idx % 2 === 0 ? 255 : 250, idx % 2 === 0 ? 255 : 250, idx % 2 === 0 ? 255 : 250);
-      doc.rect(14, y, 182, 8, "F");
-      doc.rect(14, y, 182, 8);
-
-      doc.setFontSize(8);
-      doc.setTextColor(51, 65, 85);
-      doc.text(String(idx + 1), 17, y + 5.5);
-      doc.setFont("Helvetica", "bold");
-      doc.text(String(item.name || "").substring(0, 36), 26, y + 5.5);
-
-      doc.setFont("Helvetica", "normal");
-      doc.text(String(item.quantity || 1), 108, y + 5.5);
-      doc.text(Number(item.unitPrice || 0).toFixed(2), 125, y + 5.5);
-      doc.text(`${item.gstPercent || 18}%`, 155, y + 5.5);
-      doc.setFont("Helvetica", "bold");
-      doc.text(Number(item.totalAmount || 0).toFixed(2), 175, y + 5.5);
-
-      y += 8;
-    });
-
-    // Totals Box
-    y += 4;
-    doc.setFillColor(248, 250, 252);
-    doc.rect(118, y, 78, 28, "F");
-    doc.rect(118, y, 78, 28);
-
-    doc.setFont("Helvetica", "normal");
-    doc.setFontSize(8.5);
-    doc.setTextColor(71, 85, 105);
-    doc.text("Taxable Subtotal:", 122, y + 6);
-    doc.text(`INR ${Number(cn.subtotal || 0).toFixed(2)}`, 164, y + 6);
-
-    doc.text("GST Tax Total:", 122, y + 12);
-    doc.text(`INR ${Number(cn.totalTax || 0).toFixed(2)}`, 164, y + 12);
-
-    doc.setDrawColor(226, 232, 240);
-    doc.line(122, y + 16, 192, y + 16);
-
-    doc.setFont("Helvetica", "bold");
-    doc.setFontSize(10);
-    doc.setTextColor(227, 0, 15);
-    doc.text("Total Credit:", 122, y + 23);
-    doc.text(`INR ${Number(cn.totalCreditAmount || 0).toFixed(2)}`, 164, y + 23);
-
-    // Left notes box
-    doc.setFillColor(248, 250, 252);
-    doc.rect(14, y, 98, 28, "F");
-    doc.rect(14, y, 98, 28);
-
-    doc.setFont("Helvetica", "bold");
-    doc.setFontSize(8);
-    doc.setTextColor(71, 85, 105);
-    doc.text("TERMS & AUDIT NOTES:", 18, y + 6);
-
-    doc.setFont("Helvetica", "normal");
-    doc.setFontSize(7.5);
-    doc.setTextColor(100, 116, 139);
-    const splitNotes = doc.splitTextToSize(cn.notes || "Credit note issued subject to standard return policy.", 90);
-    doc.text(splitNotes, 18, y + 12);
-
-    // Signatures
-    y += 38;
-    doc.setFont("Helvetica", "bold");
-    doc.setFontSize(8.5);
-    doc.setTextColor(15, 23, 42);
-    doc.text("Authorized Signatory", 152, y);
-    doc.setFont("Helvetica", "normal");
-    doc.setFontSize(7.5);
-    doc.setTextColor(100, 116, 139);
-    doc.text("For EToSM TECHNOLOGY", 152, y + 5);
-
-    // Footer
-    doc.setFontSize(7.5);
-    doc.text("This is an official computer-generated Credit Note under GST provisions.", 14, 285);
-
-    doc.save(`EToSM_CreditNote_${cn.creditNoteNumber}.pdf`);
-    showToast(`Downloaded Credit Note #${cn.creditNoteNumber} PDF`);
   };
 
   // Filtered List
@@ -935,7 +761,7 @@ const CreditNotesPage = () => {
                             <Download size={15} />
                           </button>
                           <button
-                            className="action-icon status"
+                            className="action-icon status-change"
                             onClick={() => setStatusModalCN(cn)}
                             title="Change Status (Applied / Refunded)"
                           >
@@ -1143,17 +969,19 @@ const CreditNotesPage = () => {
                               />
                             </td>
                             <td>
-                              <select
+                              <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                step="any"
                                 className="item-inp center"
-                                value={item.gstPercent}
-                                onChange={(e) => handleItemChange(idx, "gstPercent", Number(e.target.value))}
-                              >
-                                <option value={0}>0%</option>
-                                <option value={5}>5%</option>
-                                <option value={12}>12%</option>
-                                <option value={18}>18%</option>
-                                <option value={28}>28%</option>
-                              </select>
+                                placeholder="18"
+                                value={item.gstPercent === 0 ? "0" : (item.gstPercent ?? "")}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  handleItemChange(idx, "gstPercent", val === "" ? "" : Number(val));
+                                }}
+                              />
                             </td>
                             <td style={{ textAlign: "right" }}>
                               <strong>₹{rowTotal.toFixed(2)}</strong>
@@ -1242,6 +1070,9 @@ const CreditNotesPage = () => {
                   </p>
                 </div>
                 <div style={{ display: "flex", gap: "8px" }}>
+                  <button className="cn-btn secondary small" onClick={() => handlePrintCreditNote(previewCN)}>
+                    <Printer size={14} /> <span>Print</span>
+                  </button>
                   <button className="cn-btn primary small" onClick={() => handleDownloadPDF(previewCN)}>
                     <Download size={14} /> <span>Download PDF</span>
                   </button>

@@ -4,11 +4,32 @@ import API_BASE_URL from "../apiConfig";
 import AdminLayout from "./AdminLayout";
 import "./AdminSettings.css";
 
+const getSavedLocalSettings = () => {
+  try {
+    const raw = localStorage.getItem("etosm_store_settings");
+    if (raw) return JSON.parse(raw);
+  } catch (e) {
+    console.error(e);
+  }
+  return null;
+};
+
 const AdminSettings = () => {
   const navigate = useNavigate();
-  const [settings, setSettings] = useState({
-    expressShippingPrice: 9.99,
-    standardShippingPrice: 0,
+  const [settings, setSettings] = useState(() => {
+    const local = getSavedLocalSettings();
+    return {
+      companyName: local?.companyName || "ETOSM TECHNOLOGY",
+      companyEmail: local?.companyEmail || "",
+      invoicePrefix: local?.invoicePrefix || "INV",
+      creditNotePrefix: local?.creditNotePrefix || "CN",
+      expressShippingPrice: local?.expressShippingPrice ?? 190,
+      standardShippingPrice: local?.standardShippingPrice ?? 80,
+      bankName: local?.bankName || "INDIAN BANK",
+      accountNumber: local?.accountNumber || "7776386819",
+      ifscCode: local?.ifscCode || "IDIB000T038",
+      upiId: local?.upiId || "etosm@indianbk",
+    };
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -22,11 +43,24 @@ const AdminSettings = () => {
     try {
       const res = await fetch(`${API_BASE_URL}/settings`);
       const data = await res.json();
+      const local = getSavedLocalSettings() || {};
       if (data) {
-        setSettings({
-          expressShippingPrice: data.expressShippingPrice ?? 9.99,
-          standardShippingPrice: data.standardShippingPrice ?? 0,
-        });
+        const merged = {
+          companyName: data.companyName || local.companyName || "ETOSM TECHNOLOGY",
+          companyEmail: (data.companyEmail !== undefined && data.companyEmail !== null && data.companyEmail !== "")
+            ? data.companyEmail
+            : (local.companyEmail || ""),
+          invoicePrefix: data.invoicePrefix || local.invoicePrefix || "INV",
+          creditNotePrefix: data.creditNotePrefix || local.creditNotePrefix || "CN",
+          expressShippingPrice: data.expressShippingPrice ?? local.expressShippingPrice ?? 190,
+          standardShippingPrice: data.standardShippingPrice ?? local.standardShippingPrice ?? 80,
+          bankName: data.bankName || local.bankName || "INDIAN BANK",
+          accountNumber: data.accountNumber || local.accountNumber || "7776386819",
+          ifscCode: data.ifscCode || local.ifscCode || "IDIB000T038",
+          upiId: data.upiId || local.upiId || "etosm@indianbk",
+        };
+        setSettings(merged);
+        localStorage.setItem("etosm_store_settings", JSON.stringify(merged));
       }
     } catch (err) {
       console.error("Failed to fetch settings:", err);
@@ -49,9 +83,20 @@ const AdminSettings = () => {
     setMessage("");
 
     const payload = {
+      companyName: settings.companyName || "ETOSM TECHNOLOGY",
+      companyEmail: (settings.companyEmail || "").trim(),
+      invoicePrefix: (settings.invoicePrefix || "INV").trim().toUpperCase(),
+      creditNotePrefix: (settings.creditNotePrefix || "CN").trim().toUpperCase(),
       standardShippingPrice: parseFloat(settings.standardShippingPrice) || 0,
       expressShippingPrice: parseFloat(settings.expressShippingPrice) || 0,
+      bankName: settings.bankName || "",
+      accountNumber: settings.accountNumber || "",
+      ifscCode: settings.ifscCode || "",
+      upiId: settings.upiId || "",
     };
+
+    // Immediately persist to localStorage
+    localStorage.setItem("etosm_store_settings", JSON.stringify(payload));
 
     const token = localStorage.getItem("token");
     try {
@@ -65,16 +110,26 @@ const AdminSettings = () => {
       });
 
       if (res.ok) {
+        const savedData = await res.json();
+        if (savedData) {
+          const finalMerged = {
+            ...payload,
+            ...savedData,
+            companyEmail: savedData.companyEmail || payload.companyEmail,
+          };
+          setSettings(finalMerged);
+          localStorage.setItem("etosm_store_settings", JSON.stringify(finalMerged));
+        }
         setMessage("Settings saved successfully!");
       } else {
-        setMessage("Failed to save settings.");
+        setMessage("Saved locally, but server update failed.");
       }
     } catch (err) {
       console.error(err);
-      setMessage("Error saving settings.");
+      setMessage("Saved locally, but server connection error.");
     } finally {
       setSaving(false);
-      setTimeout(() => setMessage(""), 3000);
+      setTimeout(() => setMessage(""), 3500);
     }
   };
 
@@ -89,7 +144,7 @@ const AdminSettings = () => {
   return (
     <AdminLayout>
       <div className="admin-settings-container">
-        <h2>Store Settings</h2>
+        <h2>Settings</h2>
         {message && (
           <div className={`settings-msg ${message.includes("success") ? "success" : "error"}`}>
             {message}
@@ -97,30 +152,115 @@ const AdminSettings = () => {
         )}
 
         <form className="settings-form" onSubmit={handleSave}>
+          {/* 1. Company Profile & Email */}
           <div className="settings-section">
-            <h3>Shipping Configuration</h3>
+            <h3>Company Information</h3>
             
             <div className="form-group">
-              <label>Standard Shipping Price (₹)</label>
+              <label>Company / Store Name</label>
               <input
-                type="number"
-                step="0.01"
-                name="standardShippingPrice"
-                value={settings.standardShippingPrice}
+                type="text"
+                name="companyName"
+                placeholder="e.g. ETOSM TECHNOLOGY"
+                value={settings.companyName || ""}
                 onChange={handleChange}
                 required
               />
             </div>
 
             <div className="form-group">
-              <label>Express Shipping Price (₹)</label>
+              <label>Official Mail (Email Address)</label>
               <input
-                type="number"
-                step="0.01"
-                name="expressShippingPrice"
-                value={settings.expressShippingPrice}
+                type="email"
+                name="companyEmail"
+                placeholder="e.g. contact@etosm.in"
+                value={settings.companyEmail || ""}
                 onChange={handleChange}
                 required
+              />
+            </div>
+          </div>
+
+          {/* 2. Document Numbering Configuration */}
+          <div className="settings-section" style={{ marginTop: "24px" }}>
+            <h3>Document Numbering Configuration</h3>
+            
+            <div className="form-group">
+              <label>Invoice Number Prefix</label>
+              <input
+                type="text"
+                name="invoicePrefix"
+                placeholder="e.g. INV"
+                value={settings.invoicePrefix || ""}
+                onChange={handleChange}
+                required
+              />
+              <small style={{ color: "#64748b", marginTop: "4px", display: "block" }}>
+                Invoices will be formatted as: <strong>{(settings.invoicePrefix || "INV")}-{new Date().getFullYear()}-0001</strong>
+              </small>
+            </div>
+
+            <div className="form-group">
+              <label>Credit Note Number Prefix</label>
+              <input
+                type="text"
+                name="creditNotePrefix"
+                placeholder="e.g. CN"
+                value={settings.creditNotePrefix || ""}
+                onChange={handleChange}
+                required
+              />
+              <small style={{ color: "#64748b", marginTop: "4px", display: "block" }}>
+                Credit notes will be formatted as: <strong>{(settings.creditNotePrefix || "CN")}-{new Date().getFullYear()}-0001</strong>
+              </small>
+            </div>
+          </div>
+
+          {/* 3. Payment Settlement & Bank Details */}
+          <div className="settings-section" style={{ marginTop: "24px" }}>
+            <h3>Payment Settlement & Bank Info</h3>
+            
+            <div className="form-group">
+              <label>Bank Name</label>
+              <input
+                type="text"
+                name="bankName"
+                placeholder="e.g. INDIAN BANK"
+                value={settings.bankName || ""}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Account Number</label>
+              <input
+                type="text"
+                name="accountNumber"
+                placeholder="e.g. 7776386819"
+                value={settings.accountNumber || ""}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="form-group">
+              <label>IFSC Code</label>
+              <input
+                type="text"
+                name="ifscCode"
+                placeholder="e.g. IDIB000T038"
+                value={settings.ifscCode || ""}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="form-group">
+              <label>UPI ID (VPA)</label>
+              <input
+                type="text"
+                name="upiId"
+                placeholder="e.g. etosm@indianbk"
+                value={settings.upiId || ""}
+                onChange={handleChange}
               />
             </div>
           </div>

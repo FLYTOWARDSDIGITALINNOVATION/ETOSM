@@ -13,6 +13,7 @@ const AddProduct = () => {
     category: "",
     subcategory: "",
     price: "",
+    hsnCode: "",
     gstPercent: "18",
     stock: "",
     sku: "",
@@ -48,6 +49,7 @@ const AddProduct = () => {
     formData.append("category", form.category);
     formData.append("subcategory", form.subcategory || "");
     formData.append("price", form.price);
+    formData.append("hsnCode", form.hsnCode || "");
     formData.append("gstPercent", form.gstPercent !== undefined && form.gstPercent !== "" ? form.gstPercent : "18");
     formData.append("stock", form.stock !== "" ? form.stock : "0");
     if (form.sku !== "" && form.sku !== undefined) {
@@ -124,7 +126,7 @@ const AddProduct = () => {
                   <button
                     type="button"
                     onClick={() => {
-                      const randomId = `PRD-${Math.floor(10000 + Math.random() * 90000)}`;
+                      const randomId = `SKU-${Math.floor(10000 + Math.random() * 90000)}`;
                       setForm(prev => ({ ...prev, productId: randomId }));
                     }}
                     style={{
@@ -143,7 +145,7 @@ const AddProduct = () => {
                 </div>
                 <input
                   type="text"
-                  placeholder="e.g. PRD-10024 or ET-BAT-12V"
+                  placeholder="e.g. SKU-10024 or ET-BAT-12V"
                   value={form.productId}
                   onChange={(e) => setForm({ ...form, productId: e.target.value })}
                 />
@@ -178,6 +180,16 @@ const AddProduct = () => {
                   onChange={(e) => setForm({ ...form, price: e.target.value })}
                 />
               </div>
+            </div>
+
+            <div className="form-group">
+              <label>HSN Code</label>
+              <input
+                type="text"
+                placeholder="e.g. 8507 or 8532"
+                value={form.hsnCode}
+                onChange={(e) => setForm({ ...form, hsnCode: e.target.value })}
+              />
             </div>
 
             <div className="form-row">

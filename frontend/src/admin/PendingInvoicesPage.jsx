@@ -1090,8 +1090,8 @@ EToSM Technology Support`;
                 <div className="sheet-top-header">
                   <div className="sheet-brand">
                     <img src="/logo1.png" alt="ETOSM Logo" style={{ height: "36px", marginBottom: "8px" }} />
-                    <p>Lithium Battery Packs • Custom BMS • EV Electronics</p>
-                    <p>Namakkal, Tamil Nadu-637202 | support@etosmtechnology.in</p>
+                    <p>2/167, Merkukadu, Ramapuram, Tiruchengodu, Namakkal, Tamil Nadu - 637202</p>
+                    <p>Mobile: +91 88070 80216 | Email: support@etosmtechnology.in</p>
                   </div>
                   <div className="sheet-inv-title">
                     <h3>TAX INVOICE</h3>

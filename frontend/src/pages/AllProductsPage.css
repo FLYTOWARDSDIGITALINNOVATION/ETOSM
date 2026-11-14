@@ -172,17 +172,17 @@
   color: #e3000f;
 }
 
-/* 2. Category Icon Pills Row - Spread evenly across the center area */
+/* 2. Category Icon Pills Row - Centered with uniform gaps */
 .cat-icon-pills-row {
   display: flex;
   align-items: center;
-  justify-content: space-evenly;
+  justify-content: center;
   flex: 1;
   max-width: 900px;
-  gap: 20px;
+  gap: 18px;
   flex-wrap: nowrap;
   overflow-x: auto;
-  padding: 4px 12px;
+  padding: 4px 8px;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
 }
@@ -199,9 +199,9 @@
   background: none;
   border: none;
   cursor: pointer;
-  padding: 6px 10px;
-  min-width: 86px;
-  max-width: 130px;
+  padding: 6px 4px;
+  min-width: 76px;
+  max-width: 155px;
   flex-shrink: 0;
   transition: transform 0.2s ease;
 }
@@ -227,8 +227,13 @@
   text-align: center;
   white-space: normal;
   line-height: 1.25;
-  max-width: 110px;
+  max-width: 150px;
   transition: color 0.2s ease;
+}
+
+.cat-pill-label .pill-line {
+  display: block;
+  white-space: nowrap;
 }
 
 /* Active Category Pill (Brand Red solid circle with white icon) */

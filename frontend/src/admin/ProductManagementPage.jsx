@@ -395,7 +395,7 @@ const ProductManagementPage = () => {
       const cleanDesc = (p.description || "").replace(/"/g, '""').replace(/\n/g, " ");
 
       return [
-        `"${p.productId || (p.sku ? `PRD-${p.sku}` : p._id)}"`,
+        `"${p.sku ? `SKU-${p.sku}` : (p.productId ? p.productId.replace(/^PRD-?/i, "SKU-") : p._id)}"`,
         `"${(p.name || "").replace(/"/g, '""')}"`,
         `"${p.sku || ""}"`,
         `"${(p.category || "").replace(/"/g, '""')}"`,
@@ -438,7 +438,7 @@ const ProductManagementPage = () => {
       const totalAmount = Number((unitPrice + gstAmount).toFixed(2));
 
       return {
-        productId: p.productId || (p.sku ? `PRD-${p.sku}` : `PRD-${p._id.toString().slice(-5).toUpperCase()}`),
+        productId: p.sku ? `SKU-${p.sku}` : (p.productId ? p.productId.replace(/^PRD-?/i, "SKU-") : `SKU-${p._id.toString().slice(-5).toUpperCase()}`),
         name: p.name || "",
         description: p.description || "",
         availableStock: Number(p.stock) || 0,
@@ -497,7 +497,7 @@ const ProductManagementPage = () => {
     setQuoteItems(prev => [
       ...prev,
       {
-        productId: p.productId || (p.sku ? `PRD-${p.sku}` : `PRD-${p._id.toString().slice(-5).toUpperCase()}`),
+        productId: p.sku ? `SKU-${p.sku}` : (p.productId ? p.productId.replace(/^PRD-?/i, "SKU-") : `SKU-${p._id.toString().slice(-5).toUpperCase()}`),
         name: p.name,
         description: p.description || "",
         availableStock: Number(p.stock) || 0,
@@ -645,7 +645,7 @@ const ProductManagementPage = () => {
         doc.setTextColor(30, 41, 59);
         doc.text(String(idx + 1), 16, y + 2);
         doc.setFont("Helvetica", "bold");
-        doc.text(item.productId || "PRD-N/A", 24, y + 2);
+        doc.text(item.productId ? item.productId.replace(/^PRD-?/i, "SKU-") : "SKU-N/A", 24, y + 2);
 
         doc.setFont("Helvetica", "normal");
         const nameText = item.name.length > 34 ? item.name.substring(0, 32) + "..." : item.name;
@@ -1028,7 +1028,7 @@ const ProductManagementPage = () => {
               const gst = Number(p.gstPercent) || 18;
               const priceInclGst = (price + (price * gst) / 100).toFixed(2);
               const stock = Number(p.stock) || 0;
-              const prodId = p.productId || (p.sku ? `PRD-${p.sku}` : `PRD-${p._id.toString().slice(-5).toUpperCase()}`);
+              const prodId = p.sku ? `SKU-${p.sku}` : (p.productId ? p.productId.replace(/^PRD-?/i, "SKU-") : `SKU-${p._id.toString().slice(-5).toUpperCase()}`);
               const isSelected = selectedProductIds.has(p._id);
 
               const stockStatus =
@@ -1425,7 +1425,7 @@ const ProductManagementPage = () => {
                   <option value="">+ Add Product from Catalog</option>
                   {products.map((p) => (
                     <option key={p._id} value={p._id}>
-                      {p.productId || "PRD"} - {p.name} (₹{p.price})
+                      {(p.productId ? p.productId.replace(/^PRD-?/i, "SKU-") : "SKU")} - {p.name} (₹{p.price})
                     </option>
                   ))}
                 </select>

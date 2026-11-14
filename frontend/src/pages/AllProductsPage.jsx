@@ -27,8 +27,9 @@ import "./AllProductsPage.css";
 const BASE_CATEGORIES = [
   { key: "All", name: "All Categories", icon: LayoutGrid },
   { key: "Battery Packs", name: "Battery Packs", icon: BatteryCharging },
-  { key: "Battery Management System", name: "Battery Management System", icon: ShieldCheck },
-  { key: "Amplifier", name: "Amplifier", icon: Volume2 }
+  { key: "BMS", name: "BMS", icon: ShieldCheck },
+  { key: "Amplifier", name: "Amplifier", icon: Volume2 },
+  { key: "Electronics Components", name: "Electronics Components", icon: Layers }
 ];
 
 const normalizeCat = (str) =>
@@ -103,7 +104,7 @@ const AllProductsPage = () => {
     if (Array.isArray(categories)) {
       categories.forEach((cat) => {
         const catName = cat?.name || String(cat);
-        if (!catName || catName === "BATTERY PACKS" || catName === "BMS Solutions") return; // ignore duplicates/unwanted
+        if (!catName || catName === "BATTERY PACKS" || catName === "BMS Solutions" || catName.toLowerCase() === "battery management system" || catName.toLowerCase() === "bms") return; // ignore duplicates/unwanted
         const norm = normalizeCat(catName);
         const alreadyExists = list.some(
           (b) => normalizeCat(b.name) === norm || normalizeCat(b.key) === norm
@@ -129,8 +130,12 @@ const AllProductsPage = () => {
     const prodCatNorm = normalizeCat(product.category);
     const prodSubNorm = normalizeCat(product.subcategory);
 
+    const isBmsFilter = normSelected === "bms" || normSelected.includes("batterymanagementsystem");
+    const isBmsProd = prodCatNorm.includes("bms") || prodCatNorm.includes("batterymanagementsystem") || prodSubNorm.includes("bms") || prodSubNorm.includes("batterymanagementsystem");
+
     const matchesCategory =
       selectedCategory === "All" ||
+      (isBmsFilter && isBmsProd) ||
       (product.category && product.category.toLowerCase() === selectedCategory.toLowerCase()) ||
       (product.subcategory && product.subcategory.toLowerCase() === selectedCategory.toLowerCase()) ||
       (prodCatNorm && normSelected && (prodCatNorm === normSelected || prodCatNorm.includes(normSelected) || normSelected.includes(prodCatNorm))) ||
@@ -229,7 +234,9 @@ const AllProductsPage = () => {
           <div className="cat-icon-pills-row">
             {displayCategories.map((cat) => {
               const IconComp = cat.icon;
-              const isActive = selectedCategory.toLowerCase() === cat.key.toLowerCase();
+              const isBmsCat = cat.key.toLowerCase() === "bms" || cat.key.toLowerCase() === "battery management system";
+              const isBmsSelected = selectedCategory.toLowerCase() === "bms" || selectedCategory.toLowerCase() === "battery management system";
+              const isActive = isBmsCat ? isBmsSelected : selectedCategory.toLowerCase() === cat.key.toLowerCase();
               return (
                 <button
                   key={cat.key}
@@ -240,7 +247,18 @@ const AllProductsPage = () => {
                   <div className="cat-pill-circle">
                     <IconComp size={18} />
                   </div>
-                  <span className="cat-pill-label">{cat.name}</span>
+                  <span className="cat-pill-label">
+                    {cat.name.toLowerCase() === "bms" || cat.name.toLowerCase() === "battery management system" ? (
+                      "BMS"
+                    ) : cat.name.toLowerCase() === "electronics components" ? (
+                      <>
+                        <span className="pill-line">Electronics</span>
+                        <span className="pill-line">Components</span>
+                      </>
+                    ) : (
+                      cat.name
+                    )}
+                  </span>
                 </button>
               );
             })}

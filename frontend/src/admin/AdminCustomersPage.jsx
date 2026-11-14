@@ -648,7 +648,7 @@ const AdminCustomersPage = () => {
                           <div className="table-actions-row">
                             <button
                               className="action-icon invoice"
-                              onClick={() => navigate("/admin/create-invoice")}
+                              onClick={() => navigate("/admin/create-invoice", { state: { customer: c } })}
                               title="Create Invoice for this Customer"
                             >
                               <Receipt size={14} />
@@ -656,7 +656,7 @@ const AdminCustomersPage = () => {
 
                             <button
                               className="action-icon quote"
-                              onClick={() => navigate("/admin/quotations")}
+                              onClick={() => navigate("/admin/quotations", { state: { customer: c } })}
                               title="Create Quotation for this Customer"
                             >
                               <FileCheck size={14} />
@@ -905,8 +905,9 @@ const AdminCustomersPage = () => {
                 <button
                   className="c-btn primary small"
                   onClick={() => {
+                    const custToPass = selectedCustomer;
                     setSelectedCustomer(null);
-                    navigate("/admin/create-invoice");
+                    navigate("/admin/create-invoice", { state: { customer: custToPass } });
                   }}
                 >
                   <Receipt size={14} />
@@ -915,8 +916,9 @@ const AdminCustomersPage = () => {
                 <button
                   className="c-btn secondary small"
                   onClick={() => {
+                    const custToPass = selectedCustomer;
                     setSelectedCustomer(null);
-                    navigate("/admin/quotations");
+                    navigate("/admin/quotations", { state: { customer: custToPass } });
                   }}
                 >
                   <FileCheck size={14} />

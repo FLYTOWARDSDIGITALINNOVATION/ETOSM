@@ -135,7 +135,7 @@ const Header = ({ onSearch }) => {
         {/* 2. Logo */}
         <div className="nav-left">
           <Link to="/" className="brand-logo">
-            <img src="/logo1.png" alt="Etosm Logo" />
+            <img src="/logo1.png" alt="Etosm Logo" width="128" height="52" />
           </Link>
         </div>
 
@@ -369,23 +369,32 @@ const Header = ({ onSearch }) => {
           <div className="divider"></div>
 
           <div className="utility-icons">
-            <Link to="/wishlist" className="utility-btn wish">
-              <FaHeart />
-              {wishlist.length > 0 && <span className="u-badge">{wishlist.length}</span>}
+            <Link to="/wishlist" className="utility-btn wish" title="Wishlist">
+              <div className="u-icon-wrap">
+                <FaHeart />
+                {wishlist.length > 0 && <span className="u-badge">{wishlist.length}</span>}
+              </div>
+              <span className="u-label">Wishlist</span>
             </Link>
 
-            <Link to="/cart" className="utility-btn cart">
-              <FaShoppingCart />
-              {cart.length > 0 && (
-                <span className="u-badge">{cart.length}</span>
-              )}
+            <Link to="/cart" className="utility-btn cart" title="Cart">
+              <div className="u-icon-wrap">
+                <FaShoppingCart />
+                {cart.length > 0 && (
+                  <span className="u-badge">{cart.length}</span>
+                )}
+              </div>
+              <span className="u-label">Cart</span>
             </Link>
 
             <div className="user-dropdown-container">
               {user ? (
                 <div className="user-profile-trigger">
-                  <Link to="/profile" className="utility-btn profile">
-                    <FaUser />
+                  <Link to="/profile" className="utility-btn profile" title="Profile">
+                    <div className="u-icon-wrap">
+                      <FaUser />
+                    </div>
+                    <span className="u-label">Account</span>
                   </Link>
                   <div className="user-mini-menu">
                     <p className="welcome-username">Hi, {user.name ? user.name.split(' ')[0] : 'User'}</p>

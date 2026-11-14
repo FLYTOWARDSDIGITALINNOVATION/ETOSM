@@ -99,6 +99,9 @@ const AdminLayout = ({ children }) => {
     if (path === "/admin/reviews") {
       return location.pathname === "/admin/reviews";
     }
+    if (path === "/admin/store-settings") {
+      return location.pathname === "/admin/store-settings" || location.pathname === "/admin/shipping-settings";
+    }
     if (path === "/admin/settings") {
       return location.pathname === "/admin/settings";
     }
@@ -152,6 +155,7 @@ const AdminLayout = ({ children }) => {
       submenu: [
         { title: "Orders Management", path: "/admin/orders" },
         { title: "Shipping Labels (6*4)", path: "/admin/shipping-labels" },
+        { title: "Store Settings", path: "/admin/store-settings" },
       ],
     },
     {

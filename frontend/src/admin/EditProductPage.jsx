@@ -57,7 +57,8 @@ const EditProductPage = () => {
 
         setForm({
           ...data,
-          productId: data.productId || (data.sku ? `PRD-${data.sku}` : `PRD-${data._id ? data._id.toString().slice(-5).toUpperCase() : ""}`),
+          productId: data.sku ? `SKU-${data.sku}` : (data.productId ? data.productId.replace(/^PRD-?/i, "SKU-") : `SKU-${data._id ? data._id.toString().slice(-5).toUpperCase() : ""}`),
+          hsnCode: data.hsnCode || data.hsn || "",
           gstPercent: data.gstPercent !== undefined ? data.gstPercent : 18,
           salesPrice: salesPriceValue,
           sku: data.sku !== null && data.sku !== undefined ? data.sku : "",
@@ -106,6 +107,7 @@ const EditProductPage = () => {
       formData.append("category", form.category);
       formData.append("subcategory", form.subcategory || "");
       formData.append("price", form.price);
+      formData.append("hsnCode", form.hsnCode || "");
       formData.append("gstPercent", form.gstPercent !== undefined && form.gstPercent !== "" ? form.gstPercent : 18);
       formData.append("description", form.description);
       if (imageFile) {
@@ -169,13 +171,13 @@ const EditProductPage = () => {
                 name="productId"
                 value={form.productId || ""}
                 onChange={handleChange}
-                placeholder="e.g. PRD-10024"
+                placeholder="e.g. SKU-10024"
                 style={{ flex: 1 }}
               />
               <button
                 type="button"
                 onClick={() => {
-                  const randomId = `PRD-${Math.floor(10000 + Math.random() * 90000)}`;
+                  const randomId = `SKU-${Math.floor(10000 + Math.random() * 90000)}`;
                   setForm(prev => ({ ...prev, productId: randomId }));
                 }}
                 style={{
@@ -236,6 +238,15 @@ const EditProductPage = () => {
               required
             />
 
+            <label>HSN Code</label>
+            <input
+              type="text"
+              name="hsnCode"
+              placeholder="e.g. 8507 or 8532"
+              value={form.hsnCode || ""}
+              onChange={handleChange}
+            />
+
             <label>GST %</label>
             <input
               type="number"
@@ -244,28 +255,6 @@ const EditProductPage = () => {
               onChange={handleChange}
               required
             />
-
-            <div style={{ display: 'flex', gap: '20px', width: '100%', marginBottom: '10px' }}>
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                <label>Current Stock (Edit Total)</label>
-                <input
-                  type="number"
-                  name="stock"
-                  value={form.stock === "" ? "" : form.stock}
-                  onChange={handleChange}
-                />
-              </div>
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                <label>Or Add/Reduce Quantity (e.g. -5)</label>
-                <input
-                  type="number"
-                  name="restockQuantity"
-                  placeholder="e.g. 10 or -5"
-                  value={form.restockQuantity || ""}
-                  onChange={handleChange}
-                />
-              </div>
-            </div>
 
             <label>SKU Number</label>
             <input
