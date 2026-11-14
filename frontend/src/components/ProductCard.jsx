@@ -191,9 +191,8 @@ const ProductCard = ({ product, variant, index = 0 }) => {
         >
           {product.name}
         </h4>
-        {(() => {
-          const rawSku = product.sku ?? product.productId;
-          const displaySku = rawSku ? String(rawSku).replace(/^PRD-?/i, "").replace(/^SKU-?/i, "").trim() : "";
+        {product.sku != null && String(product.sku).trim() !== "" && (() => {
+          const displaySku = String(product.sku).replace(/^PRD-?/i, "").replace(/^SKU-?/i, "").trim();
           if (!displaySku) return null;
           return (
             <div style={{ marginTop: '3px', marginBottom: '5px' }}>

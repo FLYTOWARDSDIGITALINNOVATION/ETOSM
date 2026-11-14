@@ -660,7 +660,7 @@ const ProductDetailPage = () => {
             </div>
 
             {/* SKU Display */}
-            {product.sku != null && (
+            {product.sku != null && String(product.sku).trim() !== "" && (
               <div style={{ marginBottom: '16px' }}>
                 <span style={{
                   display: 'inline-flex',
