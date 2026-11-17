@@ -147,9 +147,9 @@
 
 .pending-kpi-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-  margin-bottom: 28px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
 }
 
 .pending-kpi-card {
@@ -476,23 +476,24 @@
 .pending-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.88rem;
+  font-size: 0.86rem;
   text-align: left;
+  min-width: 1060px;
 }
 
 .pending-table th {
   background: #f8fafc;
   color: #64748b;
-  font-size: 0.72rem;
+  font-size: 0.70rem;
   font-weight: 800;
-  letter-spacing: 0.8px;
-  padding: 14px 18px;
+  letter-spacing: 0.6px;
+  padding: 12px 14px;
   border-bottom: 1px solid #e2e8f0;
   white-space: nowrap;
 }
 
 .pending-table td {
-  padding: 16px 18px;
+  padding: 12px 14px;
   border-bottom: 1px solid #f1f5f9;
   vertical-align: middle;
 }
@@ -520,6 +521,10 @@
   color: #2563eb;
   cursor: pointer;
   transition: color 0.15s ease;
+  white-space: nowrap;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 13px;
+  display: inline-block;
 }
 
 .table-inv-num:hover {
@@ -591,9 +596,10 @@
   gap: 4px;
   font-size: 0.72rem;
   font-weight: 700;
-  padding: 2px 8px;
+  padding: 2.5px 8px;
   border-radius: 4px;
   width: fit-content;
+  white-space: nowrap;
 }
 
 .urgency-pill.overdue {
@@ -637,47 +643,54 @@
 .status-pill {
   display: inline-flex;
   align-items: center;
-  padding: 4px 10px;
-  border-radius: 6px;
+  justify-content: center;
+  gap: 5px;
+  padding: 3.5px 10px;
+  border-radius: 12px;
   font-size: 0.76rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-weight: 700;
+  text-transform: capitalize;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
 }
 
 .status-pill.pending {
-  background: #fef9c3;
-  color: #854d0e;
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
 }
 
 .status-pill.partially-paid {
-  background: #ffedd5;
+  background: #fff7ed;
   color: #c2410c;
+  border: 1px solid #fed7aa;
 }
 
 .status-pill.overdue {
-  background: #fee2e2;
-  color: #991b1b;
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
 }
 
 /* Table Actions */
 .table-action-row {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   justify-content: center;
+  white-space: nowrap;
 }
 
 .action-btn-primary {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   background: #0f172a;
   color: #ffffff;
   border: none;
-  padding: 7px 12px;
+  padding: 6px 10px;
   border-radius: 6px;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -691,8 +704,8 @@
 }
 
 .action-btn-quick-paid {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 6px;
   background: #f0fdf4;
   color: #16a34a;
@@ -710,8 +723,8 @@
 }
 
 .action-btn-icon {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 6px;
   background: #ffffff;
   border: 1px solid #e2e8f0;
@@ -748,10 +761,50 @@
   color: #ffffff;
 }
 
+.action-btn-icon.cancel-btn {
+  color: #dc2626 !important;
+  background: #fef2f2 !important;
+  border: 1px solid #fca5a5 !important;
+}
+
+.action-btn-icon.cancel-btn svg {
+  display: block;
+  stroke: #dc2626 !important;
+  stroke-width: 2.2px !important;
+}
+
+.action-btn-icon.cancel-btn:hover {
+  background: #dc2626 !important;
+  color: #ffffff !important;
+  border-color: #dc2626 !important;
+  transform: translateY(-1px);
+}
+
+.action-btn-icon.cancel-btn:hover svg {
+  stroke: #ffffff !important;
+}
+
+.action-btn-icon.delete-btn {
+  color: #dc2626 !important;
+  background: #fef2f2 !important;
+  border: 1px solid #fca5a5 !important;
+}
+
+.action-btn-icon.delete-btn svg {
+  display: block;
+  stroke: #dc2626 !important;
+  stroke-width: 2.2px !important;
+}
+
 .action-btn-icon.delete-btn:hover {
-  background: #fee2e2;
-  color: #dc2626;
-  border-color: #fca5a5;
+  background: #dc2626 !important;
+  color: #ffffff !important;
+  border-color: #dc2626 !important;
+  transform: translateY(-1px);
+}
+
+.action-btn-icon.delete-btn:hover svg {
+  stroke: #ffffff !important;
 }
 
 /* Loading & Empty States */
@@ -1460,27 +1513,127 @@
 
 @media (max-width: 768px) {
   .pending-invoices-page {
-    padding: 16px;
+    padding: 12px 6px 48px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .pending-page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+
+  .pending-header-title h1 {
+    font-size: 1.5rem;
+  }
+
+  .pending-header-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .pending-header-actions .pending-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 9px 12px;
+    font-size: 12.5px;
+    box-sizing: border-box;
+  }
+
+  .pending-header-actions .pending-btn.icon-only {
+    grid-column: span 2;
   }
 
   .pending-kpi-grid {
     grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  .pending-filter-card {
+    padding: 14px 12px;
+    border-radius: 12px;
+    margin-bottom: 16px;
   }
 
   .pending-filter-top {
     flex-direction: column;
     align-items: stretch;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .pending-search-wrap {
+    width: 100%;
+    min-width: 0;
   }
 
   .pending-status-tabs {
+    display: flex;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
     width: 100%;
+    padding-bottom: 4px;
+    gap: 6px;
+  }
+
+  .pending-status-tabs .status-tab {
+    white-space: nowrap;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+  }
+
+  .pending-filter-bottom {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .filter-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+
+  .filter-group select {
+    max-width: 62%;
+  }
+
+  .pending-modal-card {
+    padding: 18px 14px;
+    width: calc(100% - 16px);
+    max-height: 92vh;
+    border-radius: 14px;
+    margin: 8px;
+    box-sizing: border-box;
+  }
+
+  .modal-financial-strip {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .fin-divider {
+    display: none;
   }
 
   .modal-form-grid,
   .sheet-customer-strip,
   .sheet-bottom-grid {
     grid-template-columns: 1fr;
+  }
+
+  .modal-primary-actions {
+    flex-direction: column;
+    gap: 8px;
   }
 
   .sheet-top-header {

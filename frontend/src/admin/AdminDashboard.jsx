@@ -241,27 +241,27 @@ const AdminDashboard = () => {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Order ID</th>
-                  <th>Customer</th>
-                  <th>Total</th>
-                  <th>Status</th>
-                  <th>Date</th>
+                  <th style={{ width: "20%", textAlign: "left" }}>Order ID</th>
+                  <th style={{ width: "30%", textAlign: "left" }}>Customer</th>
+                  <th style={{ width: "18%", textAlign: "left" }}>Total</th>
+                  <th style={{ width: "16%", textAlign: "left" }}>Status</th>
+                  <th style={{ width: "16%", textAlign: "left" }}>Date</th>
                 </tr>
               </thead>
               <tbody>
                 {recentOrders.map((order) => (
                   <tr key={order._id}>
-                    <td className="order-id">{order._id?.slice(-8)}</td>
-                    <td>{order.userName || "Customer"}</td>
-                    <td className="price">₹{order.totalAmount?.toFixed(2) || "0.00"}</td>
-                    <td>
+                    <td className="order-id" style={{ textAlign: "left" }}>#{order._id?.slice(-8)}</td>
+                    <td style={{ textAlign: "left" }}>{order.userName || "Customer"}</td>
+                    <td className="price" style={{ textAlign: "left" }}>₹{order.totalAmount?.toFixed(2) || "0.00"}</td>
+                    <td style={{ textAlign: "left" }}>
                       <span className={`status ${order.status || "pending"}`}>
                         {order.status || "Pending"}
                       </span>
                     </td>
-                    <td>
+                    <td style={{ textAlign: "left" }}>
                       {order.createdAt
-                        ? new Date(order.createdAt).toLocaleDateString()
+                        ? new Date(order.createdAt).toLocaleDateString("en-IN")
                         : "N/A"}
                     </td>
                   </tr>

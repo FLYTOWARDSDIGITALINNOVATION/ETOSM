@@ -4,6 +4,7 @@ import { useCart } from "../context/CartContext";
 import { ChevronLeft, Lock, FileText } from 'lucide-react';
 import { useNavigate, useLocation } from "react-router-dom";
 import OrderReceipt from '../components/OrderReceipt';
+import { detectPlaceOfSupply } from "../utils/gstStates";
 import './Checkout.css';
 
 const loadRazorpay = () => {
@@ -74,9 +75,30 @@ const Checkout = () => {
     postalCode: useExistingAddress && previousAddresses.length > 0 ? previousAddresses[0].postalCode || '' : ''
   });
 
+  const [billingSameAsShipping, setBillingSameAsShipping] = useState(true);
+  const [billingInfo, setBillingInfo] = useState({
+    firstName: '',
+    lastName: '',
+    email: user?.email || '',
+    phone: '',
+    company: '',
+    gstin: '',
+    address: '',
+    apartment: '',
+    locality: '',
+    city: '',
+    state: '',
+    postalCode: ''
+  });
+
   const handleShippingChange = (e) => {
     const { name, value } = e.target;
     setShippingInfo(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleBillingChange = (e) => {
+    const { name, value } = e.target;
+    setBillingInfo(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSelectPreviousAddress = (index) => {
@@ -117,6 +139,13 @@ const Checkout = () => {
       return;
     }
 
+    if (!billingSameAsShipping) {
+      if (!billingInfo.firstName || !billingInfo.address || !billingInfo.phone || !billingInfo.city || !billingInfo.state || !billingInfo.postalCode) {
+        alert("Please fill in all required billing address information.");
+        return;
+      }
+    }
+
     // Save address for future use
     const addresses = previousAddresses;
     const addressExists = addresses.some(addr => addr.address === shippingInfo.address);
@@ -127,6 +156,14 @@ const Checkout = () => {
 
     const placeDatabaseOrder = async (paymentDetails = {}) => {
       try {
+        const activeBilling = billingSameAsShipping ? shippingInfo : billingInfo;
+        const detectedPos = detectPlaceOfSupply({
+          gstin: activeBilling.gstin || "",
+          state: activeBilling.state || shippingInfo.state || "",
+          pincode: activeBilling.postalCode || shippingInfo.postalCode || "",
+          address: `${activeBilling.address || ""} ${shippingInfo.address || ""}`
+        });
+
         const websiteInvoiceNumber = `INV-${Math.floor(100000 + Math.random() * 900000)}`;
         const orderPromises = checkoutItems.map(item => {
           const itemGst = item.qty * (Number(item.price) * (Number(item.gstPercent !== undefined ? item.gstPercent : 18) / 100));
@@ -143,6 +180,10 @@ const Checkout = () => {
               userName: user.name || `${shippingInfo.firstName} ${shippingInfo.lastName}`,
               phone: shippingInfo.phone,
               shippingAddress: shippingInfo,
+              billingAddress: billingSameAsShipping ? shippingInfo : billingInfo,
+              billingSameAsShipping: billingSameAsShipping,
+              placeOfSupply: detectedPos.placeOfSupply,
+              isInterState: detectedPos.isInterState,
               shippingMethod: selectedShipping,
               paymentMethod: selectedPayment,
               shippingCost: shippingCost,
@@ -428,6 +469,151 @@ const Checkout = () => {
                   />
                 </div>
               </div>
+
+              {/* Billing Address Toggle */}
+              <div style={{ margin: "20px 0 10px 0", padding: "14px", background: "#f8fafc", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", fontWeight: "600", fontSize: "14px", color: "#1e293b" }}>
+                  <input
+                    type="checkbox"
+                    id="sameBilling"
+                    checked={billingSameAsShipping}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setBillingSameAsShipping(checked);
+                      if (checked) {
+                        setBillingInfo({ ...shippingInfo, company: '', gstin: '' });
+                      }
+                    }}
+                    style={{ accentColor: "#e3000f", width: "17px", height: "17px", cursor: "pointer" }}
+                  />
+                  <span>Billing address is the same as shipping address</span>
+                </label>
+
+                {!billingSameAsShipping && (
+                  <div style={{ marginTop: "16px", paddingTop: "14px", borderTop: "1px dashed #cbd5e1" }}>
+                    <h4 style={{ margin: "0 0 12px 0", fontSize: "14px", color: "#e3000f" }}>Separate Billing Address (Buyer Details)</h4>
+                    <div className="input-grid">
+                      <div className="field">
+                        <label>First Name</label>
+                        <input
+                          type="text"
+                          name="firstName"
+                          placeholder="First Name"
+                          value={billingInfo.firstName}
+                          onChange={handleBillingChange}
+                          required
+                        />
+                      </div>
+                      <div className="field">
+                        <label>Last Name</label>
+                        <input
+                          type="text"
+                          name="lastName"
+                          placeholder="Last Name"
+                          value={billingInfo.lastName}
+                          onChange={handleBillingChange}
+                          required
+                        />
+                      </div>
+                      <div className="field">
+                        <label>Company / Firm (Optional)</label>
+                        <input
+                          type="text"
+                          name="company"
+                          placeholder="Company name"
+                          value={billingInfo.company}
+                          onChange={handleBillingChange}
+                        />
+                      </div>
+                      <div className="field">
+                        <label>GSTIN (Optional)</label>
+                        <input
+                          type="text"
+                          name="gstin"
+                          placeholder="GST Number"
+                          value={billingInfo.gstin}
+                          onChange={handleBillingChange}
+                        />
+                      </div>
+                      <div className="field full">
+                        <label>Billing Phone Number</label>
+                        <input
+                          type="tel"
+                          name="phone"
+                          placeholder="+91 xxxxxxxxxx"
+                          value={billingInfo.phone}
+                          onChange={handleBillingChange}
+                          required
+                        />
+                      </div>
+                      <div className="field full">
+                        <label>Billing Street Address</label>
+                        <input
+                          type="text"
+                          name="address"
+                          placeholder="Street address, building, floor"
+                          value={billingInfo.address}
+                          onChange={handleBillingChange}
+                          required
+                        />
+                      </div>
+                      <div className="field">
+                        <label>Apartment, suite, etc. (optional)</label>
+                        <input
+                          type="text"
+                          name="apartment"
+                          placeholder="Suite / Apt"
+                          value={billingInfo.apartment}
+                          onChange={handleBillingChange}
+                        />
+                      </div>
+                      <div className="field">
+                        <label>Locality</label>
+                        <input
+                          type="text"
+                          name="locality"
+                          placeholder="Area / Locality"
+                          value={billingInfo.locality}
+                          onChange={handleBillingChange}
+                        />
+                      </div>
+                      <div className="field">
+                        <label>City</label>
+                        <input
+                          type="text"
+                          name="city"
+                          placeholder="City"
+                          value={billingInfo.city}
+                          onChange={handleBillingChange}
+                          required
+                        />
+                      </div>
+                      <div className="field">
+                        <label>State</label>
+                        <input
+                          type="text"
+                          name="state"
+                          placeholder="State"
+                          value={billingInfo.state}
+                          onChange={handleBillingChange}
+                          required
+                        />
+                      </div>
+                      <div className="field full">
+                        <label>Postal Code</label>
+                        <input
+                          type="text"
+                          name="postalCode"
+                          placeholder="Postal Code"
+                          value={billingInfo.postalCode}
+                          onChange={handleBillingChange}
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </section>
 
             {/* Step 2: Shipping Method */}
@@ -572,6 +758,8 @@ const Checkout = () => {
         <OrderReceipt
           order={{
             shippingAddress: shippingInfo,
+            billingAddress: billingSameAsShipping ? shippingInfo : billingInfo,
+            billingSameAsShipping: billingSameAsShipping,
             shippingMethod: selectedShipping,
             paymentMethod: selectedPayment,
             subtotal,

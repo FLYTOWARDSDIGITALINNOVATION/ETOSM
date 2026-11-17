@@ -189,11 +189,13 @@
   color: #e3000f;
   padding: 15px;
   font-weight: 700;
+  text-align: left !important;
 }
 
 .data-table td {
   padding: 18px 15px;
   border-bottom: 1px solid #fef2f2;
+  text-align: left !important;
 }
 
 .status {
@@ -291,32 +293,76 @@
 }
 
 @media (max-width: 768px) {
-
   .dashboard-header {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
-    padding: 20px 55px 20px 20px;
+    align-items: stretch;
+    gap: 14px;
+    padding: 18px 16px;
+    border-radius: 14px;
+    margin-bottom: 20px;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .dashboard-header h1 {
-    font-size: 22px;
+    font-size: 20px;
+  }
+
+  .refresh-btn {
+    width: 100%;
+    text-align: center;
+    padding: 10px 18px;
+    border-radius: 10px;
   }
 
   .stats-grid {
     grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    padding: 18px 16px;
+    border-radius: 16px;
   }
 
   .actions-grid {
     grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .action-btn {
+    padding: 16px 12px;
+    border-radius: 14px;
+    font-size: 12.5px;
   }
 
   .recent-section {
-    padding: 20px;
+    padding: 16px 14px;
+    border-radius: 16px;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .data-table {
-    min-width: 600px; /* To allow scrolling on small screens */
+    min-width: 540px;
+  }
+}
+
+@media (max-width: 480px) {
+  .actions-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+  }
+
+  .stat-content h3 {
+    font-size: 22px;
   }
 }

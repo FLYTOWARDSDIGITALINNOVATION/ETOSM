@@ -21,6 +21,7 @@ import {
   Printer,
   Receipt,
   Truck,
+  AlertTriangle,
 } from "lucide-react";
 import "./AdminLayout.css";
 
@@ -35,6 +36,7 @@ const AdminLayout = ({ children }) => {
     return false;
   });
   const [expandedMenu, setExpandedMenu] = useState(null);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   // Automatically close sidebar on mobile when navigating routes
   useEffect(() => {
@@ -43,6 +45,17 @@ const AdminLayout = ({ children }) => {
     }
   }, [location.pathname]);
 
+  // Handle ESC key to dismiss logout modal
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape" && showLogoutModal) {
+        setShowLogoutModal(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showLogoutModal]);
+
   const handleNavigate = (path) => {
     navigate(path);
     if (window.innerWidth <= 768) {
@@ -50,7 +63,11 @@ const AdminLayout = ({ children }) => {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogoutClick = () => {
+    setShowLogoutModal(true);
+  };
+
+  const handleConfirmLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     localStorage.removeItem("admin_dashboard_cache");
@@ -154,7 +171,7 @@ const AdminLayout = ({ children }) => {
       icon: Truck,
       submenu: [
         { title: "Orders Management", path: "/admin/orders" },
-        { title: "Shipping Labels (6*4)", path: "/admin/shipping-labels" },
+        { title: "Shipping Labels", path: "/admin/shipping-labels" },
         { title: "Store Settings", path: "/admin/store-settings" },
       ],
     },
@@ -269,23 +286,29 @@ const AdminLayout = ({ children }) => {
         </nav>
 
         <div className="sidebar-footer">
-          <button className="logout-btn" onClick={handleLogout}>
+          <button className="logout-btn" onClick={handleLogoutClick} title="Logout">
             <LogOut size={20} />
             {sidebarOpen && <span>Logout</span>}
           </button>
         </div>
       </aside>
 
-      {/* Mobile Toggle Button (Visible at top only when sidebar is closed) */}
-      {!sidebarOpen && (
+      {/* Mobile Sticky Topbar (Visible on <= 768px screens) */}
+      <header className="admin-mobile-topbar">
+        <div className="admin-mobile-brand" onClick={() => handleNavigate("/admin/create-invoice")}>
+          <span className="admin-mobile-brand-name">
+            ET<span style={{ color: "#e3000f" }}>O</span>SM
+          </span>
+          <span className="admin-mobile-brand-pill">Admin</span>
+        </div>
         <button
-          className="mobile-toggle-btn"
-          onClick={() => setSidebarOpen(true)}
-          aria-label="Open Admin Menu"
+          className="admin-mobile-menu-btn"
+          onClick={() => setSidebarOpen((prev) => !prev)}
+          aria-label={sidebarOpen ? "Close Admin Menu" : "Open Admin Menu"}
         >
-          <Menu size={22} color="white" />
+          {sidebarOpen ? <X size={20} color="#0f172a" /> : <Menu size={20} color="#0f172a" />}
         </button>
-      )}
+      </header>
 
       {/* Mobile Overlay */}
       {sidebarOpen && (
@@ -296,6 +319,52 @@ const AdminLayout = ({ children }) => {
       <main className={`admin-main ${sidebarOpen ? "sidebar-open" : "sidebar-closed"}`}>
         <div className="admin-content">{children}</div>
       </main>
+
+      {/* ⚠️ CENTERED LOGOUT CONFIRMATION WARNING MODAL */}
+      {showLogoutModal && (
+        <div 
+          className="admin-logout-modal-overlay" 
+          onClick={() => setShowLogoutModal(false)}
+        >
+          <div 
+            className="admin-logout-modal-card" 
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="logout-title"
+          >
+            <div className="admin-logout-icon-wrap">
+              <AlertTriangle size={32} strokeWidth={2.2} />
+            </div>
+
+            <h3 id="logout-title" className="admin-logout-modal-title">
+              Sign Out of Admin Portal?
+            </h3>
+            
+            <p className="admin-logout-modal-desc">
+              Are you sure you want to log out? Any unsaved edits will be discarded and you will need to sign in again to access admin controls.
+            </p>
+
+            <div className="admin-logout-modal-actions">
+              <button 
+                type="button" 
+                className="admin-logout-btn-cancel" 
+                onClick={() => setShowLogoutModal(false)}
+              >
+                Cancel
+              </button>
+              <button 
+                type="button" 
+                className="admin-logout-btn-confirm" 
+                onClick={handleConfirmLogout}
+              >
+                <LogOut size={16} />
+                <span>Yes, Logout</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

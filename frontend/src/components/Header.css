@@ -526,9 +526,9 @@
     }
 
     .navbar {
-        padding: 0 12px;
+        padding: 0 16px;
         height: var(--header-height);
-        gap: 8px;
+        gap: 10px;
     }
 
     .nav-left {
@@ -540,14 +540,19 @@
     }
 
     .hamburger {
-        display: block;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         z-index: 2200;
-        font-size: 1.1rem;
+        font-size: 1.25rem;
         cursor: pointer;
         color: var(--text-dark);
         order: 4;
         /* Move to end */
-        margin-left: 0;
+        margin-left: 14px;
+        margin-right: 4px;
+        padding: 4px;
+        flex-shrink: 0;
     }
 
     .nav-right {
@@ -654,11 +659,11 @@
     }
 
     .navbar {
-        padding: 0 8px;
+        padding: 0 14px;
     }
 
     .nav-right {
-        gap: 5px;
+        gap: 6px;
     }
 
     .utility-icons {
@@ -674,6 +679,12 @@
     .login-pill {
         padding: 6px 10px !important;
         font-size: 0.75rem !important;
+    }
+
+    .hamburger {
+        font-size: 1.15rem;
+        margin-left: 12px;
+        margin-right: 4px;
     }
 
     .top-bar p {

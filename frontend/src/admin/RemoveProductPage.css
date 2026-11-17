@@ -14,7 +14,7 @@
   align-items: flex-start !important;
   justify-content: flex-start !important;
   gap: 6px !important;
-  padding-right: 55px; /* Leaves clear space so wordings never hide behind hamburger icon */
+  padding-right: 0;
 }
 
 .manage-header h1,
@@ -492,7 +492,7 @@
   .manage-header,
   .manage-products-container .page-header {
     margin-bottom: 18px;
-    padding-right: 55px;
+    padding-right: 0;
   }
 
   .manage-header h1,

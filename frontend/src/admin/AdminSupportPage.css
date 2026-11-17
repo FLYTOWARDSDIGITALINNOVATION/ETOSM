@@ -336,11 +336,11 @@
     }
 
     .sidebar-header {
-        padding: 16px 60px 16px 16px; /* Room for mobile hamburger button */
+        padding: 16px;
     }
 
     .chat-header {
-        padding-right: 60px; /* Room for mobile hamburger button */
+        padding: 14px 16px;
     }
 
     .chat-sidebar {

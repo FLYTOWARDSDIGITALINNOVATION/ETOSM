@@ -2,9 +2,8 @@
   padding: 0;
   background-color: transparent;
   font-family: 'Plus Jakarta Sans', sans-serif;
-  max-width: 800px;
   width: 100%;
-  margin: 0 auto;
+  max-width: 1080px;
   box-sizing: border-box;
 }
 
@@ -13,7 +12,6 @@
   font-weight: 700;
   color: #1e293b;
   margin-bottom: 24px;
-  padding-right: 55px;
 }
 
 .settings-msg {
@@ -37,12 +35,26 @@
 
 .settings-form {
   background: white;
-  padding: 30px;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  max-width: 600px;
+  padding: 32px 36px;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
   width: 100%;
+  max-width: 100%;
   box-sizing: border-box;
+}
+
+.settings-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 24px;
+}
+
+@media (max-width: 768px) {
+  .settings-grid-2 {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
 }
 
 .settings-section h3 {
@@ -116,7 +128,7 @@
 @media (max-width: 768px) {
   .admin-settings-container h2 {
     font-size: 22px;
-    padding-right: 55px; /* Leave space for top-right mobile toggle button */
+    padding-right: 0;
   }
 
   .settings-form {
@@ -125,3 +137,139 @@
     box-sizing: border-box;
   }
 }
+
+/* ==========================================================================
+   DOCUMENT NUMBER SEQUENCE CONFIGURATION (BUG-001 & BUG-002)
+   ========================================================================== */
+.seq-config-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin-bottom: 20px;
+}
+
+.seq-config-card h4 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 16px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.seq-grid-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.seq-select-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  background-color: #ffffff;
+  color: #1e293b;
+}
+
+.seq-select-input:focus {
+  outline: none;
+  border-color: #e3000f;
+  box-shadow: 0 0 0 3px rgba(227, 0, 15, 0.1);
+}
+
+.seq-preview-box {
+  margin-top: 14px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.seq-preview-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.seq-preview-badge {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #b91c1c;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  padding: 4px 10px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+}
+
+.seq-sync-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #0f172a;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.seq-sync-btn:hover:not(:disabled) {
+  background: #1e293b;
+  transform: translateY(-1px);
+}
+
+.seq-sync-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+  .admin-settings-container {
+    padding: 0 2px;
+  }
+
+  .admin-settings-container h2 {
+    font-size: 20px;
+    margin-bottom: 18px;
+  }
+
+  .settings-form {
+    padding: 18px 16px;
+    border-radius: 12px;
+  }
+
+  .save-settings-btn {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 640px) {
+  .seq-grid-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+

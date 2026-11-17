@@ -30,7 +30,9 @@ import {
   Receipt,
   ArrowRight,
   TrendingUp,
-  Percent
+  Percent,
+  Ban,
+  XCircle
 } from "lucide-react";
 import { generateEtosmInvoicePdf } from "../utils/invoicePdfGenerator";
 import AdminLayout from "./AdminLayout";
@@ -183,6 +185,8 @@ const PendingInvoicesPage = () => {
     return invoices.filter(
       (inv) =>
         (inv.invoiceNumber && inv.invoiceNumber.toLowerCase().includes(q)) ||
+        (inv.sourceOrderNumber && inv.sourceOrderNumber.toLowerCase().includes(q)) ||
+        (inv.quotationReference && inv.quotationReference.toLowerCase().includes(q)) ||
         (inv.customerName && inv.customerName.toLowerCase().includes(q)) ||
         (inv.customerEmail && inv.customerEmail.toLowerCase().includes(q)) ||
         (inv.customerPhone && inv.customerPhone.includes(q)) ||
@@ -281,9 +285,48 @@ const PendingInvoicesPage = () => {
     }
   };
 
-  // Delete invoice record
+  // Safely Cancel invoice without deleting record (GST statutory compliance)
+  const handleCancelInvoice = async (inv) => {
+    const reason = window.prompt(
+      `Are you sure you want to cancel pending invoice "${inv.invoiceNumber}" for ${inv.customerName}?\n\nStatutory Note: Issued tax invoices cannot be deleted to avoid serial number gaps. This will mark the invoice as CANCELLED while preserving the audit record.\n\nEnter cancellation reason:`,
+      "Customer cancelled order / Invoiced in error"
+    );
+    if (reason === null) return;
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/admin/invoices/${inv._id}/cancel`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ reason: reason.trim() || "Cancelled by Admin" })
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        showToast(`Invoice ${inv.invoiceNumber} has been safely marked as Cancelled.`);
+        fetchPendingInvoices();
+        if (reviewInvoice && reviewInvoice._id === inv._id) {
+          setReviewInvoice(null);
+        }
+      } else {
+        throw new Error(data.message || "Failed to cancel invoice");
+      }
+    } catch (err) {
+      console.error("Cancel error:", err);
+      showToast(err.message || "Failed to cancel invoice", "error");
+    }
+  };
+
+  // Guard against destructive deletion of issued invoices
   const handleDeleteInvoice = async (inv) => {
-    if (!window.confirm(`Are you sure you want to delete invoice record "${inv.invoiceNumber}"?`)) {
+    const isDraft = String(inv?.documentStatus || "").toLowerCase() === "draft";
+    if (!isDraft) {
+      showToast(`Statutory Compliance: Invoice "${inv?.invoiceNumber || ""}" has been issued and cannot be deleted. Use Cancel instead.`, "error");
+      return;
+    }
+    if (!window.confirm(`Are you sure you want to delete draft invoice record "${inv.invoiceNumber}"?`)) {
       return;
     }
 
@@ -295,16 +338,17 @@ const PendingInvoicesPage = () => {
 
       if (res.ok) {
         setInvoices((prev) => prev.filter((item) => item._id !== inv._id));
-        showToast(`Invoice ${inv.invoiceNumber} deleted successfully`);
+        showToast(`Draft invoice ${inv.invoiceNumber} deleted successfully`);
         if (reviewInvoice && reviewInvoice._id === inv._id) {
           setReviewInvoice(null);
         }
       } else {
-        throw new Error("Failed to delete record");
+        const data = await res.json();
+        throw new Error(data.message || "Failed to delete record");
       }
     } catch (err) {
       console.error("Delete error:", err);
-      showToast("Failed to delete invoice", "error");
+      showToast(err.message || "Failed to delete draft invoice", "error");
     }
   };
 
@@ -674,14 +718,15 @@ EToSM Technology Support`;
               <table className="pending-table">
                 <thead>
                   <tr>
-                    <th>INVOICE #</th>
-                    <th>CUSTOMER DETAILS</th>
-                    <th>DUE DATE & TIMELINE</th>
-                    <th style={{ textAlign: "right" }}>TOTAL AMOUNT</th>
-                    <th style={{ textAlign: "right" }}>AMOUNT PAID</th>
-                    <th style={{ textAlign: "right" }}>OUTSTANDING BALANCE</th>
-                    <th>PAYMENT STATUS</th>
-                    <th style={{ textAlign: "center" }}>ACTIONS</th>
+                    <th style={{ width: "135px", minWidth: "125px", whiteSpace: "nowrap" }}>INVOICE #</th>
+                    <th style={{ minWidth: "150px" }}>CUSTOMER DETAILS</th>
+                    <th style={{ width: "140px", minWidth: "135px", whiteSpace: "nowrap" }}>DUE DATE & TIMELINE</th>
+                    <th style={{ textAlign: "right", width: "105px", minWidth: "95px", whiteSpace: "nowrap" }}>TOTAL AMOUNT</th>
+                    <th style={{ textAlign: "right", width: "100px", minWidth: "90px", whiteSpace: "nowrap" }}>AMOUNT PAID</th>
+                    <th style={{ textAlign: "right", width: "125px", minWidth: "115px", whiteSpace: "nowrap" }}>OUTSTANDING BALANCE</th>
+                    <th style={{ textAlign: "center", width: "110px", minWidth: "100px", whiteSpace: "nowrap" }}>DOCUMENT STATUS</th>
+                    <th style={{ textAlign: "center", width: "115px", minWidth: "105px", whiteSpace: "nowrap" }}>PAYMENT STATUS</th>
+                    <th style={{ textAlign: "center", width: "250px", minWidth: "240px", whiteSpace: "nowrap" }}>ACTIONS</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -692,7 +737,7 @@ EToSM Technology Support`;
                     return (
                       <tr key={inv._id} className={inv.isOverdue ? "row-overdue" : ""}>
                         {/* Invoice Number & Date */}
-                        <td>
+                        <td style={{ whiteSpace: "nowrap" }}>
                           <div className="table-inv-meta">
                             <span
                               className="table-inv-num"
@@ -701,6 +746,16 @@ EToSM Technology Support`;
                             >
                               {inv.invoiceNumber}
                             </span>
+                            {inv.sourceOrderNumber && (
+                              <div style={{ fontSize: "10.5px", color: "#64748b", marginTop: "2px" }} title="Source Order">
+                                Order: <strong style={{ color: "#e3000f" }}>#{inv.sourceOrderNumber}</strong>
+                              </div>
+                            )}
+                            {inv.quotationReference && (
+                              <div style={{ fontSize: "10.5px", color: "#64748b", marginTop: "1px" }} title="Quotation Reference">
+                                Quote: <strong style={{ color: "#2563eb" }}>#{inv.quotationReference}</strong>
+                              </div>
+                            )}
                             <span className="table-inv-date">
                               {inv.invoiceDate ? new Date(inv.invoiceDate).toLocaleDateString("en-IN") : "N/A"}
                             </span>
@@ -732,11 +787,16 @@ EToSM Technology Support`;
                         </td>
 
                         {/* Due Date & Urgency Indicator */}
-                        <td>
+                        <td style={{ whiteSpace: "nowrap" }}>
                           <div className="table-due-cell">
                             <span className="table-due-date">
                               {inv.dueDate ? new Date(inv.dueDate).toLocaleDateString("en-IN") : "Immediate"}
                             </span>
+                            {inv.paymentTerms && (
+                              <span style={{ fontSize: "10.5px", color: "#64748b", fontWeight: 600 }}>
+                                {inv.paymentTerms}
+                              </span>
+                            )}
                             {inv.isOverdue ? (
                               <span className="urgency-pill overdue">
                                 <AlertTriangle size={11} /> Overdue by {inv.daysOverdue} days
@@ -774,19 +834,26 @@ EToSM Technology Support`;
                           </span>
                         </td>
 
-                        {/* Status Pill */}
-                        <td>
+                        {/* Document Status */}
+                        <td style={{ textAlign: "center", whiteSpace: "nowrap" }}>
+                          <span className={`doc-status-pill ${(inv.documentStatus || "issued").toLowerCase().replace(/\s+/g, "-")}`}>
+                            {inv.documentStatus || "Issued"}
+                          </span>
+                        </td>
+
+                        {/* Payment Status Pill */}
+                        <td style={{ textAlign: "center", whiteSpace: "nowrap" }}>
                           <span className={`status-pill ${inv.isOverdue ? "overdue" : (inv.paymentStatus || "pending").toLowerCase().replace(/\s+/g, "-")}`}>
-                            {inv.isOverdue
+                            ● {inv.isOverdue
                               ? "Overdue"
                               : inv.paymentStatus === "Partially Paid"
                               ? "Partially Paid"
-                              : "Unpaid (Pending)"}
+                              : "Pending"}
                           </span>
                         </td>
 
                         {/* Action Buttons */}
-                        <td>
+                        <td style={{ textAlign: "center", whiteSpace: "nowrap" }}>
                           <div className="table-action-row">
                             {/* Record / Manage Payment */}
                             <button
@@ -849,14 +916,24 @@ EToSM Technology Support`;
                               <Download size={15} />
                             </button>
 
-                            {/* Delete */}
-                            <button
-                              className="action-btn-icon delete-btn"
-                              onClick={() => handleDeleteInvoice(inv)}
-                              title="Delete Invoice"
-                            >
-                              <Trash2 size={15} />
-                            </button>
+                            {/* Cancel Invoice (Non-destructive) */}
+                            {String(inv.documentStatus || "").toLowerCase() === "draft" ? (
+                              <button
+                                className="action-btn-icon delete-btn"
+                                onClick={() => handleDeleteInvoice(inv)}
+                                title="Delete Draft Invoice"
+                              >
+                                <Trash2 size={15} />
+                              </button>
+                            ) : (
+                              <button
+                                className="action-btn-icon cancel-btn"
+                                onClick={() => handleCancelInvoice(inv)}
+                                title="Cancel Invoice (Void)"
+                              >
+                                <XCircle size={15} strokeWidth={2.2} />
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -1100,6 +1177,18 @@ EToSM Technology Support`;
                         <span>Invoice No:</span>
                         <strong>{reviewInvoice.invoiceNumber}</strong>
                       </div>
+                      {reviewInvoice.sourceOrderNumber && (
+                        <div>
+                          <span>Source Order #:</span>
+                          <strong style={{ color: "#e3000f" }}>{reviewInvoice.sourceOrderNumber}</strong>
+                        </div>
+                      )}
+                      {reviewInvoice.quotationReference && (
+                        <div>
+                          <span>Quotation Ref:</span>
+                          <strong style={{ color: "#2563eb" }}>{reviewInvoice.quotationReference}</strong>
+                        </div>
+                      )}
                       <div>
                         <span>Invoice Date:</span>
                         <strong>{reviewInvoice.invoiceDate ? new Date(reviewInvoice.invoiceDate).toLocaleDateString("en-IN") : "N/A"}</strong>
@@ -1109,6 +1198,16 @@ EToSM Technology Support`;
                         <strong style={{ color: reviewInvoice.isOverdue ? "#e3000f" : "#0f172a" }}>
                           {reviewInvoice.dueDate ? new Date(reviewInvoice.dueDate).toLocaleDateString("en-IN") : "Immediate"}
                         </strong>
+                      </div>
+                      <div>
+                        <span>Payment Terms:</span>
+                        <strong>{reviewInvoice.paymentTerms || "Net 15"}</strong>
+                      </div>
+                      <div>
+                        <span>Document Status:</span>
+                        <span className={`doc-status-pill ${(reviewInvoice.documentStatus || "issued").toLowerCase().replace(/\s+/g, "-")}`} style={{ marginLeft: "4px" }}>
+                          {reviewInvoice.documentStatus || "Issued"}
+                        </span>
                       </div>
                       <div>
                         <span>Place of Supply:</span>
@@ -1123,7 +1222,10 @@ EToSM Technology Support`;
                     <h4>BILLED TO:</h4>
                     <strong>{reviewInvoice.customerName}</strong>
                     {reviewInvoice.customerCompany && <p>{reviewInvoice.customerCompany}</p>}
-                    {reviewInvoice.customerAddress && <p>{reviewInvoice.customerAddress}</p>}
+                    {reviewInvoice.customerAddress && <p><strong>Billing Address:</strong> {reviewInvoice.customerAddress}</p>}
+                    {reviewInvoice.shippingAddress && reviewInvoice.shippingSameAsBilling === false && reviewInvoice.shippingAddress !== reviewInvoice.customerAddress && (
+                      <p><strong>Shipped To:</strong> {reviewInvoice.shippingAddress} {reviewInvoice.shippingName ? `(${reviewInvoice.shippingName})` : ""}</p>
+                    )}
                     {reviewInvoice.customerPhone && <p>Phone: {reviewInvoice.customerPhone}</p>}
                     {reviewInvoice.customerEmail && <p>Email: {reviewInvoice.customerEmail}</p>}
                     {reviewInvoice.customerGstin && <p>GSTIN: {reviewInvoice.customerGstin}</p>}

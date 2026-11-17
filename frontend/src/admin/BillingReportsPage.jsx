@@ -28,9 +28,13 @@ import {
   RefreshCw,
   Printer,
   ChevronRight,
-  HelpCircle
+  HelpCircle,
+  ShieldCheck,
+  Package,
+  Award
 } from "lucide-react";
 import jsPDF from "jspdf";
+import { generateEtosmBulkInvoicesPdf } from "../utils/invoicePdfGenerator";
 import AdminLayout from "./AdminLayout";
 import "./BillingReportsPage.css";
 
@@ -50,7 +54,18 @@ const BillingReportsPage = () => {
   const [paymentStatusFilter, setPaymentStatusFilter] = useState("all");
   const [paymentModeFilter, setPaymentModeFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState("overview"); // "overview" | "datewise" | "transactions" | "customers"
+  const [activeTab, setActiveTab] = useState("overview"); // "overview" | "auditor" | "skusales" | "bestsellers" | "datewise" | "transactions" | "customers"
+
+  // BUG-015: Monthly bulk invoice PDF download state
+  const [bulkPdfModalOpen, setBulkPdfModalOpen] = useState(false);
+  const [bulkMonth, setBulkMonth] = useState(() => new Date().getMonth() + 1);
+  const [bulkYear, setBulkYear] = useState(() => new Date().getFullYear());
+  const [generatingBulkPdf, setGeneratingBulkPdf] = useState(false);
+
+  // BUG-017 & BUG-018: SKU and Bestseller view state
+  const [skuSearchTerm, setSkuSearchTerm] = useState("");
+  const [bestsellerMetric, setBestsellerMetric] = useState("qty"); // "qty" | "revenue"
+  const [bestsellerLimit, setBestsellerLimit] = useState(10); // 10 | 20 | "all"
 
   // Data from backend
   const [reportsData, setReportsData] = useState({
@@ -80,7 +95,11 @@ const BillingReportsPage = () => {
     dateWiseReports: [],
     transactions: [],
     topCustomers: [],
-    invoices: []
+    invoices: [],
+    skuSalesReport: [],
+    topSellingProducts: { byQuantity: [], byRevenue: [] },
+    auditorSalesRegister: [],
+    creditNotes: []
   });
 
   // Modals
@@ -253,6 +272,270 @@ const BillingReportsPage = () => {
     link.click();
     document.body.removeChild(link);
     showToast(`Exported ${filteredTransactions.length} transaction entries to CSV`);
+  };
+
+  // BUG-016: Export Auditor-Ready GST Sales Register (CSV)
+  const handleExportAuditorGSTReport = () => {
+    const list = reportsData.auditorSalesRegister || [];
+    if (list.length === 0) {
+      showToast("No auditor sales records found for this period", "error");
+      return;
+    }
+
+    const headers = [
+      "Invoice Number",
+      "Invoice Date",
+      "Source Order ID",
+      "Sales Channel",
+      "Customer Name",
+      "Customer GSTIN",
+      "Billing State",
+      "Place of Supply",
+      "Taxable Value (INR)",
+      "CGST (INR)",
+      "SGST (INR)",
+      "IGST (INR)",
+      "Total GST (INR)",
+      "Round Off (INR)",
+      "Gross Total (INR)",
+      "Document Status",
+      "Payment Status",
+      "Linked Credit Notes",
+      "Credited Taxable (INR)",
+      "Credited GST (INR)",
+      "Credited Gross Total (INR)",
+      "Net Adjusted Taxable (INR)",
+      "Net Adjusted GST (INR)",
+      "Net Adjusted Sales Total (INR)"
+    ];
+
+    const rows = [headers.join(",")];
+    list.forEach((inv) => {
+      rows.push([
+        `"${inv.invoiceNumber}"`,
+        `"${inv.invoiceDate ? new Date(inv.invoiceDate).toLocaleDateString("en-IN") : "N/A"}"`,
+        `"${(inv.sourceOrderNumber || "").replace(/"/g, '""')}"`,
+        `"${inv.salesChannel || "Direct"}"`,
+        `"${(inv.customerName || "").replace(/"/g, '""')}"`,
+        `"${inv.customerGstin || ""}"`,
+        `"${(inv.billingState || "").replace(/"/g, '""')}"`,
+        `"${(inv.placeOfSupply || "").replace(/"/g, '""')}"`,
+        Number(inv.taxableSubtotal || 0).toFixed(2),
+        Number(inv.cgstTotal || 0).toFixed(2),
+        Number(inv.sgstTotal || 0).toFixed(2),
+        Number(inv.igstTotal || 0).toFixed(2),
+        Number(inv.totalTax || 0).toFixed(2),
+        Number(inv.roundOff || 0).toFixed(2),
+        Number(inv.grandTotal || 0).toFixed(2),
+        `"${inv.documentStatus || "Issued"}"`,
+        `"${inv.paymentStatus || "Paid"}"`,
+        `"${(inv.linkedCreditNoteNumbers || []).join("; ")}"`,
+        Number(inv.totalCreditedTaxable || 0).toFixed(2),
+        Number(inv.totalCreditedTax || 0).toFixed(2),
+        Number(inv.totalCreditedGross || 0).toFixed(2),
+        Number(inv.netTaxable || 0).toFixed(2),
+        Number(inv.netTax || 0).toFixed(2),
+        Number(inv.netGross || 0).toFixed(2)
+      ].join(","));
+    });
+
+    const csvContent = rows.join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `ETOSM_Auditor_GST_Sales_Register_${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast(`Exported ${list.length} auditor sales records to CSV`);
+  };
+
+  // BUG-016: Export Credit Notes Register (CSV)
+  const handleExportCreditNotesRegisterCSV = () => {
+    const list = reportsData.creditNotes || [];
+    if (list.length === 0) {
+      showToast("No credit notes found for this period", "error");
+      return;
+    }
+
+    const headers = [
+      "Credit Note #",
+      "Date",
+      "Linked Invoice #",
+      "Customer Name",
+      "Customer GSTIN",
+      "Place of Supply",
+      "Reason",
+      "Taxable Amount (INR)",
+      "CGST (INR)",
+      "SGST (INR)",
+      "IGST (INR)",
+      "Total GST (INR)",
+      "Total Credit Amount (INR)",
+      "Status",
+      "Refund Mode",
+      "Refund Reference"
+    ];
+
+    const rows = [headers.join(",")];
+    list.forEach((cn) => {
+      rows.push([
+        `"${cn.creditNoteNumber}"`,
+        `"${cn.creditNoteDate ? new Date(cn.creditNoteDate).toLocaleDateString("en-IN") : "N/A"}"`,
+        `"${cn.invoiceNumber || "Standalone"}"`,
+        `"${(cn.customerName || "").replace(/"/g, '""')}"`,
+        `"${cn.customerGstin || ""}"`,
+        `"${(cn.placeOfSupply || "").replace(/"/g, '""')}"`,
+        `"${(cn.reason || "").replace(/"/g, '""')}"`,
+        Number(cn.subtotal || 0).toFixed(2),
+        Number(cn.cgstTotal || 0).toFixed(2),
+        Number(cn.sgstTotal || 0).toFixed(2),
+        Number(cn.igstTotal || 0).toFixed(2),
+        Number(cn.totalTax || 0).toFixed(2),
+        Number(cn.totalCreditAmount || 0).toFixed(2),
+        `"${cn.status || "Issued"}"`,
+        `"${cn.refundMode || ""}"`,
+        `"${(cn.refundReference || "").replace(/"/g, '""')}"`
+      ].join(","));
+    });
+
+    const csvContent = rows.join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `ETOSM_Credit_Notes_Register_${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast(`Exported ${list.length} credit note records to CSV`);
+  };
+
+  // BUG-017: Export SKU-Wise Sales Quantity Report (CSV)
+  const handleExportSkuSalesCSV = () => {
+    const list = reportsData.skuSalesReport || [];
+    if (list.length === 0) {
+      showToast("No SKU sales records found for this period", "error");
+      return;
+    }
+
+    const headers = [
+      "SKU",
+      "Product Name",
+      "Invoiced Units",
+      "Credited / Returned Units",
+      "Net Units Sold",
+      "Invoiced Taxable (INR)",
+      "Credited Value (INR)",
+      "Net Sales Taxable (INR)"
+    ];
+
+    const rows = [headers.join(",")];
+    list.forEach((item) => {
+      rows.push([
+        `"${(item.sku || "N/A").replace(/"/g, '""')}"`,
+        `"${(item.name || "").replace(/"/g, '""')}"`,
+        item.invoicedQuantity || 0,
+        item.creditedQuantity || 0,
+        item.netQuantity || 0,
+        Number(item.taxableSales || 0).toFixed(2),
+        Number(item.creditedValue || 0).toFixed(2),
+        Number(item.netSales || 0).toFixed(2)
+      ].join(","));
+    });
+
+    const csvContent = rows.join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `ETOSM_SKU_Sales_Quantity_Report_${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast(`Exported ${list.length} SKU sales records to CSV`);
+  };
+
+  // BUG-018: Export Best-Selling Products (CSV)
+  const handleExportBestSellersCSV = () => {
+    const rawList = bestsellerMetric === "qty"
+      ? (reportsData.topSellingProducts?.byQuantity || [])
+      : (reportsData.topSellingProducts?.byRevenue || []);
+    const list = bestsellerLimit === "all" ? rawList : rawList.slice(0, Number(bestsellerLimit) || 10);
+    if (list.length === 0) {
+      showToast("No best-seller records to export", "error");
+      return;
+    }
+
+    const headers = [
+      "Rank",
+      "SKU",
+      "Product Title",
+      "Net Units Sold",
+      "Net Sales Revenue (INR)"
+    ];
+
+    const rows = [headers.join(",")];
+    list.forEach((item, index) => {
+      rows.push([
+        index + 1,
+        `"${(item.sku || "N/A").replace(/"/g, '""')}"`,
+        `"${(item.name || "").replace(/"/g, '""')}"`,
+        item.netQuantity || 0,
+        Number(item.netSales || 0).toFixed(2)
+      ].join(","));
+    });
+
+    const csvContent = rows.join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `ETOSM_Best_Selling_Products_${bestsellerMetric}_${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast(`Exported ${list.length} top products to CSV`);
+  };
+
+  // BUG-015: Handle Monthly Bulk Invoices PDF Download
+  const handleDownloadMonthlyBulkPdf = async () => {
+    setGeneratingBulkPdf(true);
+    try {
+      showToast("Fetching invoices and preparing bulk PDF bundle...", "info");
+      const res = await fetch(`${API_BASE_URL}/admin/invoices`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error("Failed to fetch invoices");
+      const allInvoices = await res.json();
+
+      const monthInvoices = (Array.isArray(allInvoices) ? allInvoices : []).filter((inv) => {
+        const invDate = new Date(inv.invoiceDate || inv.createdAt);
+        return (
+          invDate.getFullYear() === Number(bulkYear) &&
+          invDate.getMonth() + 1 === Number(bulkMonth) &&
+          inv.documentStatus !== "Cancelled"
+        );
+      });
+
+      if (monthInvoices.length === 0) {
+        showToast(`No issued invoices found for ${new Date(bulkYear, bulkMonth - 1).toLocaleString("en-US", { month: "long", year: "numeric" })}`, "error");
+        setGeneratingBulkPdf(false);
+        return;
+      }
+
+      const monthName = new Date(bulkYear, bulkMonth - 1).toLocaleString("en-US", { month: "long", year: "numeric" });
+      const bundleDoc = await generateEtosmBulkInvoicesPdf(monthInvoices, monthName);
+      bundleDoc.save(`EToSM_Invoices_Bundle_${bulkYear}_${String(bulkMonth).padStart(2, "0")}.pdf`);
+      showToast(`Successfully downloaded bulk bundle for ${monthName} (${monthInvoices.length} invoices)!`);
+      setBulkPdfModalOpen(false);
+    } catch (err) {
+      console.error("Bulk PDF generation error:", err);
+      showToast(err.message || "Failed to generate bulk invoices PDF", "error");
+    } finally {
+      setGeneratingBulkPdf(false);
+    }
   };
 
   // Export Executive Summary PDF
@@ -439,8 +722,12 @@ const BillingReportsPage = () => {
           </div>
 
           <div className="header-actions-box">
-            <button className="r-btn primary" onClick={handleDownloadPDFSummary}>
+            <button className="r-btn primary" onClick={() => setBulkPdfModalOpen(true)} title="Download Monthly Sequential Bulk Invoices PDF (BUG-015)">
               <Download size={16} />
+              <span>Monthly Bulk Invoices PDF</span>
+            </button>
+            <button className="r-btn secondary" onClick={handleDownloadPDFSummary}>
+              <FileText size={16} />
               <span>Executive PDF</span>
             </button>
             <button className="r-btn secondary" onClick={handleExportDateWiseCSV}>
@@ -645,6 +932,27 @@ const BillingReportsPage = () => {
           >
             <BarChart3 size={15} />
             <span>Financial Overview & Aging</span>
+          </button>
+          <button
+            className={`tab-btn ${activeTab === "auditor" ? "active" : ""}`}
+            onClick={() => setActiveTab("auditor")}
+          >
+            <ShieldCheck size={15} />
+            <span>Auditor GST Register ({reportsData.auditorSalesRegister?.length || 0})</span>
+          </button>
+          <button
+            className={`tab-btn ${activeTab === "skusales" ? "active" : ""}`}
+            onClick={() => setActiveTab("skusales")}
+          >
+            <Package size={15} />
+            <span>SKU Sales ({reportsData.skuSalesReport?.length || 0})</span>
+          </button>
+          <button
+            className={`tab-btn ${activeTab === "bestsellers" ? "active" : ""}`}
+            onClick={() => setActiveTab("bestsellers")}
+          >
+            <Award size={15} />
+            <span>Best-Selling Products</span>
           </button>
           <button
             className={`tab-btn ${activeTab === "datewise" ? "active" : ""}`}
@@ -855,6 +1163,340 @@ const BillingReportsPage = () => {
                     <span className="legend-hint">Click any day column to view its invoice list</span>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* ========================================================
+                TAB: AUDITOR GST SALES REGISTER (BUG-016)
+               ======================================================== */}
+            {activeTab === "auditor" && (
+              <div className="auditor-tab-content">
+                <div className="tab-actions-header">
+                  <div>
+                    <h3>Auditor-Ready Invoice & GST Sales Register (BUG-016)</h3>
+                    <p className="section-desc">
+                      Statutory date-wise invoice register with source order IDs, credit note linkage, CGST/SGST/IGST breakdown, and net adjusted sales.
+                    </p>
+                  </div>
+                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                    <button className="r-btn primary small" onClick={handleExportAuditorGSTReport}>
+                      <FileSpreadsheet size={15} />
+                      <span>Export Auditor GST CSV</span>
+                    </button>
+                    <button className="r-btn secondary small" onClick={handleExportCreditNotesRegisterCSV}>
+                      <FileSpreadsheet size={15} />
+                      <span>Export Credit Notes Register CSV</span>
+                    </button>
+                  </div>
+                </div>
+
+                {reportsData.auditorSalesRegister?.length === 0 ? (
+                  <div className="empty-tab-state">
+                    <FileText size={42} color="#cbd5e1" />
+                    <h4>No Invoices Found</h4>
+                    <p>No invoices were issued in the selected reporting period.</p>
+                  </div>
+                ) : (
+                  <div className="table-responsive-card">
+                    <table className="report-data-table">
+                      <thead>
+                        <tr>
+                          <th>INVOICE # & DATE</th>
+                          <th>ORDER # / CHANNEL</th>
+                          <th>CUSTOMER & GSTIN</th>
+                          <th>PLACE OF SUPPLY</th>
+                          <th style={{ textAlign: "right" }}>TAXABLE</th>
+                          <th style={{ textAlign: "right" }}>TAX SPLIT</th>
+                          <th style={{ textAlign: "right" }}>GROSS</th>
+                          <th style={{ textAlign: "right" }}>CREDITED (CN)</th>
+                          <th style={{ textAlign: "right" }}>NET SALES</th>
+                          <th style={{ textAlign: "center" }}>STATUS</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {reportsData.auditorSalesRegister.map((inv, idx) => (
+                          <tr key={inv._id || idx}>
+                            <td>
+                              <strong>{inv.invoiceNumber}</strong>
+                              <div style={{ fontSize: "11px", color: "#64748b" }}>
+                                {inv.invoiceDate ? new Date(inv.invoiceDate).toLocaleDateString("en-IN") : "—"}
+                              </div>
+                            </td>
+                            <td>
+                              <div>{inv.sourceOrderNumber || "Direct"}</div>
+                              <small style={{ color: "#64748b" }}>{inv.salesChannel || "Storefront"}</small>
+                            </td>
+                            <td>
+                              <strong>{inv.customerName}</strong>
+                              {inv.customerGstin && (
+                                <div style={{ fontSize: "11px", fontFamily: "monospace", color: "#0369a1" }}>
+                                  {inv.customerGstin}
+                                </div>
+                              )}
+                            </td>
+                            <td>
+                              <span style={{ fontSize: "12px" }}>{inv.placeOfSupply || "33 - Tamil Nadu"}</span>
+                            </td>
+                            <td style={{ textAlign: "right" }}>
+                              ₹{Number(inv.taxableSubtotal || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                            </td>
+                            <td style={{ textAlign: "right", fontSize: "11px", color: "#475569" }}>
+                              {inv.isInterState ? (
+                                <div>IGST: ₹{Number(inv.igstTotal || inv.totalTax || 0).toLocaleString("en-IN")}</div>
+                              ) : (
+                                <div>
+                                  CGST: ₹{Number(inv.cgstTotal || 0).toLocaleString("en-IN")}<br />
+                                  SGST: ₹{Number(inv.sgstTotal || 0).toLocaleString("en-IN")}
+                                </div>
+                              )}
+                            </td>
+                            <td style={{ textAlign: "right", fontWeight: "700" }}>
+                              ₹{Number(inv.grandTotal || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                            </td>
+                            <td style={{ textAlign: "right", color: inv.totalCreditedGross > 0 ? "#dc2626" : "#64748b" }}>
+                              {inv.totalCreditedGross > 0 ? (
+                                <div>
+                                  -₹{Number(inv.totalCreditedGross).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                                  <div style={{ fontSize: "10px", color: "#b91c1c" }}>
+                                    {(inv.linkedCreditNoteNumbers || []).join(", ")}
+                                  </div>
+                                </div>
+                              ) : "—"}
+                            </td>
+                            <td style={{ textAlign: "right", fontWeight: "800", color: "#0f172a" }}>
+                              ₹{Number(inv.netGross !== undefined ? inv.netGross : inv.grandTotal).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                            </td>
+                            <td style={{ textAlign: "center" }}>
+                              <span className={`status-pill ${String(inv.documentStatus || "").toLowerCase().replace(/\s+/g, "-")}`}>
+                                {inv.documentStatus || "Issued"}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ========================================================
+                TAB: SKU SALES QUANTITY REPORT (BUG-017)
+               ======================================================== */}
+            {activeTab === "skusales" && (
+              <div className="skusales-tab-content">
+                <div className="tab-actions-header">
+                  <div>
+                    <h3>SKU-Wise Sales Quantity Report (BUG-017)</h3>
+                    <p className="section-desc">
+                      Aggregated sales quantities by SKU with units credited via return credit notes and net turnover.
+                    </p>
+                  </div>
+                  <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                    <div className="sku-search-box" style={{ position: "relative" }}>
+                      <input
+                        type="text"
+                        placeholder="Filter by SKU or title..."
+                        value={skuSearchTerm}
+                        onChange={(e) => setSkuSearchTerm(e.target.value)}
+                        style={{ padding: "6px 10px", fontSize: "12px", border: "1px solid #cbd5e1", borderRadius: "6px" }}
+                      />
+                    </div>
+                    <button className="r-btn primary small" onClick={handleExportSkuSalesCSV}>
+                      <FileSpreadsheet size={15} />
+                      <span>Export SKU Sales CSV</span>
+                    </button>
+                  </div>
+                </div>
+
+                {(() => {
+                  const rawList = reportsData.skuSalesReport || [];
+                  const filtered = rawList.filter((item) => {
+                    if (!skuSearchTerm.trim()) return true;
+                    const q = skuSearchTerm.toLowerCase();
+                    return (item.sku || "").toLowerCase().includes(q) || (item.name || "").toLowerCase().includes(q);
+                  });
+
+                  if (filtered.length === 0) {
+                    return (
+                      <div className="empty-tab-state">
+                        <Package size={42} color="#cbd5e1" />
+                        <h4>No SKU Sales Records Found</h4>
+                        <p>{rawList.length === 0 ? "No product line items sold in the selected period." : "No SKU matched your filter query."}</p>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="table-responsive-card">
+                      <table className="report-data-table">
+                        <thead>
+                          <tr>
+                            <th>SKU</th>
+                            <th>PRODUCT TITLE</th>
+                            <th style={{ textAlign: "center" }}>INVOICED UNITS</th>
+                            <th style={{ textAlign: "center" }}>CREDITED / RETURNED</th>
+                            <th style={{ textAlign: "center" }}>NET UNITS SOLD</th>
+                            <th style={{ textAlign: "right" }}>INVOICED TAXABLE (₹)</th>
+                            <th style={{ textAlign: "right" }}>CREDITED VALUE (₹)</th>
+                            <th style={{ textAlign: "right" }}>NET SALES REVENUE (₹)</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filtered.map((item, idx) => (
+                            <tr key={item.sku || idx}>
+                              <td>
+                                <span style={{ fontFamily: "monospace", fontWeight: "700", color: "#0f172a", background: "#f1f5f9", padding: "2px 6px", borderRadius: "4px" }}>
+                                  {item.sku || "N/A"}
+                                </span>
+                              </td>
+                              <td>
+                                <strong>{item.name}</strong>
+                              </td>
+                              <td style={{ textAlign: "center", color: "#475569" }}>
+                                {item.invoicedQuantity || 0}
+                              </td>
+                              <td style={{ textAlign: "center", color: item.creditedQuantity > 0 ? "#dc2626" : "#64748b" }}>
+                                {item.creditedQuantity > 0 ? `-${item.creditedQuantity}` : "0"}
+                              </td>
+                              <td style={{ textAlign: "center", fontWeight: "800", color: "#059669" }}>
+                                {item.netQuantity || 0}
+                              </td>
+                              <td style={{ textAlign: "right" }}>
+                                ₹{Number(item.taxableSales || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                              </td>
+                              <td style={{ textAlign: "right", color: item.creditedValue > 0 ? "#dc2626" : "#64748b" }}>
+                                {item.creditedValue > 0 ? `-₹${Number(item.creditedValue).toLocaleString("en-IN", { minimumFractionDigits: 2 })}` : "₹0.00"}
+                              </td>
+                              <td style={{ textAlign: "right", fontWeight: "800", color: "#0f172a" }}>
+                                ₹{Number(item.netSales || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {/* ========================================================
+                TAB: BEST-SELLING PRODUCTS (BUG-018)
+               ======================================================== */}
+            {activeTab === "bestsellers" && (
+              <div className="bestsellers-tab-content">
+                <div className="tab-actions-header">
+                  <div>
+                    <h3>Best-Selling Products & Ranking (BUG-018)</h3>
+                    <p className="section-desc">
+                      Ranked performance net of returned units and credit notes. Toggle between Net Units Sold and Net Sales Revenue.
+                    </p>
+                  </div>
+                  <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
+                    <div style={{ display: "inline-flex", background: "#f1f5f9", padding: "3px", borderRadius: "6px" }}>
+                      <button
+                        type="button"
+                        className={`r-btn small ${bestsellerMetric === "qty" ? "primary" : ""}`}
+                        style={{ border: "none", boxShadow: "none" }}
+                        onClick={() => setBestsellerMetric("qty")}
+                      >
+                        Rank by Net Units
+                      </button>
+                      <button
+                        type="button"
+                        className={`r-btn small ${bestsellerMetric === "revenue" ? "primary" : ""}`}
+                        style={{ border: "none", boxShadow: "none" }}
+                        onClick={() => setBestsellerMetric("revenue")}
+                      >
+                        Rank by Net Revenue
+                      </button>
+                    </div>
+
+                    <select
+                      value={bestsellerLimit}
+                      onChange={(e) => setBestsellerLimit(e.target.value === "all" ? "all" : Number(e.target.value))}
+                      style={{ padding: "6px 10px", fontSize: "12px", border: "1px solid #cbd5e1", borderRadius: "6px" }}
+                    >
+                      <option value="10">Top 10 Products</option>
+                      <option value="20">Top 20 Products</option>
+                      <option value="all">All Products</option>
+                    </select>
+
+                    <button className="r-btn primary small" onClick={handleExportBestSellersCSV}>
+                      <FileSpreadsheet size={15} />
+                      <span>Export Best-Sellers CSV</span>
+                    </button>
+                  </div>
+                </div>
+
+                {(() => {
+                  const rawList = bestsellerMetric === "qty"
+                    ? (reportsData.topSellingProducts?.byQuantity || [])
+                    : (reportsData.topSellingProducts?.byRevenue || []);
+                  const list = bestsellerLimit === "all" ? rawList : rawList.slice(0, Number(bestsellerLimit) || 10);
+
+                  if (list.length === 0) {
+                    return (
+                      <div className="empty-tab-state">
+                        <Award size={42} color="#cbd5e1" />
+                        <h4>No Best-Seller Data Found</h4>
+                        <p>No sales activity recorded for this period to generate rankings.</p>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="table-responsive-card">
+                      <table className="report-data-table">
+                        <thead>
+                          <tr>
+                            <th style={{ width: "80px", textAlign: "center" }}>RANK</th>
+                            <th>SKU</th>
+                            <th>PRODUCT TITLE</th>
+                            <th style={{ textAlign: "center" }}>NET UNITS SOLD</th>
+                            <th style={{ textAlign: "right" }}>NET REVENUE GENERATED (₹)</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {list.map((item, idx) => (
+                            <tr key={item.sku || idx}>
+                              <td style={{ textAlign: "center" }}>
+                                <span style={{
+                                  display: "inline-block",
+                                  width: "24px",
+                                  height: "24px",
+                                  lineHeight: "24px",
+                                  borderRadius: "50%",
+                                  background: idx === 0 ? "#fef08a" : idx === 1 ? "#e2e8f0" : idx === 2 ? "#fed7aa" : "#f1f5f9",
+                                  fontWeight: "800",
+                                  color: "#0f172a",
+                                  fontSize: "12px"
+                                }}>
+                                  {idx + 1}
+                                </span>
+                              </td>
+                              <td>
+                                <span style={{ fontFamily: "monospace", fontWeight: "700", color: "#0f172a", background: "#f1f5f9", padding: "2px 6px", borderRadius: "4px" }}>
+                                  {item.sku || "N/A"}
+                                </span>
+                              </td>
+                              <td>
+                                <strong>{item.name}</strong>
+                              </td>
+                              <td style={{ textAlign: "center", fontWeight: "700", color: bestsellerMetric === "qty" ? "#059669" : "#334155" }}>
+                                {item.netQuantity || 0} units
+                              </td>
+                              <td style={{ textAlign: "right", fontWeight: "800", color: bestsellerMetric === "revenue" ? "#059669" : "#0f172a" }}>
+                                ₹{Number(item.netSales || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  );
+                })()}
               </div>
             )}
 
@@ -1223,6 +1865,93 @@ const BillingReportsPage = () => {
               <div className="modal-footer">
                 <button className="r-btn secondary small" onClick={() => setSelectedDayReport(null)}>
                   Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* MODAL: MONTHLY BULK INVOICES PDF DOWNLOAD (BUG-015) */}
+        {bulkPdfModalOpen && (
+          <div className="modal-backdrop" onClick={() => setBulkPdfModalOpen(false)}>
+            <div className="day-drilldown-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "520px" }}>
+              <div className="modal-header">
+                <div>
+                  <span className="modal-eyebrow">DOCUMENT EXPORT (BUG-015)</span>
+                  <h2 style={{ fontSize: "18px" }}>Monthly Bulk Invoices PDF</h2>
+                  <p className="modal-subtitle">
+                    Generate a merged sequential PDF bundle of all issued invoices for the selected month, complete with an auditor register summary sheet.
+                  </p>
+                </div>
+                <button className="modal-close" onClick={() => setBulkPdfModalOpen(false)}>
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="modal-body" style={{ padding: "20px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "16px" }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: "12px", fontWeight: "600", marginBottom: "4px", color: "#334155" }}>
+                      Select Month:
+                    </label>
+                    <select
+                      value={bulkMonth}
+                      onChange={(e) => setBulkMonth(Number(e.target.value))}
+                      style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px" }}
+                    >
+                      {[
+                        "January", "February", "March", "April", "May", "June",
+                        "July", "August", "September", "October", "November", "December"
+                      ].map((m, idx) => (
+                        <option key={idx + 1} value={idx + 1}>{m}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ display: "block", fontSize: "12px", fontWeight: "600", marginBottom: "4px", color: "#334155" }}>
+                      Select Year:
+                    </label>
+                    <select
+                      value={bulkYear}
+                      onChange={(e) => setBulkYear(Number(e.target.value))}
+                      style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px" }}
+                    >
+                      {[2024, 2025, 2026, 2027].map((yr) => (
+                        <option key={yr} value={yr}>{yr}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "8px", padding: "12px 14px", fontSize: "12px", color: "#475569" }}>
+                  <div style={{ fontWeight: "700", color: "#0f172a", marginBottom: "4px" }}>
+                    Bundle Inclusions:
+                  </div>
+                  <ul style={{ margin: 0, paddingLeft: "18px", lineHeight: "1.6" }}>
+                    <li>Page 1: Auditor-Ready Monthly Summary Sheet with totals breakdown</li>
+                    <li>Subsequent Pages: All non-cancelled Tax Invoices with official vector styling</li>
+                    <li>Single consolidated PDF download for accounting & GST filings</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="modal-footer" style={{ padding: "14px 20px", display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+                <button
+                  type="button"
+                  className="r-btn secondary small"
+                  onClick={() => setBulkPdfModalOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="r-btn primary small"
+                  onClick={handleDownloadMonthlyBulkPdf}
+                  disabled={generatingBulkPdf}
+                >
+                  <Download size={14} />
+                  <span>{generatingBulkPdf ? "Generating Multi-Page PDF..." : "Generate & Download PDF Bundle"}</span>
                 </button>
               </div>
             </div>

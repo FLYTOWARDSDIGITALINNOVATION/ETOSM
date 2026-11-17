@@ -8,7 +8,6 @@ import {
   Download,
   Printer,
   Eye,
-  Trash2,
   Edit3,
   Calendar,
   CreditCard,
@@ -182,6 +181,8 @@ const PaidInvoicesPage = () => {
     return invoices.filter(
       (inv) =>
         (inv.invoiceNumber && inv.invoiceNumber.toLowerCase().includes(q)) ||
+        (inv.sourceOrderNumber && inv.sourceOrderNumber.toLowerCase().includes(q)) ||
+        (inv.quotationReference && inv.quotationReference.toLowerCase().includes(q)) ||
         (inv.customerName && inv.customerName.toLowerCase().includes(q)) ||
         (inv.customerEmail && inv.customerEmail.toLowerCase().includes(q)) ||
         (inv.customerPhone && inv.customerPhone.includes(q)) ||
@@ -231,31 +232,9 @@ const PaidInvoicesPage = () => {
     }
   };
 
-  // Delete invoice record
+  // Destructive deletion is prohibited for paid invoices under GST statutory compliance
   const handleDeleteInvoice = async (inv) => {
-    if (!window.confirm(`Are you sure you want to delete invoice record "${inv.invoiceNumber}"?`)) {
-      return;
-    }
-
-    try {
-      const res = await fetch(`${API_BASE_URL}/admin/invoices/${inv._id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      if (res.ok) {
-        setInvoices((prev) => prev.filter((item) => item._id !== inv._id));
-        showToast(`Invoice ${inv.invoiceNumber} deleted from records`);
-        if (reviewInvoice && reviewInvoice._id === inv._id) {
-          setReviewInvoice(null);
-        }
-      } else {
-        throw new Error("Failed to delete record");
-      }
-    } catch (err) {
-      console.error("Delete error:", err);
-      showToast("Failed to delete invoice", "error");
-    }
+    showToast(`Statutory Compliance: Invoice "${inv?.invoiceNumber || ""}" is a paid tax invoice and cannot be deleted.`, "error");
   };
 
   // Export Filtered Records to CSV Spreadsheet
@@ -582,15 +561,16 @@ const PaidInvoicesPage = () => {
               <table className="pi-table">
                 <thead>
                   <tr>
-                    <th style={{ width: "135px" }}>Invoice #</th>
-                    <th style={{ width: "105px" }}>Payment Date</th>
-                    <th style={{ minWidth: "190px" }}>Customer Details</th>
-                    <th style={{ minWidth: "170px" }}>Items Summary</th>
-                    <th style={{ width: "130px" }}>Payment Mode</th>
-                    <th style={{ width: "110px" }}>Taxable (₹)</th>
-                    <th style={{ width: "125px" }}>Total Paid (₹)</th>
-                    <th style={{ width: "105px" }}>Status</th>
-                    <th style={{ width: "140px", textAlign: "right" }}>Actions</th>
+                    <th style={{ width: "135px", minWidth: "125px", whiteSpace: "nowrap" }}>Invoice #</th>
+                    <th style={{ width: "110px", minWidth: "105px", whiteSpace: "nowrap" }}>Payment Date</th>
+                    <th style={{ minWidth: "150px" }}>Customer Details</th>
+                    <th style={{ minWidth: "140px" }}>Items Summary</th>
+                    <th style={{ width: "110px", minWidth: "100px", whiteSpace: "nowrap" }}>Payment Mode</th>
+                    <th style={{ width: "95px", minWidth: "90px", textAlign: "right", whiteSpace: "nowrap" }}>Taxable (₹)</th>
+                    <th style={{ width: "105px", minWidth: "100px", textAlign: "right", whiteSpace: "nowrap" }}>Total Paid (₹)</th>
+                    <th style={{ width: "110px", minWidth: "100px", textAlign: "center", whiteSpace: "nowrap" }}>Document Status</th>
+                    <th style={{ width: "110px", minWidth: "100px", textAlign: "center", whiteSpace: "nowrap" }}>Payment Status</th>
+                    <th style={{ width: "120px", minWidth: "110px", textAlign: "center", whiteSpace: "nowrap" }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -611,6 +591,16 @@ const PaidInvoicesPage = () => {
                           >
                             <span>{inv.invoiceNumber}</span>
                           </div>
+                          {inv.sourceOrderNumber && (
+                            <div style={{ fontSize: "10.5px", color: "#64748b", marginTop: "2px" }} title="Source Order">
+                              Order: <strong style={{ color: "#e3000f" }}>#{inv.sourceOrderNumber}</strong>
+                            </div>
+                          )}
+                          {inv.quotationReference && (
+                            <div style={{ fontSize: "10.5px", color: "#64748b", marginTop: "1px" }} title="Quotation Reference">
+                              Quote: <strong style={{ color: "#2563eb" }}>#{inv.quotationReference}</strong>
+                            </div>
+                          )}
                         </td>
 
                         {/* Date */}
@@ -628,6 +618,11 @@ const PaidInvoicesPage = () => {
                                 })
                               : ""}
                           </span>
+                          {inv.paymentTerms && (
+                            <span style={{ fontSize: "10.5px", color: "#64748b", display: "inline-block", marginTop: "2px", fontWeight: 500 }}>
+                              Terms: {inv.paymentTerms}
+                            </span>
+                          )}
                         </td>
 
                         {/* Customer */}
@@ -666,28 +661,35 @@ const PaidInvoicesPage = () => {
                         </td>
 
                         {/* Taxable Amount */}
-                        <td>
+                        <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
                           <span className="pi-taxable-val">
                             ₹{taxable.toLocaleString("en-IN")}
                           </span>
                         </td>
 
                         {/* Grand Total */}
-                        <td>
+                        <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
                           <span className="pi-total-val">
                             ₹{grandTotal.toLocaleString("en-IN")}
                           </span>
                         </td>
 
-                        {/* Status */}
-                        <td>
+                        {/* Document Status */}
+                        <td style={{ textAlign: "center", whiteSpace: "nowrap" }}>
+                          <span className={`doc-status-pill ${(inv.documentStatus || (inv.balanceAmount === 0 ? "settled" : "issued")).toLowerCase().replace(/\s+/g, "-")}`}>
+                            {inv.documentStatus || (inv.balanceAmount === 0 ? "Settled" : "Issued")}
+                          </span>
+                        </td>
+
+                        {/* Payment Status */}
+                        <td style={{ textAlign: "center", whiteSpace: "nowrap" }}>
                           <span className="pi-paid-pill">
-                            <CheckCircle2 size={12} /> Paid in Full
+                            <CheckCircle2 size={12} /> {inv.paymentStatus || "Paid in Full"}
                           </span>
                         </td>
 
                         {/* Actions */}
-                        <td style={{ textAlign: "right" }}>
+                        <td style={{ textAlign: "center", whiteSpace: "nowrap" }}>
                           <div className="pi-actions-row">
                             <button
                               className="pi-action-btn view"
@@ -709,13 +711,6 @@ const PaidInvoicesPage = () => {
                               title="Manage Record & Notes"
                             >
                               <Edit3 size={14} />
-                            </button>
-                            <button
-                              className="pi-action-btn delete"
-                              onClick={() => handleDeleteInvoice(inv)}
-                              title="Delete Record"
-                            >
-                              <Trash2 size={14} />
                             </button>
                           </div>
                         </td>
@@ -783,18 +778,36 @@ const PaidInvoicesPage = () => {
                       <p><strong>GSTIN:</strong> {reviewInvoice.customerGstin}</p>
                     )}
                     {reviewInvoice.customerAddress && (
-                      <p><strong>Address:</strong> {reviewInvoice.customerAddress}</p>
+                      <p><strong>Billing Address:</strong> {reviewInvoice.customerAddress}</p>
+                    )}
+                    {reviewInvoice.shippingAddress && reviewInvoice.shippingSameAsBilling === false && reviewInvoice.shippingAddress !== reviewInvoice.customerAddress && (
+                      <p><strong>Shipping Address:</strong> {reviewInvoice.shippingAddress} {reviewInvoice.shippingName ? `(${reviewInvoice.shippingName})` : ""}</p>
                     )}
                   </div>
 
                   <div className="pi-review-box">
                     <h4>Payment & Settlement Details</h4>
                     <p><strong>Invoice Number:</strong> {reviewInvoice.invoiceNumber}</p>
+                    {reviewInvoice.sourceOrderNumber && (
+                      <p><strong>Source Order #:</strong> <span style={{ color: "#e3000f", fontWeight: 600 }}>{reviewInvoice.sourceOrderNumber}</span></p>
+                    )}
+                    {reviewInvoice.quotationReference && (
+                      <p><strong>Quotation Ref:</strong> <span style={{ color: "#2563eb", fontWeight: 600 }}>{reviewInvoice.quotationReference}</span></p>
+                    )}
                     <p><strong>Payment Mode:</strong> {reviewInvoice.paymentMode || "UPI / Online"}</p>
+                    {reviewInvoice.paymentTerms && (
+                      <p><strong>Payment Terms:</strong> <span style={{ fontWeight: 600, color: "#0f172a" }}>{reviewInvoice.paymentTerms}</span></p>
+                    )}
+                    <p>
+                      <strong>Document Status:</strong>{" "}
+                      <span className={`doc-status-pill ${(reviewInvoice.documentStatus || (reviewInvoice.balanceAmount === 0 ? "settled" : "issued")).toLowerCase().replace(/\s+/g, "-")}`} style={{ marginLeft: "4px" }}>
+                        {reviewInvoice.documentStatus || (reviewInvoice.balanceAmount === 0 ? "Settled" : "Issued")}
+                      </span>
+                    </p>
                     <p>
                       <strong>Payment Status:</strong>{" "}
-                      <span className="pi-paid-pill" style={{ display: "inline-flex" }}>
-                        ● Paid in Full
+                      <span className="pi-paid-pill" style={{ display: "inline-flex", marginLeft: "4px" }}>
+                        <CheckCircle2 size={12} /> {reviewInvoice.paymentStatus || "Paid in Full"}
                       </span>
                     </p>
                     <p><strong>Place of Supply:</strong> {reviewInvoice.placeOfSupply || "33 - Tamil Nadu"}</p>

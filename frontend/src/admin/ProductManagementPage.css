@@ -18,7 +18,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding-right: 55px; /* Leaves clear space for top-right toggle button on mobile */
+  padding-right: 0;
 }
 
 .pm-header-top {
@@ -1294,11 +1294,24 @@
 }
 
 @media (max-width: 768px) {
+  .pm-header {
+    padding-right: 0 !important;
+  }
   .pm-header-top {
     flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
   }
   .pm-header-actions {
     width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .pm-header-actions .pm-btn {
+    width: 100%;
+    justify-content: center;
+    box-sizing: border-box;
   }
   .pm-controls-card {
     flex-direction: column;
@@ -1314,7 +1327,7 @@
   }
   .products-grid,
   .pm-grid-view {
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     gap: 12px;
   }
   .product-image,

@@ -6,16 +6,18 @@
   position: relative;
   width: 100%;
   margin-top: 122px; /* Offset for fixed header (top-bar + navbar) */
-  height: calc(100vh - 122px);
-  min-height: 480px;
+  min-height: calc(100vh - 122px);
+  height: auto;
   background-color: #ffffff;
-  background-image: url('/hero-bg.png');
-  background-size: cover;
-  background-position: right center;
-  background-repeat: no-repeat;
+  background-image: 
+    linear-gradient(to right, #ffffff 0%, #ffffff 42%, rgba(255, 255, 255, 0.94) 54%, rgba(255, 255, 255, 0.4) 68%, rgba(255, 255, 255, 0) 80%),
+    url('/hero-bg.png');
+  background-size: 100% 100%, cover;
+  background-position: left center, right center;
+  background-repeat: no-repeat, no-repeat;
   display: flex;
   align-items: center;
-  padding: 16px 0;
+  padding: 30px 0;
   overflow: hidden;
   color: #1e293b;
   box-sizing: border-box;
@@ -238,10 +240,119 @@
   background: none !important;
 }
 
-/* Responsive Media Queries */
-@media (max-width: 1100px) {
+/* ==========================================================================
+   LAPTOP & COMPACT SCREEN RESPONSIVE STYLES (993px to 1440px)
+   Balances left content column and right hardware illustration seamlessly
+   ========================================================================== */
+@media (min-width: 993px) and (max-width: 1440px) {
+  .etosm-hero {
+    margin-top: 112px;
+    min-height: calc(100vh - 112px);
+    height: auto;
+    padding: 24px 0;
+    background-image: 
+      linear-gradient(to right, #ffffff 0%, #ffffff 46%, rgba(255, 255, 255, 0.96) 57%, rgba(255, 255, 255, 0.25) 72%, rgba(255, 255, 255, 0) 84%),
+      url('/hero-bg.png');
+    background-size: 100% 100%, auto 90%;
+    background-position: left center, calc(100% + 25px) center;
+  }
+
+  .hero-content-wrapper {
+    max-width: 1240px;
+    padding: 0 24px;
+  }
+
+  .hero-left-col {
+    max-width: 500px;
+  }
+
+  .hero-display-headline {
+    font-size: clamp(1.75rem, 2.4vw, 2.35rem);
+    margin: 0 0 10px 0;
+    line-height: 1.15;
+  }
+
+  .hero-description {
+    font-size: 0.88rem;
+    line-height: 1.55;
+    max-width: 480px;
+    margin: 0 0 16px 0;
+  }
+
+  .hero-cta-group {
+    margin-bottom: 18px;
+    gap: 10px;
+  }
+
+  .hero-btn-primary {
+    padding: 10px 22px;
+    font-size: 0.86rem;
+  }
+
+  .hero-btn-secondary {
+    padding: 10px 18px;
+    font-size: 0.86rem;
+  }
+
   .hero-highlights-row {
-    gap: 14px;
+    gap: 12px;
+    padding-top: 14px;
+    flex-wrap: wrap;
+    max-width: 520px;
+  }
+
+  .hero-highlight-item {
+    gap: 7px;
+  }
+
+  .highlight-icon-wrap {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+  }
+
+  .highlight-icon-wrap svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .hero-feature-title {
+    font-size: 0.78rem;
+  }
+
+  .hero-feature-sub {
+    font-size: 0.68rem;
+  }
+}
+
+/* Compact Laptop Screens (993px to 1200px) */
+@media (min-width: 993px) and (max-width: 1200px) {
+  .etosm-hero {
+    margin-top: 104px;
+    min-height: calc(100vh - 104px);
+    background-image: 
+      linear-gradient(to right, #ffffff 0%, #ffffff 50%, rgba(255, 255, 255, 0.96) 62%, rgba(255, 255, 255, 0.3) 76%, rgba(255, 255, 255, 0) 88%),
+      url('/hero-bg.png');
+    background-size: 100% 100%, auto 84%;
+    background-position: left center, calc(100% + 50px) center;
+  }
+
+  .hero-left-col {
+    max-width: 460px;
+  }
+
+  .hero-display-headline {
+    font-size: 1.95rem;
+  }
+
+  .hero-description {
+    font-size: 0.85rem;
+    max-width: 440px;
+  }
+
+  .hero-highlights-row {
+    gap: 10px 14px;
+    max-width: 460px;
   }
 }
 

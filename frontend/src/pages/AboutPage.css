@@ -467,10 +467,7 @@
 }
 
 .about-who-bar {
-  width: 28px;
-  height: 3px;
-  background: #e3000f;
-  border-radius: 2px;
+  display: none;
 }
 
 .about-who-eyebrow {
@@ -549,10 +546,7 @@
 }
 
 .about-offer-bar {
-  width: 28px;
-  height: 3px;
-  background: #e3000f;
-  border-radius: 2px;
+  display: none;
 }
 
 .about-offer-eyebrow {
@@ -750,10 +744,7 @@
 }
 
 .about-why-bar {
-  width: 28px;
-  height: 3px;
-  background: #e3000f;
-  border-radius: 2px;
+  display: none;
 }
 
 .about-why-eyebrow {
@@ -965,10 +956,7 @@
 }
 
 .about-mv-bar {
-  width: 28px;
-  height: 3px;
-  background: #e3000f;
-  border-radius: 2px;
+  display: none;
 }
 
 .about-mv-eyebrow {
@@ -1112,11 +1100,7 @@
 }
 
 .about-cta-bar {
-  width: 32px;
-  height: 3.5px;
-  background: #ffffff;
-  border-radius: 2px;
-  margin-bottom: 14px;
+  display: none;
 }
 
 .about-cta-h2 {

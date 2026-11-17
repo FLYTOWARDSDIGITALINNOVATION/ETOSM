@@ -685,20 +685,37 @@
 }
 
 @media (max-width: 768px) {
+  .bestsellers-page-container {
+    padding: 12px 6px 48px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
   .bestsellers-header {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+
+  .active-bestsellers-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 10px;
   }
 
   .catalog-filter-bar {
     flex-direction: column;
+    gap: 10px;
   }
 
   .catalog-filters {
     width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
   }
 
   .catalog-select {
-    flex: 1;
+    width: 100%;
   }
 }

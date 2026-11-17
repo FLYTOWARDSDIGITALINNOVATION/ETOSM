@@ -32,10 +32,10 @@ import {
   Receipt,
   AlertCircle
 } from "lucide-react";
-import { jsPDF } from "jspdf";
 import AdminLayout from "./AdminLayout";
+import { generateEtosmQuotationPdf, printEtosmQuotationPdf } from "../utils/invoicePdfGenerator";
 import { cacheGet, cacheSet } from "../utils/dataCache";
-import { GST_STATES } from "../utils/gstStates";
+import { GST_STATES, detectPlaceOfSupply, isInterStateSupply } from "../utils/gstStates";
 import "./QuotationManagementPage.css";
 
 // Helper: Convert number to Indian currency words
@@ -100,7 +100,15 @@ const QuotationManagementPage = () => {
   const [convertModalQuotation, setConvertModalQuotation] = useState(null);
   const [convertPaymentStatus, setConvertPaymentStatus] = useState("Pending");
   const [convertAmountPaid, setConvertAmountPaid] = useState("");
+  const [convertPaymentTerms, setConvertPaymentTerms] = useState("Net 15");
   const [converting, setConverting] = useState(false);
+
+  const handleOpenConvertModal = (q) => {
+    setConvertModalQuotation(q);
+    setConvertPaymentStatus("Pending");
+    setConvertAmountPaid("");
+    setConvertPaymentTerms(q?.paymentTerms || "Net 15");
+  };
 
   // Toast
   const [toast, setToast] = useState(null);
@@ -124,6 +132,13 @@ const QuotationManagementPage = () => {
     customerAddress: "",
     customerGstin: "",
     placeOfSupply: "33 - Tamil Nadu",
+    paymentTerms: "Net 15",
+    taxPreference: "exclusive",
+    sourceOrderNumber: "",
+    shippingSameAsBilling: true,
+    shippingName: "",
+    shippingPhone: "",
+    shippingAddress: "",
     status: "Pending",
     notes: "1. Quotation prices are valid for 30 days from date of issue.\n2. Taxes as applicable at the time of invoicing.\n3. Delivery timeline: 3-5 business days upon PO confirmation.",
     overallDiscountType: "percent", // "percent" | "amount"
@@ -147,6 +162,7 @@ const QuotationManagementPage = () => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [catalogSearch, setCatalogSearch] = useState("");
+  const [catalogStatusFilter, setCatalogStatusFilter] = useState("all"); // "all" | "published" | "unpublished"
   const [showCatalogModal, setShowCatalogModal] = useState(false);
 
   // Verify Auth
@@ -248,6 +264,13 @@ const QuotationManagementPage = () => {
       customerAddress: "",
       customerGstin: "",
       placeOfSupply: "33 - Tamil Nadu",
+      paymentTerms: "Net 15",
+      taxPreference: "exclusive",
+      sourceOrderNumber: "",
+      shippingSameAsBilling: true,
+      shippingName: "",
+      shippingPhone: "",
+      shippingAddress: "",
       status: "Pending",
       notes: "1. Quotation prices are valid for 30 days from date of issue.\n2. Taxes as applicable at the time of invoicing.\n3. Delivery timeline: 3-5 business days upon PO confirmation.",
       overallDiscountType: "percent",
@@ -275,12 +298,22 @@ const QuotationManagementPage = () => {
     setEditingQuotationId(quotation._id);
     setFormData({
       quotationNumber: quotation.quotationNumber || quotation.docNumber,
-      quotationDate: quotation.quotationDate
-        ? new Date(quotation.quotationDate).toISOString().split("T")[0]
-        : new Date().toISOString().split("T")[0],
-      validUntil: quotation.validUntil
-        ? new Date(quotation.validUntil).toISOString().split("T")[0]
-        : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+      quotationDate: (() => {
+        try {
+          const d = quotation.quotationDate ? new Date(quotation.quotationDate) : new Date();
+          return isNaN(d.getTime()) ? new Date().toISOString().split("T")[0] : d.toISOString().split("T")[0];
+        } catch (e) {
+          return new Date().toISOString().split("T")[0];
+        }
+      })(),
+      validUntil: (() => {
+        try {
+          const d = quotation.validUntil ? new Date(quotation.validUntil) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+          return isNaN(d.getTime()) ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0] : d.toISOString().split("T")[0];
+        } catch (e) {
+          return new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+        }
+      })(),
       customerId: quotation.customerId || "",
       customerName: quotation.customerName || "",
       customerEmail: quotation.customerEmail || "",
@@ -289,6 +322,13 @@ const QuotationManagementPage = () => {
       customerAddress: quotation.customerAddress || "",
       customerGstin: quotation.customerGstin || "",
       placeOfSupply: quotation.placeOfSupply || "33 - Tamil Nadu",
+      paymentTerms: quotation.paymentTerms || "Net 15",
+      taxPreference: quotation.taxPreference || "exclusive",
+      sourceOrderNumber: quotation.sourceOrderNumber || "",
+      shippingSameAsBilling: quotation.shippingSameAsBilling !== undefined ? quotation.shippingSameAsBilling : true,
+      shippingName: quotation.shippingName || "",
+      shippingPhone: quotation.shippingPhone || "",
+      shippingAddress: quotation.shippingAddress || "",
       status: quotation.status || "Pending",
       notes: quotation.notes || "",
       overallDiscountType: quotation.quotationDiscountPercent > 0 ? "percent" : "amount",
@@ -306,6 +346,7 @@ const QuotationManagementPage = () => {
           sku: i.sku || "",
           quantity: Number(i.quantity) || 1,
           unitPrice: Number(i.unitPrice) || 0,
+          isTaxInclusive: i.isTaxInclusive !== undefined ? i.isTaxInclusive : (quotation.taxPreference === "inclusive"),
           discountPercent: Number(i.discountPercent) || 0,
           discountAmount: Number(i.discountAmount) || 0,
           gstPercent: Number(i.gstPercent) !== undefined ? Number(i.gstPercent) : 18
@@ -321,6 +362,13 @@ const QuotationManagementPage = () => {
     if (cust.city && !fullAddr.includes(cust.city)) fullAddr += (fullAddr ? ", " : "") + cust.city;
     if (cust.pincode && !fullAddr.includes(cust.pincode)) fullAddr += (fullAddr ? " - " : "") + cust.pincode;
 
+    const detected = detectPlaceOfSupply({
+      gstin: cust.gstin,
+      state: cust.state,
+      pincode: cust.pincode,
+      address: fullAddr
+    });
+
     setFormData((prev) => ({
       ...prev,
       customerId: cust._id || "",
@@ -329,9 +377,10 @@ const QuotationManagementPage = () => {
       customerPhone: cust.phone && cust.phone !== "N/A" ? cust.phone : "",
       customerCompany: cust.company || "",
       customerAddress: fullAddr,
-      customerGstin: cust.gstin || ""
+      customerGstin: cust.gstin || "",
+      placeOfSupply: detected.placeOfSupply
     }));
-    showToast(`Loaded details for customer "${cust.name}"`);
+    showToast(`Loaded customer "${cust.name}" (${detected.isInterState ? "Inter-State: IGST" : "Intra-State: CGST+SGST"})`);
   };
 
   // Auto-open builder and select customer if navigated from Customer Management
@@ -345,6 +394,7 @@ const QuotationManagementPage = () => {
   // Add Item to Line Items
   const handleAddItem = (product = null) => {
     if (product) {
+      const isUnpub = product.isVisible === false || product.isPublished === false || product.status === "unpublished" || product.status === "draft";
       const newItem = {
         productId: product.productId || product._id || "",
         productRef: product._id || "",
@@ -353,6 +403,8 @@ const QuotationManagementPage = () => {
         sku: product.sku ? String(product.sku) : "",
         quantity: 1,
         unitPrice: Number(product.price) || 0,
+        isTaxInclusive: formData.taxPreference === "inclusive",
+        isUnpublished: isUnpub,
         discountPercent: 0,
         discountAmount: 0,
         gstPercent: Number(product.gstPercent) || 18
@@ -364,7 +416,7 @@ const QuotationManagementPage = () => {
         return [...prev, newItem];
       });
       setShowCatalogModal(false);
-      showToast(`Added "${product.name}" to quotation!`);
+      showToast(`Added "${product.name}"${isUnpub ? " (Unpublished Item)" : ""} to quotation!`);
     } else {
       setItems((prev) => [
         ...prev,
@@ -409,26 +461,54 @@ const QuotationManagementPage = () => {
     const calculatedItems = items.map((item) => {
       const qty = Number(item.quantity) || 1;
       const rate = Number(item.unitPrice) || 0;
-      const baseGross = qty * rate;
-
-      let discAmt = 0;
-      if (item.discountPercent && Number(item.discountPercent) > 0) {
-        discAmt = (baseGross * Number(item.discountPercent)) / 100;
-      } else if (item.discountAmount) {
-        discAmt = Number(item.discountAmount);
-      }
-      discAmt = Math.min(discAmt, baseGross);
-
-      const taxable = Math.max(0, baseGross - discAmt);
+      const isInclusive = item.isTaxInclusive !== undefined
+        ? Boolean(item.isTaxInclusive)
+        : (formData.taxPreference === "inclusive");
       const gst = Number(item.gstPercent) !== undefined ? Number(item.gstPercent) : 18;
-      const taxAmt = (taxable * gst) / 100;
-      const totalAmt = taxable + taxAmt;
+
+      let baseGross = 0;
+      let discAmt = 0;
+      let taxable = 0;
+      let taxAmt = 0;
+      let totalAmt = 0;
+      let baseUnitPrice = rate;
+
+      if (isInclusive) {
+        const totalInclusiveGross = qty * rate;
+        if (item.discountPercent && Number(item.discountPercent) > 0) {
+          discAmt = (totalInclusiveGross * Number(item.discountPercent)) / 100;
+        } else if (item.discountAmount) {
+          discAmt = Number(item.discountAmount);
+        }
+        discAmt = Math.min(discAmt, totalInclusiveGross);
+        const discountedInclusive = Math.max(0, totalInclusiveGross - discAmt);
+        taxable = gst > 0 ? (discountedInclusive / (1 + gst / 100)) : discountedInclusive;
+        taxAmt = discountedInclusive - taxable;
+        totalAmt = discountedInclusive;
+        baseUnitPrice = gst > 0 ? (rate / (1 + gst / 100)) : rate;
+        baseGross = gst > 0 ? (totalInclusiveGross / (1 + gst / 100)) : totalInclusiveGross;
+      } else {
+        baseGross = qty * rate;
+        if (item.discountPercent && Number(item.discountPercent) > 0) {
+          discAmt = (baseGross * Number(item.discountPercent)) / 100;
+        } else if (item.discountAmount) {
+          discAmt = Number(item.discountAmount);
+        }
+        discAmt = Math.min(discAmt, baseGross);
+        taxable = Math.max(0, baseGross - discAmt);
+        taxAmt = (taxable * gst) / 100;
+        totalAmt = taxable + taxAmt;
+        baseUnitPrice = rate;
+      }
 
       grossSubtotal += baseGross;
       itemDiscountsTotal += discAmt;
 
       return {
         ...item,
+        unitPrice: rate,
+        baseUnitPrice: Number(baseUnitPrice.toFixed(2)),
+        isTaxInclusive: isInclusive,
         taxableAmount: Number(taxable.toFixed(2)),
         gstAmount: Number(taxAmt.toFixed(2)),
         totalAmount: Number(totalAmt.toFixed(2))
@@ -448,7 +528,7 @@ const QuotationManagementPage = () => {
     const taxableSubtotal = Math.max(0, grossSubtotal - totalDiscount);
 
     // Is Inter-State GST (Check place of supply vs TN)
-    const isInterState = !formData.placeOfSupply.includes("33");
+    const isInterState = isInterStateSupply(formData.placeOfSupply);
 
     let cgstTotal = 0;
     let sgstTotal = 0;
@@ -488,7 +568,7 @@ const QuotationManagementPage = () => {
       roundOff,
       grandTotal
     };
-  }, [items, formData.overallDiscountType, formData.overallDiscountValue, formData.shippingCharges, formData.placeOfSupply]);
+  }, [items, formData.overallDiscountType, formData.overallDiscountValue, formData.shippingCharges, formData.placeOfSupply, formData.taxPreference]);
 
   // Save Quotation (Create or Update)
   const handleSaveQuotation = async (forcedStatus = null) => {
@@ -521,6 +601,13 @@ const QuotationManagementPage = () => {
         customerAddress: formData.customerAddress,
         customerGstin: formData.customerGstin,
         placeOfSupply: formData.placeOfSupply,
+        paymentTerms: formData.paymentTerms || "Net 15",
+        taxPreference: formData.taxPreference || "exclusive",
+        sourceOrderNumber: (formData.sourceOrderNumber || "").trim(),
+        shippingSameAsBilling: formData.shippingSameAsBilling !== false,
+        shippingName: formData.shippingSameAsBilling !== false ? formData.customerName : (formData.shippingName || formData.customerName),
+        shippingPhone: formData.shippingSameAsBilling !== false ? formData.customerPhone : (formData.shippingPhone || formData.customerPhone),
+        shippingAddress: formData.shippingSameAsBilling !== false ? formData.customerAddress : (formData.shippingAddress || formData.customerAddress),
         status: statusToSave,
         items: calculations.items
           .filter((i) => i && (i.name || "").trim() !== "" && (i.name || "").trim().toLowerCase() !== "product item")
@@ -532,6 +619,9 @@ const QuotationManagementPage = () => {
           sku: i.sku,
           quantity: i.quantity,
           unitPrice: i.unitPrice,
+          enteredPrice: i.unitPrice,
+          baseUnitPrice: i.baseUnitPrice,
+          isTaxInclusive: i.isTaxInclusive,
           discountPercent: i.discountPercent,
           discountAmount: i.discountAmount,
           taxableAmount: i.taxableAmount,
@@ -632,7 +722,14 @@ const QuotationManagementPage = () => {
         },
         body: JSON.stringify({
           paymentStatus: convertPaymentStatus,
-          amountPaid: convertPaymentStatus === "Partially Paid" ? Number(convertAmountPaid) : 0
+          paymentTerms: convertPaymentTerms || "Net 15",
+          amountPaid: convertPaymentStatus === "Partially Paid" ? Number(convertAmountPaid) : 0,
+          sourceOrderNumber: convertModalQuotation.sourceOrderNumber || "",
+          taxPreference: convertModalQuotation.taxPreference || "exclusive",
+          shippingSameAsBilling: convertModalQuotation.shippingSameAsBilling !== false,
+          shippingName: convertModalQuotation.shippingName || convertModalQuotation.customerName || "",
+          shippingPhone: convertModalQuotation.shippingPhone || convertModalQuotation.customerPhone || "",
+          shippingAddress: convertModalQuotation.shippingAddress || convertModalQuotation.customerAddress || ""
         })
       });
 
@@ -676,400 +773,26 @@ const QuotationManagementPage = () => {
     }
   };
 
-  // Helper to load image as base64 Data URL for jsPDF
-  const loadImageDataUrl = async (url) => {
-    try {
-      const res = await fetch(url);
-      if (!res.ok) return null;
-      const blob = await res.blob();
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result);
-        reader.onerror = () => resolve(null);
-        reader.readAsDataURL(blob);
-      });
-    } catch (err) {
-      return null;
-    }
-  };
-
-  // Generate Vector A4 PDF - Exact 1:1 match to Official Price Quotation Preview Sheet
+  // BUG-014: Match quotation design to invoice layout
   const handleDownloadPdf = async (q) => {
     try {
-      const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-      const slateDark = [15, 23, 42];      // #0f172a
-      const primaryRed = [227, 0, 15];     // #e3000f
-      const bodyText = [51, 65, 85];       // #334155
-      const mutedText = [100, 116, 139];   // #64748b
-      const borderGray = [226, 232, 240];  // #e2e8f0
-      const softBg = [248, 250, 252];      // #f8fafc
-      const greenDiscount = [22, 163, 74]; // #16a34a
-
-      // Load logo if available
-      let logoData = null;
-      try {
-        logoData = await loadImageDataUrl("/logo1.png");
-      } catch (e) {
-        // ignore
-      }
-
-      // =======================================================================
-      // 1. TOP HEADER (Matches Sheet Header)
-      // =======================================================================
-      // Left: Logo and Company Info
-      if (logoData) {
-        try {
-          doc.addImage(logoData, "PNG", 14, 12, 36, 9.5);
-        } catch (e) {
-          // fallback logo
-          doc.setFillColor(227, 0, 15);
-          doc.roundedRect(14, 12, 9, 9, 1.5, 1.5, "F");
-          doc.setTextColor(255, 255, 255);
-          doc.setFont("Helvetica", "bold");
-          doc.setFontSize(8);
-          doc.text("E", 17.5, 18);
-          doc.setTextColor(...slateDark);
-          doc.setFontSize(13);
-          doc.text("ETOSM", 25, 19);
-        }
-      } else {
-        doc.setFillColor(227, 0, 15);
-        doc.roundedRect(14, 12, 9, 9, 1.5, 1.5, "F");
-        doc.setTextColor(255, 255, 255);
-        doc.setFont("Helvetica", "bold");
-        doc.setFontSize(8);
-        doc.text("E", 17.5, 18);
-        doc.setTextColor(...slateDark);
-        doc.setFontSize(13);
-        doc.text("ETOSM", 25, 19);
-      }
-
-      doc.setFont("Helvetica", "bold");
-      doc.setFontSize(11);
-      doc.setTextColor(...slateDark);
-      doc.text("ETOSM TECHNOLOGY", 14, 26.5);
-
-      doc.setFont("Helvetica", "normal");
-      doc.setFontSize(7.2);
-      doc.setTextColor(...mutedText);
-      doc.text("2/167, Merkukadu, Ramapuram, Tiruchengodu, Namakkal, Tamil Nadu - 637202", 14, 32);
-      doc.text("Mobile: +91 88070 80216 | Email: support@etosmtechnology.in", 14, 36.5);
-
-      // Right: PRICE QUOTATION and Meta Details
-      doc.setFont("Helvetica", "bold");
-      doc.setFontSize(15);
-      doc.setTextColor(...primaryRed);
-      doc.text("PRICE QUOTATION", 196, 18, { align: "right" });
-
-      const quoteNum = String(q.quotationNumber || q.docNumber || "QT-0001");
-      const qDate = q.quotationDate ? new Date(q.quotationDate).toLocaleDateString("en-IN") : "N/A";
-      const vUntil = q.validUntil ? new Date(q.validUntil).toLocaleDateString("en-IN") : "30 days";
-      const pos = String(q.placeOfSupply || "Tamil Nadu (33)");
-
-      doc.setFontSize(8);
-      // Quote No
-      doc.setFont("Helvetica", "normal");
-      doc.setTextColor(...mutedText);
-      doc.text("Quote No:", 158, 24, { align: "right" });
-      doc.setFont("Helvetica", "bold");
-      doc.setTextColor(...slateDark);
-      doc.text(quoteNum, 196, 24, { align: "right" });
-
-      // Date
-      doc.setFont("Helvetica", "normal");
-      doc.setTextColor(...mutedText);
-      doc.text("Date:", 158, 28.5, { align: "right" });
-      doc.setFont("Helvetica", "bold");
-      doc.setTextColor(...slateDark);
-      doc.text(qDate, 196, 28.5, { align: "right" });
-
-      // Valid Until (Highlighted in Red)
-      doc.setFont("Helvetica", "normal");
-      doc.setTextColor(...mutedText);
-      doc.text("Valid Until:", 158, 33, { align: "right" });
-      doc.setFont("Helvetica", "bold");
-      doc.setTextColor(...primaryRed);
-      doc.text(vUntil, 196, 33, { align: "right" });
-
-      // Place of Supply
-      doc.setFont("Helvetica", "normal");
-      doc.setTextColor(...mutedText);
-      doc.text("Place of Supply:", 158, 37.5, { align: "right" });
-      doc.setFont("Helvetica", "bold");
-      doc.setTextColor(...slateDark);
-      doc.text(pos, 196, 37.5, { align: "right" });
-
-      // Header Divider Line
-      doc.setDrawColor(...borderGray);
-      doc.setLineWidth(0.3);
-      doc.line(14, 42, 196, 42);
-
-      // =======================================================================
-      // 2. CLIENT INFORMATION STRIP (QUOTATION FOR)
-      // =======================================================================
-      const clientY = 46;
-      doc.setFillColor(...softBg);
-      doc.setDrawColor(...borderGray);
-      doc.setLineWidth(0.25);
-      doc.roundedRect(14, clientY, 182, 22, 2, 2, "FD");
-
-      doc.setFont("Helvetica", "bold");
-      doc.setFontSize(7.5);
-      doc.setTextColor(...mutedText);
-      doc.text("QUOTATION FOR:", 18, clientY + 5.5);
-
-      doc.setFont("Helvetica", "bold");
-      doc.setFontSize(9.5);
-      doc.setTextColor(...slateDark);
-      doc.text(q.customerName || "Valued Client", 18, clientY + 11);
-
-      doc.setFont("Helvetica", "normal");
-      doc.setFontSize(8);
-      doc.setTextColor(...bodyText);
-
-      const clientMetaLeft = [];
-      if (q.customerCompany) clientMetaLeft.push(q.customerCompany);
-      if (q.customerAddress) clientMetaLeft.push(q.customerAddress);
-
-      const clientMetaRight = [];
-      if (q.customerPhone) clientMetaRight.push(`Phone: ${q.customerPhone}`);
-      if (q.customerEmail) clientMetaRight.push(`Email: ${q.customerEmail}`);
-      if (q.customerGstin) clientMetaRight.push(`GSTIN: ${q.customerGstin}`);
-
-      doc.text(clientMetaLeft.join(" • ") || "Tamil Nadu, India", 18, clientY + 16.5);
-      if (clientMetaRight.length > 0) {
-        doc.text(clientMetaRight.join("   |   "), 192, clientY + 16.5, { align: "right" });
-      }
-
-      // =======================================================================
-      // 3. LINE ITEMS TABLE (Dark Slate Header like Sheet)
-      // =======================================================================
-      let tableY = 73;
-
-      doc.setFillColor(...slateDark);
-      doc.rect(14, tableY, 182, 7.5, "F");
-
-      doc.setTextColor(255, 255, 255);
-      doc.setFont("Helvetica", "bold");
-      doc.setFontSize(8);
-      doc.text("#", 18, tableY + 5.2);
-      doc.text("Item Description", 28, tableY + 5.2);
-      doc.text("Qty", 115, tableY + 5.2, { align: "center" });
-      doc.text("Rate (Rs.)", 145, tableY + 5.2, { align: "right" });
-      doc.text("GST", 166, tableY + 5.2, { align: "right" });
-      doc.text("Total (Rs.)", 192, tableY + 5.2, { align: "right" });
-
-      tableY += 7.5;
-
-      const rawQItems = Array.isArray(q.items) ? q.items : [];
-      const validQItems = rawQItems.filter((i) => i && (i.name || "").trim() !== "" && (i.name || "").trim().toLowerCase() !== "product item");
-      const qItems = validQItems.length > 0
-        ? validQItems
-        : [{ name: "Electronic Component Assembly", quantity: 1, unitPrice: Number(q.grandTotal || 0), gstPercent: 18, totalAmount: Number(q.grandTotal || 0) }];
-
-      qItems.forEach((item, idx) => {
-        const rawName = String(item.name || item.productName || item.title || item.description || "Electronics Component / Product").trim();
-        const rawDesc = String(item.description || "").trim();
-        const hasDesc = rawDesc !== "" && rawDesc.toLowerCase() !== rawName.toLowerCase();
-
-        // Dynamically wrap product name to 80mm column width
-        doc.setFont("Helvetica", "bold");
-        doc.setFontSize(8.2);
-        const titleLines = doc.splitTextToSize(rawName, 80);
-
-        // Dynamically wrap description without truncation
-        doc.setFont("Helvetica", "normal");
-        doc.setFontSize(7.2);
-        const descLines = hasDesc ? doc.splitTextToSize(rawDesc, 80) : [];
-
-        const titleLineH = 4.0;
-        const descLineH = 3.5;
-        const titleH = titleLines.length * titleLineH;
-        const descH = descLines.length > 0 ? (1.5 + descLines.length * descLineH) : 0;
-        const rowHeight = Math.max(9.5, titleH + descH + 4.5);
-
-        // Page boundary check
-        if (tableY + rowHeight > 230) {
-          doc.addPage();
-          tableY = 20;
-          doc.setFillColor(...slateDark);
-          doc.rect(14, tableY, 182, 7.5, "F");
-          doc.setTextColor(255, 255, 255);
-          doc.setFont("Helvetica", "bold");
-          doc.setFontSize(8);
-          doc.text("#", 18, tableY + 5.2);
-          doc.text("Item Description", 28, tableY + 5.2);
-          doc.text("Qty", 115, tableY + 5.2, { align: "center" });
-          doc.text("Rate (Rs.)", 145, tableY + 5.2, { align: "right" });
-          doc.text("GST", 166, tableY + 5.2, { align: "right" });
-          doc.text("Total (Rs.)", 192, tableY + 5.2, { align: "right" });
-          tableY += 7.5;
-        }
-
-        // Draw row background and bottom border line
-        doc.setFillColor(255, 255, 255);
-        doc.rect(14, tableY, 182, rowHeight, "F");
-        doc.setDrawColor(...borderGray);
-        doc.setLineWidth(0.2);
-        doc.line(14, tableY + rowHeight, 196, tableY + rowHeight);
-
-        const firstLineY = tableY + 5.0;
-
-        // # (Index)
-        doc.setFont("Helvetica", "normal");
-        doc.setFontSize(8);
-        doc.setTextColor(...bodyText);
-        doc.text(String(idx + 1), 18, firstLineY);
-
-        // Item Name (Full multi-line wrapping if needed)
-        doc.setFont("Helvetica", "bold");
-        doc.setFontSize(8.2);
-        doc.setTextColor(...slateDark);
-        titleLines.forEach((tLine, tIdx) => {
-          doc.text(tLine, 28, firstLineY + (tIdx * titleLineH));
-        });
-
-        // Item Description (Full multi-line clean wrapping, no ellipsis cut)
-        if (descLines.length > 0) {
-          doc.setFont("Helvetica", "normal");
-          doc.setFontSize(7.2);
-          doc.setTextColor(...mutedText);
-          const descStartY = firstLineY + titleH + 0.8;
-          descLines.forEach((dLine, dIdx) => {
-            doc.text(dLine, 28, descStartY + (dIdx * descLineH));
-          });
-        }
-
-        // Qty, Rate, GST, Total (aligned at firstLineY)
-        doc.setFont("Helvetica", "normal");
-        doc.setFontSize(8);
-        doc.setTextColor(...bodyText);
-        doc.text(String(item.quantity || 1), 115, firstLineY, { align: "center" });
-        doc.text(`Rs. ${Number(item.unitPrice || 0).toLocaleString("en-IN")}`, 145, firstLineY, { align: "right" });
-        doc.text(`${item.gstPercent || 18}%`, 166, firstLineY, { align: "right" });
-
-        doc.setFont("Helvetica", "bold");
-        doc.setTextColor(...slateDark);
-        doc.text(`Rs. ${Number(item.totalAmount || 0).toLocaleString("en-IN")}`, 192, firstLineY, { align: "right" });
-
-        tableY += rowHeight;
-      });
-
-      // =======================================================================
-      // 4. BOTTOM SECTION (Terms on Left, Financials on Right)
-      // =======================================================================
-      let bottomY = tableY + 8;
-      if (bottomY > 220) {
-        doc.addPage();
-        bottomY = 20;
-      }
-
-      // Left Box: Terms & Conditions Box
-      const defaultTerms = "1. Quotation prices are valid for 30 days from date of issue.\n2. Taxes as applicable at the time of invoicing.\n3. Delivery timeline: 3-5 business days upon PO confirmation.";
-      const termsText = (q.notes || defaultTerms).trim();
-
-      doc.setFillColor(...softBg);
-      doc.setDrawColor(...borderGray);
-      doc.setLineWidth(0.25);
-      doc.roundedRect(14, bottomY, 95, 36, 2, 2, "FD");
-
-      doc.setFont("Helvetica", "bold");
-      doc.setFontSize(7.5);
-      doc.setTextColor(...mutedText);
-      doc.text("TERMS & CONDITIONS:", 18, bottomY + 5.5);
-
-      doc.setFont("Helvetica", "normal");
-      doc.setFontSize(7.5);
-      doc.setTextColor(...bodyText);
-
-      const termLines = doc.splitTextToSize(termsText, 87);
-      termLines.slice(0, 6).forEach((line, lIdx) => {
-        doc.text(line, 18, bottomY + 10.5 + lIdx * 4);
-      });
-
-      // Right: Totals Box (Matches Sheet Totals Box)
-      const totalsX = 115;
-      let totalsY = bottomY + 2;
-
-      // Subtotal
-      doc.setFont("Helvetica", "normal");
-      doc.setFontSize(8.5);
-      doc.setTextColor(...bodyText);
-      doc.text("Subtotal:", totalsX, totalsY + 4);
-      doc.text(`Rs. ${Number(q.grossSubtotal || q.grandTotal || 0).toLocaleString("en-IN")}`, 196, totalsY + 4, { align: "right" });
-      totalsY += 6;
-
-      // Discount if any
-      if (Number(q.totalDiscount || 0) > 0) {
-        doc.setTextColor(...greenDiscount);
-        doc.text("Discount:", totalsX, totalsY + 4);
-        doc.text(`- Rs. ${Number(q.totalDiscount).toLocaleString("en-IN")}`, 196, totalsY + 4, { align: "right" });
-        totalsY += 6;
-      }
-
-      // GST (Tax)
-      doc.setTextColor(...bodyText);
-      doc.text("GST (Tax):", totalsX, totalsY + 4);
-      doc.text(`Rs. ${Number(q.totalTax || q.taxAmount || 0).toLocaleString("en-IN")}`, 196, totalsY + 4, { align: "right" });
-      totalsY += 6;
-
-      // Grand Total Highlight Line
-      doc.setDrawColor(...borderGray);
-      doc.setLineWidth(0.3);
-      doc.line(totalsX, totalsY + 2, 196, totalsY + 2);
-      totalsY += 4;
-
-      doc.setFont("Helvetica", "bold");
-      doc.setFontSize(9.5);
-      doc.setTextColor(...slateDark);
-      doc.text("TOTAL ESTIMATE:", totalsX, totalsY + 4);
-      doc.text(`Rs. ${Number(q.grandTotal || 0).toLocaleString("en-IN")}`, 196, totalsY + 4, { align: "right" });
-      totalsY += 7;
-
-      // In words
-      doc.setFont("Helvetica", "italic");
-      doc.setFontSize(7.5);
-      doc.setTextColor(...mutedText);
-      const wordsText = numberToWordsINR(q.grandTotal);
-      doc.text(wordsText, 196, totalsY + 3, { align: "right" });
-
-      // =======================================================================
-      // 5. FOOTER & SIGNATORY BLOCK (Plentiful Space, No Cutoff!)
-      // =======================================================================
-      let footerY = Math.max(bottomY + 40, totalsY + 10);
-
-      // Footer divider
-      doc.setDrawColor(...borderGray);
-      doc.setLineWidth(0.25);
-      doc.line(14, footerY, 196, footerY);
-
-      // Left: Thank you message
-      doc.setFont("Helvetica", "normal");
-      doc.setFontSize(8);
-      doc.setTextColor(...mutedText);
-      doc.text("Thank you for your business enquiry!", 14, footerY + 22);
-
-      // Right: Signatory Block (Centered on 168mm)
-      const signCenterX = 168;
-      doc.setFont("Helvetica", "bold");
-      doc.setFontSize(8.5);
-      doc.setTextColor(...slateDark);
-      doc.text("For ETOSM TECHNOLOGY", signCenterX, footerY + 8, { align: "center" });
-
-      // 20mm clean physical signature / stamp gap
-      doc.setFont("Helvetica", "normal");
-      doc.setFontSize(8);
-      doc.setTextColor(...bodyText);
-      doc.text("Authorized Signatory", signCenterX, footerY + 28, { align: "center" });
-
+      showToast("Generating official Quotation PDF...", "info");
+      const doc = await generateEtosmQuotationPdf(q);
       const cleanNum = (q.quotationNumber || q.docNumber || "QT-0001").replace(/[/\\?%*:|"<>]/g, "-");
       doc.save(`ETOSM_Quotation_${cleanNum}.pdf`);
       showToast(`Quotation ${cleanNum} downloaded as A4 PDF!`);
+      return;
     } catch (err) {
       console.error("PDF generation error:", err);
       showToast("Failed to generate PDF", "error");
+      return;
     }
   };
+
+
+
+
+
 
   // Filtered Quotations
   const filteredQuotations = useMemo(() => {
@@ -1090,15 +813,23 @@ const QuotationManagementPage = () => {
 
   // Catalog filtered for modal picker
   const filteredCatalog = useMemo(() => {
-    if (!catalogSearch.trim()) return productsCatalog;
-    const q = catalogSearch.toLowerCase();
-    return productsCatalog.filter(
-      (p) =>
+    return productsCatalog.filter((p) => {
+      const isUnpub = p.isVisible === false || p.isPublished === false || p.status === "unpublished" || p.status === "draft";
+      const matchesStatus =
+        catalogStatusFilter === "all" ||
+        (catalogStatusFilter === "published" && !isUnpub) ||
+        (catalogStatusFilter === "unpublished" && isUnpub);
+
+      if (!catalogSearch.trim()) return matchesStatus;
+      const q = catalogSearch.toLowerCase().trim();
+      const matchesSearch =
         (p.name && p.name.toLowerCase().includes(q)) ||
         (p.category && p.category.toLowerCase().includes(q)) ||
-        (p.sku && String(p.sku).includes(q))
-    );
-  }, [productsCatalog, catalogSearch]);
+        (p.productId && p.productId.toLowerCase().includes(q)) ||
+        (p.sku && String(p.sku).includes(q));
+      return matchesStatus && matchesSearch;
+    });
+  }, [productsCatalog, catalogSearch, catalogStatusFilter]);
 
   return (
     <AdminLayout>
@@ -1195,7 +926,24 @@ const QuotationManagementPage = () => {
                       </select>
                     </div>
                     <div className="q-form-group">
-                      <label>Place of Supply</label>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                        <label style={{ margin: 0 }}>Place of Supply</label>
+                        <span
+                          style={{
+                            fontSize: "10.5px",
+                            padding: "1px 6px",
+                            borderRadius: "4px",
+                            fontWeight: 600,
+                            whiteSpace: "nowrap",
+                            background: calculations.isInterState ? "#eff6ff" : "#f0fdf4",
+                            color: calculations.isInterState ? "#1d4ed8" : "#15803d",
+                            border: `1px solid ${calculations.isInterState ? "#bfdbfe" : "#bbf7d0"}`
+                          }}
+                          title={calculations.isInterState ? "Inter-State Supply: IGST applies" : "Intra-State Supply: CGST + SGST applies"}
+                        >
+                          {calculations.isInterState ? "⚡ Inter-State" : "⚡ Intra-State"}
+                        </span>
+                      </div>
                       <select
                         value={formData.placeOfSupply}
                         onChange={(e) => setFormData({ ...formData, placeOfSupply: e.target.value })}
@@ -1205,6 +953,31 @@ const QuotationManagementPage = () => {
                             {st.code} - {st.name} ({st.type})
                           </option>
                         ))}
+                      </select>
+                    </div>
+                    <div className="q-form-group">
+                      <label>Source Order # (Optional)</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. ORD-439823 or Inquiry Ref"
+                        value={formData.sourceOrderNumber || ""}
+                        onChange={(e) => setFormData({ ...formData, sourceOrderNumber: e.target.value })}
+                        title="Associated customer purchase order, inquiry, or store order reference"
+                      />
+                    </div>
+                    <div className="q-form-group">
+                      <label>Commercial Payment Terms</label>
+                      <select
+                        value={formData.paymentTerms || "Net 15"}
+                        onChange={(e) => setFormData({ ...formData, paymentTerms: e.target.value })}
+                      >
+                        <option value="Immediate">Due on Receipt (Immediate)</option>
+                        <option value="Net 7">Net 7 Days</option>
+                        <option value="Net 15">Net 15 Days (Standard)</option>
+                        <option value="Net 30">Net 30 Days</option>
+                        <option value="Net 45">Net 45 Days</option>
+                        <option value="Net 60">Net 60 Days</option>
+                        <option value="Net 90">Net 90 Days</option>
                       </select>
                     </div>
                   </div>
@@ -1274,23 +1047,103 @@ const QuotationManagementPage = () => {
                       />
                     </div>
                     <div className="q-form-group">
-                      <label>Customer GSTIN</label>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <label style={{ margin: 0 }}>Customer GSTIN</label>
+                        {formData.customerGstin && formData.customerGstin.length >= 2 && (
+                          <span style={{ fontSize: "11px", color: "#2563eb", fontWeight: 600 }}>
+                            Auto-state: {detectPlaceOfSupply({ gstin: formData.customerGstin }).code}
+                          </span>
+                        )}
+                      </div>
                       <input
                         type="text"
                         placeholder="33AAAAA0000A1Z5"
                         value={formData.customerGstin}
-                        onChange={(e) => setFormData({ ...formData, customerGstin: e.target.value })}
+                        onChange={(e) => {
+                          const val = e.target.value.toUpperCase();
+                          const detected = val.length >= 2 ? detectPlaceOfSupply({ gstin: val }) : null;
+                          setFormData((prev) => ({
+                            ...prev,
+                            customerGstin: val,
+                            placeOfSupply: detected && detected.source === "gstin" ? detected.placeOfSupply : prev.placeOfSupply
+                          }));
+                        }}
                       />
                     </div>
                     <div className="q-form-group">
-                      <label>Billing & Delivery Address</label>
+                      <label>Billing Address (Buyer Principal Place of Business)</label>
                       <input
                         type="text"
-                        placeholder="Industrial Area, Coimbatore"
+                        placeholder="Office / Billing address, City, Pincode"
                         value={formData.customerAddress}
-                        onChange={(e) => setFormData({ ...formData, customerAddress: e.target.value })}
+                        onChange={(e) => {
+                          const newAddr = e.target.value;
+                          const detected = (!formData.customerGstin || formData.customerGstin.length < 2)
+                            ? detectPlaceOfSupply({ address: newAddr })
+                            : null;
+                          setFormData((prev) => ({
+                            ...prev,
+                            customerAddress: newAddr,
+                            shippingAddress: prev.shippingSameAsBilling ? newAddr : prev.shippingAddress,
+                            placeOfSupply: detected && detected.source !== "default" ? detected.placeOfSupply : prev.placeOfSupply
+                          }));
+                        }}
                       />
                     </div>
+                  </div>
+
+                  {/* Consignee / Site Delivery Address */}
+                  <div style={{ marginTop: "14px", padding: "12px 14px", background: "#f8fafc", borderRadius: "8px", border: "1px dashed #cbd5e1" }}>
+                    <label style={{ display: "inline-flex", alignItems: "center", gap: "8px", cursor: "pointer", fontWeight: 600, color: "#1e293b", fontSize: "13px" }}>
+                      <input
+                        type="checkbox"
+                        checked={formData.shippingSameAsBilling !== false}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setFormData((prev) => ({
+                            ...prev,
+                            shippingSameAsBilling: checked,
+                            shippingName: checked ? prev.customerName : prev.shippingName,
+                            shippingPhone: checked ? prev.customerPhone : prev.shippingPhone,
+                            shippingAddress: checked ? prev.customerAddress : prev.shippingAddress
+                          }));
+                        }}
+                        style={{ width: "16px", height: "16px", cursor: "pointer", accentColor: "#e3000f" }}
+                      />
+                      <span>Delivery / Site Address is the same as Billing Address</span>
+                    </label>
+
+                    {formData.shippingSameAsBilling === false && (
+                      <div className="q-form-grid" style={{ marginTop: "12px" }}>
+                        <div className="q-form-group">
+                          <label>Consignee / Site Contact Name</label>
+                          <input
+                            type="text"
+                            placeholder="Site Engineer / Contact Person"
+                            value={formData.shippingName}
+                            onChange={(e) => setFormData({ ...formData, shippingName: e.target.value })}
+                          />
+                        </div>
+                        <div className="q-form-group">
+                          <label>Site Contact Phone</label>
+                          <input
+                            type="text"
+                            placeholder="+91 98765 43210"
+                            value={formData.shippingPhone}
+                            onChange={(e) => setFormData({ ...formData, shippingPhone: e.target.value })}
+                          />
+                        </div>
+                        <div className="q-form-group" style={{ gridColumn: "1 / -1" }}>
+                          <label>Shipping / Project Site Delivery Address</label>
+                          <input
+                            type="text"
+                            placeholder="Site plant, industrial unit, door no, city, pincode"
+                            value={formData.shippingAddress}
+                            onChange={(e) => setFormData({ ...formData, shippingAddress: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -1304,6 +1157,32 @@ const QuotationManagementPage = () => {
                       </p>
                     </div>
                     <div className="line-item-actions">
+                      <div className="tax-preference-toggle-group">
+                        <span className="tax-pref-label">Tax Mode:</span>
+                        <button
+                          type="button"
+                          className={`tax-pref-btn ${formData.taxPreference === "exclusive" ? "active" : ""}`}
+                          onClick={() => {
+                            setFormData((prev) => ({ ...prev, taxPreference: "exclusive" }));
+                            setItems((prev) => prev.map((it) => ({ ...it, isTaxInclusive: false })));
+                          }}
+                          title="Prices entered are exclusive of GST. Tax is added on top."
+                        >
+                          Exclusive
+                        </button>
+                        <button
+                          type="button"
+                          className={`tax-pref-btn ${formData.taxPreference === "inclusive" ? "active" : ""}`}
+                          onClick={() => {
+                            setFormData((prev) => ({ ...prev, taxPreference: "inclusive" }));
+                            setItems((prev) => prev.map((it) => ({ ...it, isTaxInclusive: true })));
+                          }}
+                          title="Prices entered are inclusive of GST (MRP). Tax is reverse-calculated."
+                        >
+                          Inclusive (MRP)
+                        </button>
+                      </div>
+
                       <button
                         type="button"
                         className="q-btn secondary small"
@@ -1328,9 +1207,14 @@ const QuotationManagementPage = () => {
                       <table className="items-builder-table">
                         <thead>
                           <tr>
-                            <th style={{ width: "35%" }}>ITEM DESCRIPTION</th>
+                            <th style={{ width: "33%" }}>ITEM DESCRIPTION</th>
                             <th style={{ width: "10%" }}>QTY</th>
-                            <th style={{ width: "15%" }}>UNIT PRICE (₹)</th>
+                            <th style={{ width: "17%" }}>
+                              UNIT PRICE (₹)
+                              <span style={{ display: "block", fontSize: "10px", fontWeight: 600, color: formData.taxPreference === "inclusive" ? "#e3000f" : "#64748b" }}>
+                                {formData.taxPreference === "inclusive" ? "Incl. GST" : "Excl. GST"}
+                              </span>
+                            </th>
                             <th style={{ width: "12%" }}>DISC %</th>
                             <th style={{ width: "12%" }}>GST RATE</th>
                             <th style={{ width: "16%", textAlign: "right" }}>AMOUNT (₹)</th>
@@ -1339,47 +1223,60 @@ const QuotationManagementPage = () => {
                         </thead>
                         <tbody>
                           <datalist id="quotation-products-datalist">
-                            {productsCatalog.map((p) => (
-                              <option key={p._id} value={p.name}>
-                                {p.category ? `[${p.category}] ` : ""}₹{p.price} {p.sku ? `(SKU: ${p.sku})` : ""}
-                              </option>
-                            ))}
+                            {productsCatalog.map((p) => {
+                              const isUnpub = p.isVisible === false || p.isPublished === false || p.status === "unpublished" || p.status === "draft";
+                              return (
+                                <option key={p._id} value={p.name}>
+                                  {isUnpub ? "[Unpublished] " : ""}{p.category ? `[${p.category}] ` : ""}₹{p.price} {p.sku ? `(SKU: ${p.sku})` : ""}
+                                </option>
+                              );
+                            })}
                           </datalist>
                           {items.map((item, idx) => (
                             <tr key={idx}>
                               <td>
-                                <input
-                                  type="text"
-                                  className="item-input bold"
-                                  placeholder="Product / Service Name * (type or pick from catalog)"
-                                  value={item.name}
-                                  list="quotation-products-datalist"
-                                  onChange={(e) => {
-                                    const val = e.target.value;
-                                    handleItemChange(idx, "name", val);
-                                    const matched = productsCatalog.find(
-                                      (p) => (p.name || "").trim().toLowerCase() === val.trim().toLowerCase()
-                                    );
-                                    if (matched) {
-                                      setItems((prev) => {
-                                        const updated = [...prev];
-                                        updated[idx] = {
-                                          ...updated[idx],
-                                          name: matched.name,
-                                          productId: matched.productId || matched._id || "",
-                                          productRef: matched._id || "",
-                                          unitPrice: Number(matched.price) || 0,
-                                          description: matched.description ? String(matched.description).trim() : (updated[idx].description || ""),
-                                          sku: matched.sku ? String(matched.sku) : (updated[idx].sku || ""),
-                                          gstPercent: Number(matched.gstPercent) || 18
-                                        };
-                                        return updated;
-                                      });
-                                      showToast(`Selected "${matched.name}" (₹${matched.price})`);
-                                    }
-                                  }}
-                                  required
-                                />
+                                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                  <input
+                                    type="text"
+                                    className="item-input bold"
+                                    placeholder="Product / Service Name * (type or pick from catalog)"
+                                    value={item.name}
+                                    list="quotation-products-datalist"
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      handleItemChange(idx, "name", val);
+                                      const matched = productsCatalog.find(
+                                        (p) => (p.name || "").trim().toLowerCase() === val.trim().toLowerCase()
+                                      );
+                                      if (matched) {
+                                        const isUnpub = matched.isVisible === false || matched.isPublished === false || matched.status === "unpublished" || matched.status === "draft";
+                                        setItems((prev) => {
+                                          const updated = [...prev];
+                                          updated[idx] = {
+                                            ...updated[idx],
+                                            name: matched.name,
+                                            productId: matched.productId || matched._id || "",
+                                            productRef: matched._id || "",
+                                            unitPrice: Number(matched.price) || 0,
+                                            isTaxInclusive: formData.taxPreference === "inclusive",
+                                            isUnpublished: isUnpub,
+                                            description: matched.description ? String(matched.description).trim() : (updated[idx].description || ""),
+                                            sku: matched.sku ? String(matched.sku) : (updated[idx].sku || ""),
+                                            gstPercent: Number(matched.gstPercent) || 18
+                                          };
+                                          return updated;
+                                        });
+                                        showToast(`Selected "${matched.name}"${isUnpub ? " (Unpublished Item)" : ""} (₹${matched.price})`);
+                                      }
+                                    }}
+                                    required
+                                  />
+                                  {item.isUnpublished && (
+                                    <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 6px", borderRadius: "4px", background: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca", whiteSpace: "nowrap" }} title="Unpublished / Internal product">
+                                      Unpublished
+                                    </span>
+                                  )}
+                                </div>
                                 <input
                                   type="text"
                                   className="item-input sub"
@@ -1398,14 +1295,38 @@ const QuotationManagementPage = () => {
                                 />
                               </td>
                               <td>
-                                <input
-                                  type="number"
-                                  min="0"
-                                  step="0.01"
-                                  className="item-input right"
-                                  value={item.unitPrice}
-                                  onChange={(e) => handleItemChange(idx, "unitPrice", e.target.value)}
-                                />
+                                <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    className="item-input right"
+                                    value={item.unitPrice}
+                                    onChange={(e) => handleItemChange(idx, "unitPrice", e.target.value)}
+                                  />
+                                  <button
+                                    type="button"
+                                    className={`tax-mode-pill-btn ${item.isTaxInclusive ? "inclusive" : "exclusive"}`}
+                                    onClick={() => {
+                                      setItems((prev) => {
+                                        const next = [...prev];
+                                        const cur = next[idx].isTaxInclusive !== undefined
+                                          ? next[idx].isTaxInclusive
+                                          : (formData.taxPreference === "inclusive");
+                                        next[idx] = { ...next[idx], isTaxInclusive: !cur };
+                                        return next;
+                                      });
+                                    }}
+                                    title={item.isTaxInclusive ? "Price includes GST (MRP). Click to switch to exclusive." : "Price excludes GST (Base). Click to switch to inclusive."}
+                                  >
+                                    {item.isTaxInclusive ? "Incl" : "Excl"}
+                                  </button>
+                                </div>
+                                {item.isTaxInclusive && Number(item.unitPrice) > 0 && (
+                                  <span className="q-derived-base-hint" title="Derived base taxable rate before GST">
+                                    Base: ₹{calculations.items[idx]?.baseUnitPrice?.toFixed(2)} + {item.gstPercent || 18}%
+                                  </span>
+                                )}
                               </td>
                               <td>
                                 <input
@@ -1906,11 +1827,7 @@ const QuotationManagementPage = () => {
                                 {!isConverted && (
                                   <button
                                     className="action-convert-btn"
-                                    onClick={() => {
-                                      setConvertModalQuotation(q);
-                                      setConvertPaymentStatus("Pending");
-                                      setConvertAmountPaid("");
-                                    }}
+                                    onClick={() => handleOpenConvertModal(q)}
                                     title="Convert Approved Quotation to Tax Invoice"
                                   >
                                     <FileCheck size={14} />
@@ -1983,37 +1900,71 @@ const QuotationManagementPage = () => {
                 </button>
               </div>
 
-              <div className="catalog-search-wrap">
-                <Search size={18} className="search-icon" />
-                <input
-                  type="text"
-                  placeholder="Filter by product name, category, or SKU..."
-                  value={catalogSearch}
-                  onChange={(e) => setCatalogSearch(e.target.value)}
-                  autoFocus
-                />
+              <div className="catalog-search-wrap" style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                <div style={{ position: "relative", flex: 1, display: "flex", alignItems: "center" }}>
+                  <Search size={18} className="search-icon" />
+                  <input
+                    type="text"
+                    placeholder="Filter by product name, category, or SKU..."
+                    value={catalogSearch}
+                    onChange={(e) => setCatalogSearch(e.target.value)}
+                    autoFocus
+                  />
+                </div>
+                <select
+                  value={catalogStatusFilter}
+                  onChange={(e) => setCatalogStatusFilter(e.target.value)}
+                  style={{
+                    padding: "8px 12px",
+                    borderRadius: "6px",
+                    border: "1px solid #cbd5e1",
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    background: "#ffffff",
+                    color: "#334155"
+                  }}
+                  title="Filter by publication status"
+                >
+                  <option value="all">All Products (Published & Unpublished)</option>
+                  <option value="published">🟢 Published Only (Storefront)</option>
+                  <option value="unpublished">🔴 Unpublished / Internal Only</option>
+                </select>
               </div>
 
               <div className="catalog-list-scroll">
                 {filteredCatalog.length === 0 ? (
                   <div className="empty-catalog">No products found matching your search.</div>
                 ) : (
-                  filteredCatalog.map((p) => (
-                    <div key={p._id} className="catalog-product-row" onClick={() => handleAddItem(p)}>
-                      <div className="prod-info">
-                        <strong>{p.name}</strong>
-                        <span className="prod-cat">
-                          Category: {p.category || "General"} {p.sku ? `• SKU: ${p.sku}` : ""}
-                        </span>
+                  filteredCatalog.map((p) => {
+                    const isUnpub = p.isVisible === false || p.isPublished === false || p.status === "unpublished" || p.status === "draft";
+                    return (
+                      <div key={p._id} className={`catalog-product-row ${isUnpub ? "is-unpublished" : ""}`} onClick={() => handleAddItem(p)}>
+                        <div className="prod-info">
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                            <strong>{p.name}</strong>
+                            {isUnpub ? (
+                              <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 6px", borderRadius: "4px", background: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca" }}>
+                                🔴 Unpublished
+                              </span>
+                            ) : (
+                              <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 6px", borderRadius: "4px", background: "#f0fdf4", color: "#16a34a", border: "1px solid #bbf7d0" }}>
+                                🟢 Published
+                              </span>
+                            )}
+                          </div>
+                          <span className="prod-cat">
+                            Category: {p.category || "General"} {p.sku ? `• SKU: ${p.sku}` : ""}
+                          </span>
+                        </div>
+                        <div className="prod-price-add">
+                          <strong className="prod-price">₹{Number(p.price || 0).toLocaleString("en-IN")}</strong>
+                          <button className="prod-add-btn">
+                            <Plus size={14} /> Add
+                          </button>
+                        </div>
                       </div>
-                      <div className="prod-price-add">
-                        <strong className="prod-price">₹{Number(p.price || 0).toLocaleString("en-IN")}</strong>
-                        <button className="prod-add-btn">
-                          <Plus size={14} /> Add
-                        </button>
-                      </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </div>
@@ -2062,6 +2013,22 @@ const QuotationManagementPage = () => {
                     <option value="Pending">🟡 Pending Settlement (Open Balance)</option>
                     <option value="Partially Paid">🟠 Partially Paid (With Advance Deposit)</option>
                     <option value="Paid">🟢 Paid in Full</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Invoice Payment Terms *</label>
+                  <select
+                    value={convertPaymentTerms}
+                    onChange={(e) => setConvertPaymentTerms(e.target.value)}
+                  >
+                    <option value="Immediate">Due on Receipt (Immediate)</option>
+                    <option value="Net 7">Net 7 Days</option>
+                    <option value="Net 15">Net 15 Days (Standard)</option>
+                    <option value="Net 30">Net 30 Days</option>
+                    <option value="Net 45">Net 45 Days</option>
+                    <option value="Net 60">Net 60 Days</option>
+                    <option value="Net 90">Net 90 Days</option>
                   </select>
                 </div>
 
@@ -2125,7 +2092,7 @@ const QuotationManagementPage = () => {
                     <button
                       className="q-btn secondary"
                       onClick={() => {
-                        setConvertModalQuotation(previewQuotation);
+                        handleOpenConvertModal(previewQuotation);
                         setPreviewQuotation(null);
                       }}
                     >
@@ -2155,6 +2122,7 @@ const QuotationManagementPage = () => {
                       <div><span>Date:</span><strong>{previewQuotation.quotationDate ? new Date(previewQuotation.quotationDate).toLocaleDateString("en-IN") : "N/A"}</strong></div>
                       <div><span>Valid Until:</span><strong style={{ color: "#e3000f" }}>{previewQuotation.validUntil ? new Date(previewQuotation.validUntil).toLocaleDateString("en-IN") : "30 days"}</strong></div>
                       <div><span>Place of Supply:</span><strong>{previewQuotation.placeOfSupply || "Tamil Nadu (33)"}</strong></div>
+                      <div><span>Payment Terms:</span><strong>{previewQuotation.paymentTerms || "Net 15"}</strong></div>
                     </div>
                   </div>
                 </div>
@@ -2164,7 +2132,10 @@ const QuotationManagementPage = () => {
                     <h4>QUOTATION FOR:</h4>
                     <strong>{previewQuotation.customerName || previewQuotation.clientName || previewQuotation.userName || "Valued Client"}</strong>
                     {previewQuotation.customerCompany && <p>{previewQuotation.customerCompany}</p>}
-                    <p>{previewQuotation.customerAddress || (previewQuotation.placeOfSupply ? `${previewQuotation.placeOfSupply}, India` : "Tamil Nadu, India")}</p>
+                    <p><strong>Billing Address:</strong> {previewQuotation.customerAddress || (previewQuotation.placeOfSupply ? `${previewQuotation.placeOfSupply}, India` : "Tamil Nadu, India")}</p>
+                    {previewQuotation.shippingSameAsBilling === false && previewQuotation.shippingAddress && previewQuotation.shippingAddress !== previewQuotation.customerAddress && (
+                      <p><strong>Delivery Site:</strong> {previewQuotation.shippingAddress} {previewQuotation.shippingName ? `(${previewQuotation.shippingName})` : ""}</p>
+                    )}
                     {previewQuotation.customerPhone && <p>Phone: {previewQuotation.customerPhone}</p>}
                     {previewQuotation.customerEmail && <p>Email: {previewQuotation.customerEmail}</p>}
                     {previewQuotation.customerGstin && <p>GSTIN: {previewQuotation.customerGstin}</p>}

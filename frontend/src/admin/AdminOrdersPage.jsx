@@ -1,7 +1,7 @@
 import API_BASE_URL from '../apiConfig';
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Package, Clock, Eye, X, MapPin, CreditCard, ShoppingBag, Printer, Search } from "lucide-react";
+import { ArrowLeft, Package, Clock, Eye, X, MapPin, CreditCard, ShoppingBag, Printer, Search, FileText } from "lucide-react";
 import AdminLayout from "./AdminLayout";
 import "./AdminOrdersPage.css";
 
@@ -314,7 +314,32 @@ const AdminOrdersPage = () => {
                       cursor: 'pointer'
                     }}
                   >
-                    <Printer size={14} /> 6*4 Thermal Label
+                    <Printer size={14} /> Shipping Label
+                  </button>
+                  <button
+                    onClick={() => {
+                      navigate("/admin/create-invoice", {
+                        state: {
+                          order: selectedOrder
+                        }
+                      });
+                    }}
+                    style={{
+                      background: '#2563eb',
+                      color: 'white',
+                      border: 'none',
+                      padding: '6px 12px',
+                      borderRadius: '6px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      fontSize: '13px',
+                      fontWeight: '600',
+                      cursor: 'pointer'
+                    }}
+                    title="Generate Official GST Tax Invoice for this order"
+                  >
+                    <FileText size={14} /> Create Tax Invoice
                   </button>
                   <button className="close-btn" onClick={() => setSelectedOrder(null)}><X size={20} /></button>
                 </div>
@@ -335,6 +360,28 @@ const AdminOrdersPage = () => {
                     <p><strong>Method:</strong> {selectedOrder.shippingMethod?.toUpperCase()}</p>
                   </div>
                 </div>
+
+                {selectedOrder.billingAddress && selectedOrder.billingSameAsShipping === false ? (
+                  <div className="modal-section">
+                    <h4><MapPin size={16} /> Billing Address</h4>
+                    <div className="address-box">
+                      <p><strong>Name:</strong> {selectedOrder.billingAddress?.firstName} {selectedOrder.billingAddress?.lastName}</p>
+                      {selectedOrder.billingAddress?.company && <p><strong>Company:</strong> {selectedOrder.billingAddress.company}</p>}
+                      {selectedOrder.billingAddress?.gstin && <p><strong>GSTIN:</strong> {selectedOrder.billingAddress.gstin}</p>}
+                      <p><strong>Email:</strong> {selectedOrder.billingAddress?.email || selectedOrder.userEmail}</p>
+                      <p><strong>Phone:</strong> {selectedOrder.billingAddress?.phone || selectedOrder.phone || 'N/A'}</p>
+                      <p><strong>Address:</strong> 
+                          <br />{selectedOrder.billingAddress?.address}{selectedOrder.billingAddress?.apartment ? ` (${selectedOrder.billingAddress.apartment})` : ''}
+                          {selectedOrder.billingAddress?.locality && <><br />{selectedOrder.billingAddress.locality}</>}
+                          <br />{[selectedOrder.billingAddress?.city, selectedOrder.billingAddress?.state, selectedOrder.billingAddress?.postalCode].filter(Boolean).join(', ')}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ padding: "8px 12px", background: "#f8fafc", borderRadius: "6px", fontSize: "12px", color: "#64748b", border: "1px solid #e2e8f0" }}>
+                    ✓ Billing Address is identical to Shipping Address
+                  </div>
+                )}
 
                 <div className="modal-section">
                   <h4><CreditCard size={16} /> Payment & Billing</h4>

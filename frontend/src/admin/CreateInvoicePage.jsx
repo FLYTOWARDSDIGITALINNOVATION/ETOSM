@@ -31,10 +31,13 @@ import {
   Eye,
   Filter,
   ShieldCheck,
-  Tag
+  Tag,
+  Ban,
+  Edit3,
+  FileX
 } from "lucide-react";
 import { generateEtosmInvoicePdf, printEtosmInvoicePdf } from "../utils/invoicePdfGenerator";
-import { GST_STATES } from "../utils/gstStates";
+import { GST_STATES, detectPlaceOfSupply, isInterStateSupply } from "../utils/gstStates";
 import AdminLayout from "./AdminLayout";
 import "./CreateInvoicePage.css";
 
@@ -64,6 +67,26 @@ function numberToWordsINR(num) {
   return `Rupees ${inWords(rounded)} Only`;
 }
 
+export const PAYMENT_TERMS_OPTIONS = [
+  { id: "Immediate", label: "Due on Receipt (Immediate)", days: 0 },
+  { id: "Net 7", label: "Net 7 Days", days: 7 },
+  { id: "Net 15", label: "Net 15 Days", days: 15 },
+  { id: "Net 30", label: "Net 30 Days", days: 30 },
+  { id: "Net 45", label: "Net 45 Days", days: 45 },
+  { id: "Net 60", label: "Net 60 Days", days: 60 },
+  { id: "Net 90", label: "Net 90 Days", days: 90 },
+  { id: "Custom", label: "Custom Due Date", days: null }
+];
+
+export function calculateDueDateFromTerms(baseDateStr, termId) {
+  const term = PAYMENT_TERMS_OPTIONS.find((t) => t.id === termId);
+  if (!term || term.days === null) return null;
+  const d = baseDateStr ? new Date(baseDateStr) : new Date();
+  if (isNaN(d.getTime())) return null;
+  d.setDate(d.getDate() + term.days);
+  return d.toISOString().split("T")[0];
+}
+
 const CreateInvoicePage = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -88,6 +111,7 @@ const CreateInvoicePage = () => {
   const [productPickerOpen, setProductPickerOpen] = useState(false);
   const [pickerSearch, setPickerSearch] = useState("");
   const [pickerCategory, setPickerCategory] = useState("all");
+  const [pickerPublicationFilter, setPickerPublicationFilter] = useState("all"); // "all" | "published" | "unpublished"
 
   // Customer dropdown search
   const [customerSearch, setCustomerSearch] = useState("");
@@ -96,17 +120,44 @@ const CreateInvoicePage = () => {
 
   // Invoice Meta State
   const [invoiceNumber, setInvoiceNumber] = useState("");
+  const [sourceOrderNumber, setSourceOrderNumber] = useState("");
+  const [allowDuplicateOrder, setAllowDuplicateOrder] = useState(false);
+  const [duplicateOrderWarning, setDuplicateOrderWarning] = useState(null);
+  const [quotationReference, setQuotationReference] = useState("");
+  const [quotationId, setQuotationId] = useState("");
+  const [availableQuotations, setAvailableQuotations] = useState([]);
   const [invoiceDate, setInvoiceDate] = useState(() => new Date().toISOString().split("T")[0]);
   const [dueDate, setDueDate] = useState(() => {
     const d = new Date();
     d.setDate(d.getDate() + 15);
     return d.toISOString().split("T")[0];
   });
+  const [paymentTerms, setPaymentTerms] = useState("Net 15");
+  const [taxPreference, setTaxPreference] = useState("exclusive"); // "exclusive" | "inclusive"
   const [placeOfSupply, setPlaceOfSupply] = useState("33 - Tamil Nadu");
   const [paymentMode, setPaymentMode] = useState("Bank Transfer");
   const [paymentStatus, setPaymentStatus] = useState("Paid");
   const [amountPaidInput, setAmountPaidInput] = useState("");
   const [deductStock, setDeductStock] = useState(true);
+
+  // Invoice Revision Modal State (BUG-021)
+  const [revisionModalOpen, setRevisionModalOpen] = useState(false);
+  const [revisionTarget, setRevisionTarget] = useState(null);
+  const [revisionForm, setRevisionForm] = useState({
+    customerName: "",
+    customerPhone: "",
+    customerEmail: "",
+    customerCompany: "",
+    customerAddress: "",
+    customerGstin: "",
+    notes: "",
+    sourceOrderNumber: "",
+    quotationReference: "",
+    paymentMode: "Bank Transfer",
+    paymentStatus: "Paid",
+    revisionReason: ""
+  });
+  const [savingRevision, setSavingRevision] = useState(false);
 
   // Customer Details State
   const [customer, setCustomer] = useState({
@@ -114,6 +165,16 @@ const CreateInvoicePage = () => {
     name: "",
     phone: "",
     email: "",
+    company: "",
+    address: "",
+    gstin: ""
+  });
+
+  // Consignee / Shipping Details State (Separate from Billing)
+  const [shippingSameAsBilling, setShippingSameAsBilling] = useState(true);
+  const [shippingDetails, setShippingDetails] = useState({
+    name: "",
+    phone: "",
     company: "",
     address: "",
     gstin: ""
@@ -130,6 +191,7 @@ const CreateInvoicePage = () => {
       availableStock: null,
       quantity: 1,
       unitPrice: 0,
+      isTaxInclusive: taxPreference === "inclusive",
       discountType: "percent", // "percent" or "flat"
       discountValue: 0,
       gstPercent: 18
@@ -171,6 +233,33 @@ const CreateInvoicePage = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // BUG-019: Real-time duplicate order check
+  useEffect(() => {
+    const clean = (sourceOrderNumber || "").trim();
+    if (!clean) {
+      setDuplicateOrderWarning(null);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/admin/invoices/check-duplicate?sourceOrderNumber=${encodeURIComponent(clean)}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.duplicateOrder && data.orderExistingInvoice) {
+            setDuplicateOrderWarning(data.orderExistingInvoice);
+          } else {
+            setDuplicateOrderWarning(null);
+          }
+        }
+      } catch (e) {
+        // quiet catch
+      }
+    }, 450);
+    return () => clearTimeout(timer);
+  }, [sourceOrderNumber, token]);
+
   // Auth & Initial Data Fetching
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user") || "null");
@@ -185,19 +274,28 @@ const CreateInvoicePage = () => {
   const loadInitialData = async () => {
     try {
       setLoadingInitial(true);
-      const [prodRes, custRes, settingsRes] = await Promise.all([
+      const [prodRes, custRes, settingsRes, quoteRes] = await Promise.all([
         fetch(`${API_BASE_URL}/admin/products-stats`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
         fetch(`${API_BASE_URL}/admin/customers`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        fetch(`${API_BASE_URL}/settings`)
+        fetch(`${API_BASE_URL}/settings`),
+        fetch(`${API_BASE_URL}/admin/quotations`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
       ]);
 
-      if (prodRes.ok) {
+      if (prodRes && prodRes.ok) {
         const prodData = await prodRes.json();
         setProducts(Array.isArray(prodData) ? prodData : []);
+      } else {
+        const fallbackRes = await fetch(`${API_BASE_URL}/products/all`).catch(() => null);
+        if (fallbackRes && fallbackRes.ok) {
+          const fb = await fallbackRes.json();
+          setProducts(Array.isArray(fb) ? fb : Array.isArray(fb.products) ? fb.products : []);
+        }
       }
       if (custRes.ok) {
         const custData = await custRes.json();
@@ -207,6 +305,15 @@ const CreateInvoicePage = () => {
           ? custData.customers
           : [];
         setCustomers(custList);
+      }
+      if (quoteRes && quoteRes.ok) {
+        const qData = await quoteRes.json();
+        const qList = Array.isArray(qData)
+          ? qData
+          : Array.isArray(qData.quotations)
+          ? qData.quotations
+          : [];
+        setAvailableQuotations(qList);
       }
       if (settingsRes && settingsRes.ok) {
         const sData = await settingsRes.json();
@@ -297,6 +404,56 @@ const CreateInvoicePage = () => {
     ).slice(0, 50);
   }, [customers, customerSearch]);
 
+  // Dynamic Payment Terms & Due Date Synchronization
+  const handleInvoiceDateChange = (newDate) => {
+    setInvoiceDate(newDate);
+    if (paymentTerms && paymentTerms !== "Custom") {
+      const computed = calculateDueDateFromTerms(newDate, paymentTerms);
+      if (computed) setDueDate(computed);
+    }
+  };
+
+  const handlePaymentTermsChange = (newTerm) => {
+    setPaymentTerms(newTerm);
+    if (newTerm !== "Custom") {
+      const computed = calculateDueDateFromTerms(invoiceDate, newTerm);
+      if (computed) setDueDate(computed);
+    }
+  };
+
+  const handleDueDateChange = (newDueDate) => {
+    setDueDate(newDueDate);
+    if (invoiceDate && newDueDate) {
+      const d1 = new Date(invoiceDate);
+      const d2 = new Date(newDueDate);
+      const diffDays = Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
+      const match = PAYMENT_TERMS_OPTIONS.find((t) => t.days === diffDays);
+      setPaymentTerms(match ? match.id : "Custom");
+    }
+  };
+
+  // Tax Preference (Exclusive vs Inclusive) Handlers
+  const handleTaxPreferenceChange = (newPref) => {
+    setTaxPreference(newPref);
+    setItems((prev) =>
+      prev.map((item) => ({
+        ...item,
+        isTaxInclusive: newPref === "inclusive"
+      }))
+    );
+  };
+
+  const handleToggleItemTaxInclusive = (index) => {
+    setItems((prev) => {
+      const next = [...prev];
+      const currentVal = next[index].isTaxInclusive !== undefined
+        ? next[index].isTaxInclusive
+        : (taxPreference === "inclusive");
+      next[index] = { ...next[index], isTaxInclusive: !currentVal };
+      return next;
+    });
+  };
+
   // Select customer from dropdown
   const handleSelectCustomer = (c) => {
     let fullAddr = c.address || (c.shippingAddress && c.shippingAddress !== "N/A" ? c.shippingAddress : "");
@@ -313,24 +470,226 @@ const CreateInvoicePage = () => {
       gstin: c.gstin || ""
     });
 
-    if (c.state) {
-      const matchState = GST_STATES.find(
-        (s) => s.name.toLowerCase() === c.state.toLowerCase() || c.state.includes(s.code) || c.state.toLowerCase().includes(s.name.toLowerCase())
-      );
-      if (matchState) {
-        setPlaceOfSupply(`${matchState.code} - ${matchState.name}`);
-      }
-    }
+    const detected = detectPlaceOfSupply({
+      gstin: c.gstin,
+      state: c.state,
+      pincode: c.pincode,
+      address: fullAddr
+    });
+    setPlaceOfSupply(detected.placeOfSupply);
 
     setCustomerSearch(c.name || "");
     setCustomerDropdownOpen(false);
-    showToast(`Customer "${c.name}" selected`);
+    showToast(`Customer "${c.name}" selected (${detected.isInterState ? "Inter-State: IGST" : "Intra-State: CGST+SGST"})`);
   };
 
-  // Auto-fill customer if navigated from Customer Management
+  // Select Linked Quotation
+  const handleSelectQuotation = (qId) => {
+    if (!qId) {
+      setQuotationId("");
+      setQuotationReference("");
+      return;
+    }
+    const q = availableQuotations.find((item) => item._id === qId);
+    if (!q) return;
+
+    setQuotationId(q._id);
+    const qRef = q.quotationNumber || q.docNumber || "";
+    setQuotationReference(qRef);
+    if (q.sourceOrderNumber) {
+      setSourceOrderNumber(q.sourceOrderNumber);
+    }
+    if (q.placeOfSupply) {
+      setPlaceOfSupply(q.placeOfSupply);
+    }
+
+    // Populate customer details
+    setCustomer({
+      _id: q.customerId || "",
+      name: q.customerName || "",
+      phone: q.customerPhone || "",
+      email: q.customerEmail || "",
+      company: q.customerCompany || "",
+      address: q.customerAddress || "",
+      gstin: q.customerGstin || ""
+    });
+    setCustomerSearch(q.customerName || "");
+
+    // Populate line items
+    if (Array.isArray(q.items) && q.items.length > 0) {
+      setItems(
+        q.items.map((i, idx) => ({
+          id: `item-${Date.now()}-${idx}`,
+          productId: i.productId || "",
+          productRef: i.productRef || "",
+          name: i.name || "",
+          description: i.description || "",
+          availableStock: null,
+          quantity: Math.max(1, Number(i.quantity) || 1),
+          unitPrice: Math.max(0, Number(i.unitPrice) || 0),
+          discountType: "percent",
+          discountValue: Number(i.discountPercent) || 0,
+          gstPercent: Number(i.gstPercent) >= 0 ? Number(i.gstPercent) : 18
+        }))
+      );
+    }
+
+    if (q.notes) {
+      setNotes(`Quotation Ref #${qRef}.\n${q.notes}`);
+    }
+
+    showToast(`Loaded details from Quotation #${qRef}`);
+  };
+
+  // Auto-fill customer, quotation, or storefront order if navigated with state
   useEffect(() => {
     if (location.state?.customer) {
       handleSelectCustomer(location.state.customer);
+    }
+    if (location.state?.quotation) {
+      const q = location.state.quotation;
+      setQuotationId(q._id || "");
+      const qRef = q.quotationNumber || q.docNumber || "";
+      setQuotationReference(qRef);
+      if (q.sourceOrderNumber) setSourceOrderNumber(q.sourceOrderNumber);
+      if (q.placeOfSupply) setPlaceOfSupply(q.placeOfSupply);
+      setCustomer({
+        _id: q.customerId || "",
+        name: q.customerName || "",
+        phone: q.customerPhone || "",
+        email: q.customerEmail || "",
+        company: q.customerCompany || "",
+        address: q.customerAddress || "",
+        gstin: q.customerGstin || ""
+      });
+      if (q.shippingSameAsBilling === false && q.shippingAddress) {
+        setShippingSameAsBilling(false);
+        setShippingDetails({
+          name: q.shippingName || q.customerName || "",
+          phone: q.shippingPhone || q.customerPhone || "",
+          company: q.shippingCompany || "",
+          address: q.shippingAddress || "",
+          gstin: q.shippingGstin || ""
+        });
+      } else {
+        setShippingSameAsBilling(true);
+        setShippingDetails({
+          name: q.customerName || "",
+          phone: q.customerPhone || "",
+          company: q.customerCompany || "",
+          address: q.customerAddress || "",
+          gstin: q.customerGstin || ""
+        });
+      }
+      setCustomerSearch(q.customerName || "");
+      if (q.taxPreference) {
+        setTaxPreference(q.taxPreference);
+      }
+      if (Array.isArray(q.items) && q.items.length > 0) {
+        setItems(
+          q.items.map((i, idx) => ({
+            id: `item-${Date.now()}-${idx}`,
+            productId: i.productId || "",
+            productRef: i.productRef || "",
+            name: i.name || "",
+            description: i.description || "",
+            availableStock: null,
+            quantity: Math.max(1, Number(i.quantity) || 1),
+            unitPrice: Math.max(0, Number(i.unitPrice || i.enteredPrice) || 0),
+            isTaxInclusive: i.isTaxInclusive !== undefined ? i.isTaxInclusive : (q.taxPreference === "inclusive"),
+            discountType: "percent",
+            discountValue: Number(i.discountPercent) || 0,
+            gstPercent: Number(i.gstPercent) >= 0 ? Number(i.gstPercent) : 18
+          }))
+        );
+      }
+      if (q.paymentTerms) {
+        setPaymentTerms(q.paymentTerms);
+        const computed = calculateDueDateFromTerms(new Date().toISOString().split("T")[0], q.paymentTerms);
+        if (computed) setDueDate(computed);
+      }
+      showToast(`Prefilled from Quotation #${qRef}`);
+    }
+    if (location.state?.order) {
+      const ord = location.state.order;
+      const orderRef = ord.invoiceNumber || (ord._id ? `ORD-${String(ord._id).slice(-8).toUpperCase()}` : "");
+      setSourceOrderNumber(orderRef);
+      let shipName = ord.userName || "";
+      let shipPhone = ord.phone || "";
+      let shipEmail = ord.userEmail || "";
+      let shipAddr = "";
+      if (ord.shippingAddress && typeof ord.shippingAddress === "object") {
+        shipName = `${ord.shippingAddress.firstName || ""} ${ord.shippingAddress.lastName || ""}`.trim() || shipName;
+        shipPhone = ord.shippingAddress.phone || shipPhone;
+        shipEmail = ord.shippingAddress.email || shipEmail;
+        shipAddr = [ord.shippingAddress.address, ord.shippingAddress.locality, ord.shippingAddress.city, ord.shippingAddress.state, ord.shippingAddress.postalCode || ord.shippingAddress.zipCode].filter(Boolean).join(", ");
+      }
+
+      let billName = shipName;
+      let billPhone = shipPhone;
+      let billEmail = shipEmail;
+      let billAddr = shipAddr;
+      const hasDistinctBilling = Boolean(ord.billingAddress && typeof ord.billingAddress === "object" && ord.billingSameAsShipping === false);
+
+      if (hasDistinctBilling) {
+        billName = `${ord.billingAddress.firstName || ""} ${ord.billingAddress.lastName || ""}`.trim() || billName;
+        billPhone = ord.billingAddress.phone || billPhone;
+        billEmail = ord.billingAddress.email || billEmail;
+        billAddr = [ord.billingAddress.address, ord.billingAddress.locality, ord.billingAddress.city, ord.billingAddress.state, ord.billingAddress.postalCode || ord.billingAddress.zipCode].filter(Boolean).join(", ");
+        setShippingSameAsBilling(false);
+      } else {
+        setShippingSameAsBilling(true);
+      }
+
+      const detected = detectPlaceOfSupply({
+        gstin: ord.billingAddress?.gstin || ord.gstin || "",
+        state: ord.placeOfSupply && ord.placeOfSupply !== "33 - Tamil Nadu" ? ord.placeOfSupply : (ord.billingAddress?.state || ord.shippingAddress?.state || ""),
+        pincode: ord.billingAddress?.postalCode || ord.shippingAddress?.postalCode || ord.shippingAddress?.zipCode || "",
+        address: `${billAddr} ${shipAddr}`
+      });
+      setPlaceOfSupply(detected.placeOfSupply);
+
+      setCustomer({
+        _id: "",
+        name: billName,
+        phone: billPhone,
+        email: billEmail,
+        company: "",
+        address: billAddr,
+        gstin: ""
+      });
+      setShippingDetails({
+        name: shipName,
+        phone: shipPhone,
+        company: "",
+        address: shipAddr,
+        gstin: ""
+      });
+      setCustomerSearch(billName);
+      if (ord.productName) {
+        setItems([
+          {
+            id: `item-order-1`,
+            productId: ord.sku ? `SKU-${ord.sku}` : (ord.productId || ""),
+            productRef: ord.productId || "",
+            name: ord.productName,
+            description: ord.variation ? `Variation: ${ord.variation}` : "",
+            availableStock: null,
+            quantity: Math.max(1, Number(ord.quantity) || 1),
+            unitPrice: Math.max(0, Number(ord.price || ord.totalAmount) / Math.max(1, Number(ord.quantity) || 1)),
+            discountType: "percent",
+            discountValue: 0,
+            gstPercent: 18
+          }
+        ]);
+      }
+      if (ord.paymentMethod) {
+        setPaymentMode(ord.paymentMethod.toUpperCase());
+        setPaymentStatus("Paid");
+        setPaymentTerms("Immediate");
+        setDueDate(new Date().toISOString().split("T")[0]);
+      }
+      showToast(`Prefilled from Order #${orderRef}`);
     }
   }, [location.state]);
 
@@ -353,6 +712,7 @@ const CreateInvoicePage = () => {
     const gst = Number(prod.gstPercent) || 18;
     const prodId = prod.sku ? `SKU-${prod.sku}` : (prod.productId ? prod.productId.replace(/^PRD-?/i, "SKU-") : `SKU-${prod._id.toString().slice(-5).toUpperCase()}`);
 
+    const isUnpublished = prod.isVisible === false || prod.isPublished === false || prod.status === "unpublished" || prod.status === "draft";
     const newItem = {
       id: `item-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
       productId: prodId,
@@ -363,6 +723,8 @@ const CreateInvoicePage = () => {
       availableStock: Number(prod.stock) || 0,
       quantity: 1,
       unitPrice: unitPrice,
+      isTaxInclusive: taxPreference === "inclusive",
+      isUnpublished: isUnpublished,
       discountType: "percent",
       discountValue: 0,
       gstPercent: gst
@@ -376,7 +738,7 @@ const CreateInvoicePage = () => {
     }
 
     setProductPickerOpen(false);
-    showToast(`Added "${prod.name}" to invoice`);
+    showToast(`Added "${prod.name}"${isUnpublished ? " (Unpublished Item)" : ""} to invoice`);
   };
 
   // Add blank / custom line item
@@ -390,6 +752,7 @@ const CreateInvoicePage = () => {
       availableStock: null,
       quantity: 1,
       unitPrice: 0,
+      isTaxInclusive: taxPreference === "inclusive",
       discountType: "percent",
       discountValue: 0,
       gstPercent: 18
@@ -432,7 +795,7 @@ const CreateInvoicePage = () => {
 
   // Inter-State detection (State code: 33 is Tamil Nadu)
   const isInterState = useMemo(() => {
-    return !placeOfSupply.includes("33");
+    return isInterStateSupply(placeOfSupply);
   }, [placeOfSupply]);
 
   // Compute Calculations for line items and totals
@@ -448,20 +811,46 @@ const CreateInvoicePage = () => {
     const computedItems = items.map((item) => {
       const qty = Math.max(1, Number(item.quantity) || 1);
       const unitPrice = Math.max(0, Number(item.unitPrice) || 0);
-      const lineGross = qty * unitPrice;
-
-      // Discount calculation
-      let discAmount = 0;
-      const discVal = Math.max(0, Number(item.discountValue) || 0);
-      if (item.discountType === "percent") {
-        discAmount = (lineGross * Math.min(100, discVal)) / 100;
-      } else {
-        discAmount = Math.min(lineGross, discVal);
-      }
-
-      const lineTaxable = Math.max(0, lineGross - discAmount);
+      const isInclusive = item.isTaxInclusive !== undefined
+        ? Boolean(item.isTaxInclusive)
+        : (taxPreference === "inclusive");
       const gstRate = Math.max(0, Number(item.gstPercent) || 0);
-      const lineGst = (lineTaxable * gstRate) / 100;
+      const discVal = Math.max(0, Number(item.discountValue) || 0);
+
+      let lineGross = 0;
+      let discAmount = 0;
+      let lineTaxable = 0;
+      let lineGst = 0;
+      let lineTotal = 0;
+      let baseUnitPrice = unitPrice;
+
+      if (isInclusive) {
+        // Price entered is INCLUSIVE of GST (e.g. MRP)
+        const totalInclusiveGross = qty * unitPrice;
+        if (item.discountType === "percent") {
+          discAmount = (totalInclusiveGross * Math.min(100, discVal)) / 100;
+        } else {
+          discAmount = Math.min(totalInclusiveGross, discVal);
+        }
+        const discountedInclusive = Math.max(0, totalInclusiveGross - discAmount);
+        lineTaxable = gstRate > 0 ? (discountedInclusive / (1 + gstRate / 100)) : discountedInclusive;
+        lineGst = discountedInclusive - lineTaxable;
+        lineTotal = discountedInclusive;
+        baseUnitPrice = gstRate > 0 ? (unitPrice / (1 + gstRate / 100)) : unitPrice;
+        lineGross = gstRate > 0 ? (totalInclusiveGross / (1 + gstRate / 100)) : totalInclusiveGross;
+      } else {
+        // Price entered is EXCLUSIVE of GST (Base Price + GST)
+        lineGross = qty * unitPrice;
+        if (item.discountType === "percent") {
+          discAmount = (lineGross * Math.min(100, discVal)) / 100;
+        } else {
+          discAmount = Math.min(lineGross, discVal);
+        }
+        lineTaxable = Math.max(0, lineGross - discAmount);
+        lineGst = (lineTaxable * gstRate) / 100;
+        lineTotal = lineTaxable + lineGst;
+        baseUnitPrice = unitPrice;
+      }
 
       let lineCgst = 0;
       let lineSgst = 0;
@@ -473,8 +862,6 @@ const CreateInvoicePage = () => {
         lineCgst = lineGst / 2;
         lineSgst = lineGst / 2;
       }
-
-      const lineTotal = lineTaxable + lineGst;
 
       grossSubtotal += lineGross;
       totalLineDiscount += discAmount;
@@ -488,6 +875,8 @@ const CreateInvoicePage = () => {
         ...item,
         quantity: qty,
         unitPrice: unitPrice,
+        baseUnitPrice: Number(baseUnitPrice.toFixed(2)),
+        isTaxInclusive: isInclusive,
         lineGross: Number(lineGross.toFixed(2)),
         discountAmount: Number(discAmount.toFixed(2)),
         taxableAmount: Number(lineTaxable.toFixed(2)),
@@ -530,7 +919,7 @@ const CreateInvoicePage = () => {
       grandTotal: roundedGrandTotal,
       amountInWords: numberToWordsINR(roundedGrandTotal)
     };
-  }, [items, isInterState, overallDiscountType, overallDiscountValue, shippingCharges]);
+  }, [items, isInterState, overallDiscountType, overallDiscountValue, shippingCharges, taxPreference]);
 
   // Save Invoice to Database
   const handleSaveInvoice = async (quiet = false) => {
@@ -563,8 +952,20 @@ const CreateInvoicePage = () => {
         customerAddress: customer.address,
         customerGstin: customer.gstin,
         placeOfSupply: placeOfSupply,
+        shippingSameAsBilling: shippingSameAsBilling,
+        shippingName: shippingSameAsBilling ? customer.name : (shippingDetails.name || customer.name),
+        shippingPhone: shippingSameAsBilling ? customer.phone : (shippingDetails.phone || customer.phone),
+        shippingCompany: shippingSameAsBilling ? customer.company : (shippingDetails.company || customer.company),
+        shippingAddress: shippingSameAsBilling ? customer.address : (shippingDetails.address || customer.address),
+        shippingGstin: shippingSameAsBilling ? customer.gstin : (shippingDetails.gstin || customer.gstin),
+        sourceOrderNumber: (sourceOrderNumber || "").trim(),
+        allowDuplicateOrder: allowDuplicateOrder,
+        quotationReference: (quotationReference || "").trim(),
+        quotationId: quotationId || "",
         paymentMode: paymentMode,
         paymentStatus: paymentStatus,
+        paymentTerms: paymentTerms || "Net 15",
+        taxPreference: taxPreference,
         amountPaid: paymentStatus === "Partially Paid" ? (Number(amountPaidInput) || 0) : (paymentStatus === "Paid" ? invoiceCalculations.grandTotal : 0),
         balanceAmount: paymentStatus === "Partially Paid" ? Math.max(0, invoiceCalculations.grandTotal - (Number(amountPaidInput) || 0)) : (paymentStatus === "Paid" ? 0 : invoiceCalculations.grandTotal),
         deductStock: deductStock,
@@ -575,6 +976,9 @@ const CreateInvoicePage = () => {
           description: i.description || "",
           quantity: i.quantity,
           unitPrice: i.unitPrice,
+          enteredPrice: i.unitPrice,
+          baseUnitPrice: i.baseUnitPrice,
+          isTaxInclusive: i.isTaxInclusive,
           discountPercent: i.discountType === "percent" ? i.discountValue : 0,
           discountAmount: i.discountAmount,
           taxableAmount: i.taxableAmount,
@@ -646,12 +1050,30 @@ const CreateInvoicePage = () => {
       ? { ...customInvoiceData, items: validItems.length > 0 ? validItems : customInvoiceData.items }
       : {
           invoiceNumber,
+          sourceOrderNumber: (sourceOrderNumber || "").trim(),
+          quotationReference: (quotationReference || "").trim(),
+          source: (sourceOrderNumber || "").trim(),
+          reference: (quotationReference || "").trim(),
           invoiceDate,
           dueDate,
           placeOfSupply,
           paymentMode,
           paymentStatus,
+          paymentTerms: paymentTerms || "Net 15",
+          taxPreference: taxPreference,
           customer,
+          customerName: customer.name,
+          customerAddress: customer.address,
+          customerGstin: customer.gstin,
+          customerPhone: customer.phone,
+          customerEmail: customer.email,
+          customerCompany: customer.company,
+          shippingSameAsBilling: shippingSameAsBilling,
+          shippingName: shippingSameAsBilling ? customer.name : (shippingDetails.name || customer.name),
+          shippingPhone: shippingSameAsBilling ? customer.phone : (shippingDetails.phone || customer.phone),
+          shippingCompany: shippingSameAsBilling ? customer.company : (shippingDetails.company || customer.company),
+          shippingAddress: shippingSameAsBilling ? customer.address : (shippingDetails.address || customer.address),
+          shippingGstin: shippingSameAsBilling ? customer.gstin : (shippingDetails.gstin || customer.gstin),
           items: validItems,
           grossSubtotal: invoiceCalculations.grossSubtotal,
           totalDiscount: invoiceCalculations.totalDiscount,
@@ -701,13 +1123,30 @@ const CreateInvoicePage = () => {
       ? { ...customInvoiceData, items: validItems.length > 0 ? validItems : customInvoiceData.items }
       : {
           invoiceNumber,
+          sourceOrderNumber: (sourceOrderNumber || "").trim(),
+          quotationReference: (quotationReference || "").trim(),
+          source: (sourceOrderNumber || "").trim(),
+          reference: (quotationReference || "").trim(),
           invoiceDate,
           dueDate,
           placeOfSupply,
           paymentMode,
           paymentStatus,
-          paymentTerms: "Immediate Payment",
+          paymentTerms: paymentTerms || "Net 15",
+          taxPreference: taxPreference,
           customer,
+          customerName: customer.name,
+          customerAddress: customer.address,
+          customerGstin: customer.gstin,
+          customerPhone: customer.phone,
+          customerEmail: customer.email,
+          customerCompany: customer.company,
+          shippingSameAsBilling: shippingSameAsBilling,
+          shippingName: shippingSameAsBilling ? customer.name : (shippingDetails.name || customer.name),
+          shippingPhone: shippingSameAsBilling ? customer.phone : (shippingDetails.phone || customer.phone),
+          shippingCompany: shippingSameAsBilling ? customer.company : (shippingDetails.company || customer.company),
+          shippingAddress: shippingSameAsBilling ? customer.address : (shippingDetails.address || customer.address),
+          shippingGstin: shippingSameAsBilling ? customer.gstin : (shippingDetails.gstin || customer.gstin),
           items: validItems,
           grossSubtotal: invoiceCalculations.grossSubtotal,
           totalDiscount: invoiceCalculations.totalDiscount,
@@ -777,28 +1216,125 @@ const CreateInvoicePage = () => {
     }
   };
 
-  // Delete saved invoice from history
-  const handleDeleteInvoice = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this invoice?")) return;
+  // Delete saved draft invoice from history (Issued invoices cannot be deleted)
+  const handleDeleteInvoice = async (inv) => {
+    const isDraft = String(inv?.documentStatus || "").toLowerCase() === "draft";
+    if (!isDraft) {
+      showToast("Statutory Compliance: Issued tax invoices cannot be deleted. Use Cancel instead.", "error");
+      return;
+    }
+    if (!window.confirm(`Are you sure you want to delete draft invoice "${inv.invoiceNumber}"?`)) return;
     try {
-      const res = await fetch(`${API_BASE_URL}/admin/invoices/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/admin/invoices/${inv._id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
       });
+      const data = await res.json();
       if (res.ok) {
-        setSavedInvoices((prev) => prev.filter((inv) => inv._id !== id));
-        showToast("Invoice deleted from archive");
+        setSavedInvoices((prev) => prev.filter((item) => item._id !== inv._id));
+        showToast("Draft invoice deleted successfully");
+      } else {
+        showToast(data.message || "Failed to delete draft invoice", "error");
       }
     } catch (err) {
       console.error("Delete invoice error:", err);
-      showToast("Failed to delete invoice", "error");
+      showToast("Failed to delete draft invoice", "error");
+    }
+  };
+
+  // Safely Cancel an issued invoice without deleting the record (GST audit compliance)
+  const handleCancelInvoice = async (inv) => {
+    const reason = window.prompt(
+      `Are you sure you want to cancel invoice "${inv.invoiceNumber}"?\n\nStatutory Note: Issued invoices cannot be deleted to avoid serial number gaps. This will mark the invoice as CANCELLED while preserving the audit record.\n\nEnter cancellation reason:`,
+      "Cancelled due to order revision / error"
+    );
+    if (reason === null) return;
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/admin/invoices/${inv._id}/cancel`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ reason: reason.trim() || "Cancelled by Admin" })
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        showToast(`Invoice ${inv.invoiceNumber} has been safely cancelled.`);
+        fetchInvoicesHistory();
+      } else {
+        showToast(data.message || "Failed to cancel invoice", "error");
+      }
+    } catch (err) {
+      console.error("Cancel invoice error:", err);
+      showToast("Failed to cancel invoice", "error");
+    }
+  };
+
+  // BUG-021: Handle In-place Revision of an Issued Invoice
+  const handleOpenRevisionModal = (inv) => {
+    setRevisionTarget(inv);
+    setRevisionForm({
+      customerName: inv.customerName || "",
+      customerPhone: inv.customerPhone || "",
+      customerEmail: inv.customerEmail || "",
+      customerCompany: inv.customerCompany || "",
+      customerAddress: inv.customerAddress || "",
+      customerGstin: inv.customerGstin || "",
+      notes: inv.notes || "",
+      sourceOrderNumber: inv.sourceOrderNumber || "",
+      quotationReference: inv.quotationReference || "",
+      paymentMode: inv.paymentMode || "Bank Transfer",
+      paymentStatus: inv.paymentStatus || "Paid",
+      revisionReason: ""
+    });
+    setRevisionModalOpen(true);
+  };
+
+  const handleSaveRevision = async () => {
+    if (!revisionTarget) return;
+    if (!revisionForm.revisionReason.trim()) {
+      showToast("Mandatory: Please provide a reason for statutory invoice revision", "error");
+      return;
+    }
+
+    setSavingRevision(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/admin/invoices/${revisionTarget._id}/revise`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(revisionForm)
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to save invoice revision");
+      }
+
+      showToast(`Invoice #${revisionTarget.invoiceNumber} revised successfully! (Rev ${data.invoice?.revisionCount || 1})`);
+      setRevisionModalOpen(false);
+      setRevisionTarget(null);
+      fetchInvoicesHistory();
+    } catch (err) {
+      console.error("Revision error:", err);
+      showToast(err.message || "Failed to revise invoice", "error");
+    } finally {
+      setSavingRevision(false);
     }
   };
 
   // Filtered History Invoices
   const filteredHistoryInvoices = useMemo(() => {
     return savedInvoices.filter((inv) => {
-      const matchesStatus = historyStatusFilter === "all" || inv.paymentStatus === historyStatusFilter;
+      const docStat = inv.documentStatus || (inv.paymentStatus === "Paid" ? "Settled" : "Issued");
+      const matchesStatus =
+        historyStatusFilter === "all" ||
+        inv.paymentStatus === historyStatusFilter ||
+        docStat.toLowerCase() === historyStatusFilter.toLowerCase();
       if (!historySearch.trim()) return matchesStatus;
       const q = historySearch.toLowerCase();
       const matchesSearch =
@@ -883,7 +1419,26 @@ const CreateInvoicePage = () => {
           <div className="inv-form-layout">
             {/* Top Bar: Invoice Meta Information */}
             <div className="inv-card inv-meta-card">
+              {availableQuotations.length > 0 && (
+                <div style={{ marginBottom: "16px", padding: "10px 14px", background: "#f8fafc", borderRadius: "8px", border: "1px dashed #cbd5e1", display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", width: "100%", boxSizing: "border-box" }}>
+                  <span style={{ fontSize: "12px", fontWeight: "700", color: "#334155" }}>⚡ Quick Link to Approved Quotation:</span>
+                  <select
+                    value={quotationId}
+                    onChange={(e) => handleSelectQuotation(e.target.value)}
+                    style={{ padding: "6px 10px", fontSize: "12px", borderRadius: "6px", border: "1px solid #cbd5e1", flex: "1 1 200px", minWidth: 0, maxWidth: "100%", boxSizing: "border-box" }}
+                  >
+                    <option value="">-- Choose an existing Quotation to auto-fill invoice (Optional) --</option>
+                    {availableQuotations.map((q) => (
+                      <option key={q._id} value={q._id}>
+                        #{q.quotationNumber || q.docNumber} - {q.customerName} (₹{Number(q.grandTotal).toLocaleString("en-IN")}) [{q.status}]
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               <div className="inv-meta-grid">
+                {/* Row 1: Primary Invoice & Order Reference */}
                 <div className="inv-meta-field">
                   <label>Invoice Number</label>
                   <input
@@ -902,21 +1457,100 @@ const CreateInvoicePage = () => {
                   <input
                     type="date"
                     value={invoiceDate}
-                    onChange={(e) => setInvoiceDate(e.target.value)}
+                    onChange={(e) => handleInvoiceDateChange(e.target.value)}
                   />
                 </div>
 
                 <div className="inv-meta-field">
-                  <label>Payment Due Date</label>
+                  <label>Source Order # (Optional)</label>
+                  <input
+                    type="text"
+                    value={sourceOrderNumber}
+                    onChange={(e) => {
+                      setSourceOrderNumber(e.target.value);
+                      if (allowDuplicateOrder) setAllowDuplicateOrder(false);
+                    }}
+                    placeholder="e.g. ORD-439823 or #104928"
+                    title="Source online storefront order number or purchase order reference"
+                  />
+                  {duplicateOrderWarning && (
+                    <div className="inv-duplicate-warning-box">
+                      <div className="inv-dup-text">
+                        <AlertCircle size={14} color="#b45309" />
+                        <span>Order #{sourceOrderNumber} already invoiced under #{duplicateOrderWarning.invoiceNumber}</span>
+                      </div>
+                      <label className="inv-dup-checkbox">
+                        <input
+                          type="checkbox"
+                          checked={allowDuplicateOrder}
+                          onChange={(e) => setAllowDuplicateOrder(e.target.checked)}
+                        />
+                        Allow split shipment / partial dispatch
+                      </label>
+                    </div>
+                  )}
+                </div>
+
+                {/* Row 2: Commercial Terms & Quotation */}
+                <div className="inv-meta-field">
+                  <label>Quotation Reference (Optional)</label>
+                  <input
+                    type="text"
+                    value={quotationReference}
+                    onChange={(e) => setQuotationReference(e.target.value)}
+                    placeholder="e.g. QT-2026-0001"
+                    title="Commercial quotation or proposal number"
+                  />
+                </div>
+
+                <div className="inv-meta-field">
+                  <label>Payment Terms</label>
+                  <select
+                    value={paymentTerms}
+                    onChange={(e) => handlePaymentTermsChange(e.target.value)}
+                  >
+                    {PAYMENT_TERMS_OPTIONS.map((term) => (
+                      <option key={term.id} value={term.id}>
+                        {term.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="inv-meta-field">
+                  <div className="inv-meta-field-header">
+                    <label>Payment Due Date</label>
+                    <span style={{ fontSize: "11px", color: paymentTerms === "Immediate" ? "#16a34a" : "#e3000f", fontWeight: 600, whiteSpace: "nowrap" }}>
+                      {paymentTerms === "Immediate" ? "Due Immediately" : paymentTerms === "Custom" ? "Manual Date" : `Auto (${paymentTerms})`}
+                    </span>
+                  </div>
                   <input
                     type="date"
                     value={dueDate}
-                    onChange={(e) => setDueDate(e.target.value)}
+                    onChange={(e) => handleDueDateChange(e.target.value)}
                   />
                 </div>
 
+                {/* Row 3: Statutory Tax & Financial Settlement */}
                 <div className="inv-meta-field">
-                  <label>Place of Supply (State)</label>
+                  <div className="inv-meta-field-header">
+                    <label>Place of Supply</label>
+                    <span
+                      style={{
+                        fontSize: "10.5px",
+                        padding: "1px 6px",
+                        borderRadius: "4px",
+                        fontWeight: 600,
+                        whiteSpace: "nowrap",
+                        background: isInterState ? "#eff6ff" : "#f0fdf4",
+                        color: isInterState ? "#1d4ed8" : "#15803d",
+                        border: `1px solid ${isInterState ? "#bfdbfe" : "#bbf7d0"}`
+                      }}
+                      title={isInterState ? "Inter-State Supply: IGST applies" : "Intra-State Supply: CGST (9%) + SGST (9%) applies"}
+                    >
+                      {isInterState ? "⚡ Inter-State" : "⚡ Intra-State"}
+                    </span>
+                  </div>
                   <select
                     value={placeOfSupply}
                     onChange={(e) => setPlaceOfSupply(e.target.value)}
@@ -958,7 +1592,7 @@ const CreateInvoicePage = () => {
                 </div>
 
                 {paymentStatus === "Partially Paid" && (
-                  <div className="inv-meta-field">
+                  <div className="inv-meta-field" style={{ gridColumn: "1 / -1" }}>
                     <label>Amount Paid So Far (₹)</label>
                     <input
                       type="number"
@@ -987,9 +1621,9 @@ const CreateInvoicePage = () => {
                   <span className="inv-tag">Step 1: Select or enter customer</span>
                 </div>
 
-                <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap", width: "100%", maxWidth: "100%" }}>
                   {customers.length > 0 && (
-                    <div className="customer-select-quick" style={{ minWidth: "240px" }}>
+                    <div className="customer-select-quick" style={{ minWidth: 0, width: "100%", maxWidth: "100%" }}>
                       <select
                         value={customer._id || ""}
                         onChange={(e) => {
@@ -1004,7 +1638,10 @@ const CreateInvoicePage = () => {
                           background: "#fff",
                           cursor: "pointer",
                           color: "#1e293b",
-                          fontWeight: "500"
+                          fontWeight: "500",
+                          width: "100%",
+                          maxWidth: "100%",
+                          boxSizing: "border-box"
                         }}
                       >
                         <option value="">⚡ Quick Select Customer ({customers.length})...</option>
@@ -1107,7 +1744,7 @@ const CreateInvoicePage = () => {
 
               {/* Customer Inputs Form Grid */}
               <div className="inv-customer-fields-grid">
-                <div className="inv-field">
+                <div className="inv-field inv-field-col-2">
                   <label>Customer Name *</label>
                   <input
                     type="text"
@@ -1118,7 +1755,7 @@ const CreateInvoicePage = () => {
                   />
                 </div>
 
-                <div className="inv-field">
+                <div className="inv-field inv-field-col-2">
                   <label>Phone Number</label>
                   <input
                     type="tel"
@@ -1128,7 +1765,7 @@ const CreateInvoicePage = () => {
                   />
                 </div>
 
-                <div className="inv-field">
+                <div className="inv-field inv-field-col-2">
                   <label>Email Address</label>
                   <input
                     type="email"
@@ -1138,7 +1775,7 @@ const CreateInvoicePage = () => {
                   />
                 </div>
 
-                <div className="inv-field">
+                <div className="inv-field inv-field-col-3">
                   <label>Company / Firm Name (Optional)</label>
                   <input
                     type="text"
@@ -1148,26 +1785,118 @@ const CreateInvoicePage = () => {
                   />
                 </div>
 
-                <div className="inv-field">
-                  <label>GSTIN (Optional)</label>
+                <div className="inv-field inv-field-col-3">
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "4px" }}>
+                    <label style={{ margin: 0 }}>GSTIN (Optional)</label>
+                    {customer.gstin && customer.gstin.length >= 2 && (
+                      <span style={{ fontSize: "11px", color: "#2563eb", fontWeight: 600 }}>
+                        Auto-state: {detectPlaceOfSupply({ gstin: customer.gstin }).code}
+                      </span>
+                    )}
+                  </div>
                   <input
                     type="text"
                     placeholder="e.g. 33AAAAE1234A1Z5"
                     value={customer.gstin}
-                    onChange={(e) => setCustomer({ ...customer, gstin: e.target.value.toUpperCase() })}
+                    onChange={(e) => {
+                      const val = e.target.value.toUpperCase();
+                      setCustomer({ ...customer, gstin: val });
+                      if (val.length >= 2) {
+                        const detected = detectPlaceOfSupply({ gstin: val });
+                        if (detected.source === "gstin") {
+                          setPlaceOfSupply(detected.placeOfSupply);
+                        }
+                      }
+                    }}
                     className="inv-mono-input"
                   />
                 </div>
 
-                <div className="inv-field inv-field-full">
-                  <label>Billing & Shipping Address</label>
+                <div className="inv-field inv-field-full" style={{ minWidth: 0, width: "100%" }}>
+                  <label>Billing Address (Buyer Principal Place of Business)</label>
                   <input
                     type="text"
                     placeholder="Door No, Street name, City, Pincode"
                     value={customer.address}
-                    onChange={(e) => setCustomer({ ...customer, address: e.target.value })}
+                    onChange={(e) => {
+                      const newAddr = e.target.value;
+                      setCustomer({ ...customer, address: newAddr });
+                      if (shippingSameAsBilling) {
+                        setShippingDetails((prev) => ({ ...prev, address: newAddr }));
+                      }
+                      if (!customer.gstin || customer.gstin.length < 2) {
+                        const detected = detectPlaceOfSupply({ address: newAddr });
+                        if (detected.source !== "default") {
+                          setPlaceOfSupply(detected.placeOfSupply);
+                        }
+                      }
+                    }}
                   />
                 </div>
+
+                <div className="inv-field inv-field-full" style={{ marginTop: "4px", minWidth: 0, width: "100%" }}>
+                  <label style={{ display: "flex", alignItems: "flex-start", gap: "8px", cursor: "pointer", fontWeight: 600, color: "#1e293b", fontSize: "13px", whiteSpace: "normal", lineHeight: 1.4 }}>
+                    <input
+                      type="checkbox"
+                      checked={shippingSameAsBilling}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setShippingSameAsBilling(checked);
+                        if (checked) {
+                          setShippingDetails({
+                            name: customer.name,
+                            phone: customer.phone,
+                            company: customer.company,
+                            address: customer.address,
+                            gstin: customer.gstin
+                          });
+                        }
+                      }}
+                      style={{ width: "16px", height: "16px", cursor: "pointer", accentColor: "#e3000f", marginTop: "2px", flexShrink: 0 }}
+                    />
+                    <span style={{ wordBreak: "break-word", flex: 1, minWidth: 0 }}>Shipping / Consignee Address is the same as Billing Address</span>
+                  </label>
+                </div>
+
+                {!shippingSameAsBilling && (
+                  <div className="inv-field-full" style={{ background: "#f8fafc", padding: "14px 12px", borderRadius: "8px", border: "1px dashed #cbd5e1", marginTop: "10px", boxSizing: "border-box", width: "100%", maxWidth: "100%", minWidth: 0 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "6px" }}>
+                      <h4 style={{ margin: 0, fontSize: "13px", color: "#e3000f", display: "flex", alignItems: "center", gap: "6px" }}>
+                        <MapPin size={15} /> Consignee / Delivery Address Details
+                      </h4>
+                      <span style={{ fontSize: "11px", color: "#64748b", wordBreak: "break-word" }}>Separate delivery site or consignee location</span>
+                    </div>
+                    <div className="inv-customer-fields-grid" style={{ gap: "12px" }}>
+                      <div className="inv-field inv-field-col-3">
+                        <label>Consignee Name</label>
+                        <input
+                          type="text"
+                          placeholder="Recipient / Site Contact Person"
+                          value={shippingDetails.name}
+                          onChange={(e) => setShippingDetails({ ...shippingDetails, name: e.target.value })}
+                        />
+                      </div>
+                      <div className="inv-field inv-field-col-3">
+                        <label>Consignee Phone</label>
+                        <input
+                          type="text"
+                          placeholder="Site Contact Phone"
+                          value={shippingDetails.phone}
+                          onChange={(e) => setShippingDetails({ ...shippingDetails, phone: e.target.value })}
+                        />
+                      </div>
+                      <div className="inv-field inv-field-full">
+                        <label>Shipping / Site Delivery Address</label>
+                        <input
+                          type="text"
+                          placeholder="Delivery site door no, industrial park, street, city, pincode"
+                          value={shippingDetails.address}
+                          onChange={(e) => setShippingDetails({ ...shippingDetails, address: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1181,6 +1910,26 @@ const CreateInvoicePage = () => {
                 </div>
 
                 <div className="inv-card-header-actions">
+                  <div className="tax-preference-toggle-group">
+                    <span className="tax-pref-label">Tax Mode:</span>
+                    <button
+                      type="button"
+                      className={`tax-pref-btn ${taxPreference === "exclusive" ? "active" : ""}`}
+                      onClick={() => handleTaxPreferenceChange("exclusive")}
+                      title="Prices entered are base rates exclusive of GST. Tax will be added on top."
+                    >
+                      Exclusive
+                    </button>
+                    <button
+                      type="button"
+                      className={`tax-pref-btn ${taxPreference === "inclusive" ? "active" : ""}`}
+                      onClick={() => handleTaxPreferenceChange("inclusive")}
+                      title="Prices entered are inclusive of GST (MRP). Tax will be reverse-calculated."
+                    >
+                      Inclusive (MRP)
+                    </button>
+                  </div>
+
                   <button
                     className="inv-btn inv-btn-secondary"
                     onClick={() => setProductPickerOpen(true)}
@@ -1201,15 +1950,20 @@ const CreateInvoicePage = () => {
                 <table className="inv-table">
                   <thead>
                     <tr>
-                      <th style={{ width: "38px" }}>#</th>
-                      <th style={{ minWidth: "220px" }}>Product Item & Details</th>
-                      <th style={{ width: "105px" }}>Quantity</th>
-                      <th style={{ width: "120px" }}>Unit Price (₹)</th>
-                      <th style={{ width: "140px" }}>Discount</th>
-                      <th style={{ width: "115px" }}>Taxable (₹)</th>
-                      <th style={{ width: "110px" }}>GST Rate</th>
-                      <th style={{ width: "125px" }}>Line Total (₹)</th>
-                      <th style={{ width: "45px" }}></th>
+                      <th style={{ width: "32px", textAlign: "center" }}>#</th>
+                      <th style={{ minWidth: "160px" }}>Product Item & Details</th>
+                      <th style={{ width: "84px" }}>Quantity</th>
+                      <th style={{ width: "115px" }}>
+                        Unit Price (₹)
+                        <span style={{ display: "block", fontSize: "10px", fontWeight: 600, color: taxPreference === "inclusive" ? "#e3000f" : "#64748b" }}>
+                          {taxPreference === "inclusive" ? "Incl. GST" : "Excl. GST"}
+                        </span>
+                      </th>
+                      <th style={{ width: "90px" }}>Discount</th>
+                      <th style={{ width: "88px", textAlign: "right" }}>Taxable (₹)</th>
+                      <th style={{ width: "80px" }}>GST Rate</th>
+                      <th style={{ width: "95px", textAlign: "right" }}>Line Total (₹)</th>
+                      <th style={{ width: "36px", textAlign: "center" }}></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1232,6 +1986,11 @@ const CreateInvoicePage = () => {
                               {item.productId && (
                                 <span className="inv-prod-id-pill">
                                   {item.productId}
+                                </span>
+                              )}
+                              {item.isUnpublished && (
+                                <span className="inv-item-unpublished-pill" title="Unpublished / Internal product catalog item">
+                                  Unpublished
                                 </span>
                               )}
                               {item.availableStock !== null && (
@@ -1320,7 +2079,20 @@ const CreateInvoicePage = () => {
                                 handleUpdateItem(index, "unitPrice", e.target.value)
                               }
                             />
+                            <button
+                              type="button"
+                              className={`tax-mode-pill-btn ${item.isTaxInclusive ? "inclusive" : "exclusive"}`}
+                              onClick={() => handleToggleItemTaxInclusive(index)}
+                              title={item.isTaxInclusive ? "Price is GST Inclusive (MRP). Click to switch to Exclusive." : "Price is GST Exclusive (Base). Click to switch to Inclusive."}
+                            >
+                              {item.isTaxInclusive ? "Incl" : "Excl"}
+                            </button>
                           </div>
+                          {item.isTaxInclusive && Number(item.unitPrice) > 0 && (
+                            <span className="inv-derived-base-hint" title="Derived base taxable rate before GST">
+                              Base: ₹{item.baseUnitPrice?.toFixed(2)} + {item.gstPercent}%
+                            </span>
+                          )}
                         </td>
 
                         {/* Discount */}
@@ -1360,7 +2132,7 @@ const CreateInvoicePage = () => {
                         </td>
 
                         {/* Taxable Amount */}
-                        <td>
+                        <td style={{ textAlign: "right" }}>
                           <span className="inv-taxable-val">
                             ₹{item.taxableAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                           </span>
@@ -1390,7 +2162,7 @@ const CreateInvoicePage = () => {
                         </td>
 
                         {/* Line Total */}
-                        <td>
+                        <td style={{ textAlign: "right" }}>
                           <span className="inv-line-total">
                             ₹{item.totalAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                           </span>
@@ -1624,7 +2396,7 @@ const CreateInvoicePage = () => {
                 <Search size={16} />
                 <input
                   type="text"
-                  placeholder="Search invoice number, customer name, email, or phone..."
+                  placeholder="Search invoice #, customer name, phone, order #..."
                   value={historySearch}
                   onChange={(e) => setHistorySearch(e.target.value)}
                 />
@@ -1637,9 +2409,14 @@ const CreateInvoicePage = () => {
                   className="inv-select"
                 >
                   <option value="all">Status: All Invoices</option>
-                  <option value="Paid">Status: Paid</option>
-                  <option value="Pending">Status: Pending</option>
-                  <option value="Partially Paid">Status: Partially Paid</option>
+                  <option value="Paid">Payment: Paid</option>
+                  <option value="Pending">Payment: Pending</option>
+                  <option value="Partially Paid">Payment: Partially Paid</option>
+                  <option value="Issued">Doc: Issued</option>
+                  <option value="Settled">Doc: Settled</option>
+                  <option value="Credited">Doc: Credited</option>
+                  <option value="Partially Credited">Doc: Partially Credited</option>
+                  <option value="Cancelled">Doc: Cancelled</option>
                 </select>
               </div>
             </div>
@@ -1672,21 +2449,29 @@ const CreateInvoicePage = () => {
                   <table className="inv-table">
                     <thead>
                       <tr>
-                        <th>Invoice #</th>
-                        <th>Date</th>
-                        <th>Customer</th>
-                        <th>Items</th>
-                        <th>Taxable Value</th>
-                        <th>Grand Total</th>
-                        <th>Payment Status</th>
-                        <th style={{ textAlign: "right" }}>Actions</th>
+                        <th style={{ width: "170px", minWidth: "170px", whiteSpace: "nowrap" }}>Invoice #</th>
+                        <th style={{ width: "105px", minWidth: "105px", whiteSpace: "nowrap" }}>Date</th>
+                        <th style={{ minWidth: "180px" }}>Customer</th>
+                        <th style={{ textAlign: "center", width: "90px", minWidth: "90px", whiteSpace: "nowrap" }}>Items</th>
+                        <th style={{ textAlign: "right", width: "130px", minWidth: "130px", whiteSpace: "nowrap" }}>Taxable Value</th>
+                        <th style={{ textAlign: "right", width: "130px", minWidth: "130px", whiteSpace: "nowrap" }}>Grand Total</th>
+                        <th style={{ textAlign: "center", width: "135px", minWidth: "135px", whiteSpace: "nowrap" }}>Document Status</th>
+                        <th style={{ textAlign: "center", width: "125px", minWidth: "125px", whiteSpace: "nowrap" }}>Payment Status</th>
+                        <th style={{ textAlign: "center", width: "170px", minWidth: "170px", whiteSpace: "nowrap" }}>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {filteredHistoryInvoices.map((inv) => (
                         <tr key={inv._id}>
-                          <td>
-                            <span className="inv-mono-badge">{inv.invoiceNumber}</span>
+                          <td style={{ whiteSpace: "nowrap" }}>
+                            <span className="inv-mono-badge">
+                              {inv.invoiceNumber}
+                              {Number(inv.revisionCount) > 0 && (
+                                <span className="inv-rev-indicator" title={`${inv.revisionCount} revisions recorded`}>
+                                  R{inv.revisionCount}
+                                </span>
+                              )}
+                            </span>
                           </td>
                           <td style={{ whiteSpace: "nowrap", color: "#64748b", fontSize: "12px" }}>
                             {new Date(inv.invoiceDate || inv.createdAt).toLocaleDateString("en-IN")}
@@ -1699,35 +2484,67 @@ const CreateInvoicePage = () => {
                               )}
                             </div>
                           </td>
-                          <td style={{ color: "#64748b" }}>
-                            {inv.items ? `${inv.items.length} items` : "1 item"}
+                          <td style={{ textAlign: "center", whiteSpace: "nowrap" }}>
+                            <span className="inv-items-badge">
+                              {inv.items ? `${inv.items.length} ${inv.items.length === 1 ? "item" : "items"}` : "1 item"}
+                            </span>
                           </td>
-                          <td style={{ fontWeight: "600", color: "#475569" }}>
-                            ₹{Number(inv.taxableSubtotal || 0).toLocaleString("en-IN")}
+                          <td style={{ textAlign: "right", whiteSpace: "nowrap", fontWeight: "600", color: "#475569", fontVariantNumeric: "tabular-nums" }}>
+                            ₹{Number(inv.taxableSubtotal || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </td>
-                          <td style={{ fontWeight: "800", color: "#0f172a" }}>
-                            ₹{Number(inv.grandTotal || 0).toLocaleString("en-IN")}
+                          <td style={{ textAlign: "right", whiteSpace: "nowrap", fontWeight: "800", color: "#0f172a", fontVariantNumeric: "tabular-nums" }}>
+                            ₹{Number(inv.grandTotal || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </td>
-                          <td>
+                          <td style={{ textAlign: "center", whiteSpace: "nowrap" }}>
+                            <span className={`doc-status-pill ${(inv.documentStatus || (inv.paymentStatus === "Paid" ? "settled" : "issued")).toLowerCase().replace(/\s+/g, "-")}`}>
+                              {inv.documentStatus || (inv.paymentStatus === "Paid" ? "Settled" : "Issued")}
+                            </span>
+                          </td>
+                          <td style={{ textAlign: "center", whiteSpace: "nowrap" }}>
                             <span className={`inv-status-pill ${(inv.paymentStatus || "paid").toLowerCase()}`}>
                               ● {inv.paymentStatus || "Paid"}
                             </span>
                           </td>
-                          <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                            <button
-                              className="inv-action-pill"
-                              onClick={() => handleDownloadPdf(inv)}
-                              title="Download PDF Invoice"
-                            >
-                              <Download size={13} /> PDF
-                            </button>
-                            <button
-                              className="inv-action-pill delete"
-                              onClick={() => handleDeleteInvoice(inv._id)}
-                              title="Delete Invoice"
-                            >
-                              <Trash2 size={13} />
-                            </button>
+                          <td style={{ textAlign: "center", whiteSpace: "nowrap" }}>
+                            <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
+                              <button
+                                className="inv-action-pill"
+                                onClick={() => handleDownloadPdf(inv)}
+                                title="Download PDF Invoice"
+                              >
+                                <Download size={13} /> PDF
+                              </button>
+                              {inv.documentStatus !== "Cancelled" && inv.paymentStatus !== "Cancelled" && (
+                                <button
+                                  className="inv-action-pill revise"
+                                  onClick={() => handleOpenRevisionModal(inv)}
+                                  title="Revise issued invoice (Statutory Audit Safe)"
+                                >
+                                  <Edit3 size={13} /> Revise{inv.revisionCount > 0 ? ` (R${inv.revisionCount})` : ""}
+                                </button>
+                              )}
+                              {String(inv.documentStatus || "").toLowerCase() === "draft" ? (
+                                <button
+                                  className="inv-action-pill delete"
+                                  onClick={() => handleDeleteInvoice(inv)}
+                                  title="Delete Draft Invoice"
+                                >
+                                  <Trash2 size={13} />
+                                </button>
+                              ) : inv.documentStatus === "Cancelled" || inv.paymentStatus === "Cancelled" ? (
+                                <span className="inv-action-pill cancelled-tag" title="Invoice is void/cancelled">
+                                  Cancelled
+                                </span>
+                              ) : (
+                                <button
+                                  className="inv-action-pill cancel-inv"
+                                  onClick={() => handleCancelInvoice(inv)}
+                                  title="Issue official Cancellation / Credit Note"
+                                >
+                                  <FileX size={13} /> Cancel
+                                </button>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -1790,6 +2607,18 @@ const CreateInvoicePage = () => {
                     </option>
                   ))}
                 </select>
+
+                <select
+                  className="inv-select"
+                  value={pickerPublicationFilter}
+                  onChange={(e) => setPickerPublicationFilter(e.target.value)}
+                  title="Filter products by publication status"
+                  style={{ minWidth: "175px" }}
+                >
+                  <option value="all">All Statuses (Published & Unpublished)</option>
+                  <option value="published">🟢 Published Only (Storefront)</option>
+                  <option value="unpublished">🔴 Unpublished / Internal Only</option>
+                </select>
               </div>
 
               {/* Picker Products Grid */}
@@ -1797,25 +2626,32 @@ const CreateInvoicePage = () => {
                 {products
                   .filter((p) => {
                     const matchesCat = pickerCategory === "all" || p.category === pickerCategory;
-                    if (!pickerSearch.trim()) return matchesCat;
+                    const isUnpub = p.isVisible === false || p.isPublished === false || p.status === "unpublished" || p.status === "draft";
+                    const matchesPub =
+                      pickerPublicationFilter === "all" ||
+                      (pickerPublicationFilter === "published" && !isUnpub) ||
+                      (pickerPublicationFilter === "unpublished" && isUnpub);
+
+                    if (!pickerSearch.trim()) return matchesCat && matchesPub;
                     const q = pickerSearch.toLowerCase();
                     const matchesSearch =
                       (p.name && p.name.toLowerCase().includes(q)) ||
                       (p.productId && p.productId.toLowerCase().includes(q)) ||
                       (p.sku && String(p.sku).includes(q)) ||
                       (p.category && p.category.toLowerCase().includes(q));
-                    return matchesCat && matchesSearch;
+                    return matchesCat && matchesPub && matchesSearch;
                   })
                   .map((p) => {
                     const price = Number(p.price) || 0;
                     const stock = Number(p.stock) || 0;
+                    const isUnpub = p.isVisible === false || p.isPublished === false || p.status === "unpublished" || p.status === "draft";
                     const prodId =
                       p.sku ? `SKU-${p.sku}` : (p.productId ? p.productId.replace(/^PRD-?/i, "SKU-") : `SKU-${p._id.toString().slice(-5).toUpperCase()}`);
 
                     return (
                       <div
                         key={p._id}
-                        className="inv-picker-item"
+                        className={`inv-picker-item ${isUnpub ? "is-unpublished" : ""}`}
                         onClick={() => handleAddProductFromCatalog(p)}
                       >
                         <div className="inv-picker-thumb">
@@ -1830,6 +2666,15 @@ const CreateInvoicePage = () => {
                           <div className="inv-picker-top">
                             <span className="inv-prod-id-pill">{prodId}</span>
                             <span className="inv-cat-pill">{p.category || "General"}</span>
+                            {isUnpub ? (
+                              <span className="inv-pub-pill unpublished" title="Unpublished / Hidden from public storefront - Available for Invoicing">
+                                🔴 Unpublished
+                              </span>
+                            ) : (
+                              <span className="inv-pub-pill published" title="Published in online store">
+                                🟢 Published
+                              </span>
+                            )}
                           </div>
                           <h4>{p.name}</h4>
                           <div className="inv-picker-bottom">
@@ -1848,6 +2693,132 @@ const CreateInvoicePage = () => {
                       </div>
                     );
                   })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* =========================================================================
+            MODAL: INVOICE REVISION (BUG-021)
+            ========================================================================= */}
+        {revisionModalOpen && revisionTarget && (
+          <div className="inv-modal-overlay" onClick={() => setRevisionModalOpen(false)}>
+            <div className="inv-modal-card inv-revision-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="inv-modal-header">
+                <div className="inv-modal-title">
+                  <Edit3 size={18} color="#e3000f" />
+                  <h3>Revise Invoice: <span style={{ fontFamily: "monospace", color: "#e3000f" }}>{revisionTarget.invoiceNumber}</span></h3>
+                </div>
+                <button
+                  className="inv-modal-close"
+                  onClick={() => setRevisionModalOpen(false)}
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="inv-revision-body">
+                <div className="inv-revision-banner">
+                  <ShieldCheck size={18} color="#059669" />
+                  <span>
+                    Statutory Rule: The invoice number <strong>{revisionTarget.invoiceNumber}</strong> is preserved to prevent sequence gaps. Current Revision: <strong>Rev {revisionTarget.revisionCount || 0}</strong>.
+                  </span>
+                </div>
+
+                <div className="inv-revision-grid">
+                  <div className="inv-field">
+                    <label>Customer Name *</label>
+                    <input
+                      type="text"
+                      value={revisionForm.customerName}
+                      onChange={(e) => setRevisionForm({ ...revisionForm, customerName: e.target.value })}
+                    />
+                  </div>
+                  <div className="inv-field">
+                    <label>Customer Phone</label>
+                    <input
+                      type="text"
+                      value={revisionForm.customerPhone}
+                      onChange={(e) => setRevisionForm({ ...revisionForm, customerPhone: e.target.value })}
+                    />
+                  </div>
+                  <div className="inv-field">
+                    <label>Customer Email</label>
+                    <input
+                      type="email"
+                      value={revisionForm.customerEmail}
+                      onChange={(e) => setRevisionForm({ ...revisionForm, customerEmail: e.target.value })}
+                    />
+                  </div>
+                  <div className="inv-field">
+                    <label>Company / Firm Name</label>
+                    <input
+                      type="text"
+                      value={revisionForm.customerCompany}
+                      onChange={(e) => setRevisionForm({ ...revisionForm, customerCompany: e.target.value })}
+                    />
+                  </div>
+                  <div className="inv-field" style={{ gridColumn: "1 / -1" }}>
+                    <label>Customer Address</label>
+                    <textarea
+                      rows={2}
+                      value={revisionForm.customerAddress}
+                      onChange={(e) => setRevisionForm({ ...revisionForm, customerAddress: e.target.value })}
+                    />
+                  </div>
+                  <div className="inv-field">
+                    <label>Customer GSTIN</label>
+                    <input
+                      type="text"
+                      value={revisionForm.customerGstin}
+                      onChange={(e) => setRevisionForm({ ...revisionForm, customerGstin: e.target.value.toUpperCase() })}
+                    />
+                  </div>
+                  <div className="inv-field">
+                    <label>Source Order #</label>
+                    <input
+                      type="text"
+                      value={revisionForm.sourceOrderNumber}
+                      onChange={(e) => setRevisionForm({ ...revisionForm, sourceOrderNumber: e.target.value })}
+                    />
+                  </div>
+                  <div className="inv-field" style={{ gridColumn: "1 / -1" }}>
+                    <label>Notes / Declarations</label>
+                    <textarea
+                      rows={2}
+                      value={revisionForm.notes}
+                      onChange={(e) => setRevisionForm({ ...revisionForm, notes: e.target.value })}
+                    />
+                  </div>
+                  <div className="inv-field inv-revision-reason-field" style={{ gridColumn: "1 / -1" }}>
+                    <label style={{ color: "#b45309", fontWeight: "700" }}>Mandatory Revision Reason (Auditor Trail) *</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Buyer legal business name / address corrected as per GST portal"
+                      value={revisionForm.revisionReason}
+                      onChange={(e) => setRevisionForm({ ...revisionForm, revisionReason: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="inv-modal-footer">
+                <button
+                  type="button"
+                  className="inv-btn inv-btn-secondary"
+                  onClick={() => setRevisionModalOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="inv-btn inv-btn-primary"
+                  onClick={handleSaveRevision}
+                  disabled={savingRevision || !revisionForm.revisionReason.trim()}
+                >
+                  {savingRevision ? "Saving Revision..." : "Save Revision & Update History"}
+                </button>
               </div>
             </div>
           </div>

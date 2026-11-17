@@ -244,7 +244,7 @@
   }
 
   .heading {
-    padding-right: 55px; /* Room for mobile hamburger button */
+    padding-right: 0;
     font-size: 1.25rem;
   }
 

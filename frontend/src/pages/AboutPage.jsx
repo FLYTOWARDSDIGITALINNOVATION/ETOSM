@@ -130,7 +130,6 @@ const AboutPage = () => {
 
           <div className="about-who-text-col">
             <div className="about-who-eyebrow-wrap">
-              <span className="about-who-bar"></span>
               <span className="about-who-eyebrow">WHO WE ARE</span>
             </div>
             <h2 className="about-who-h2">About EToSM Technology</h2>
@@ -153,7 +152,6 @@ const AboutPage = () => {
         <div className="about-offer-container">
           <div className="about-offer-header">
             <div className="about-offer-eyebrow-wrap">
-              <span className="about-offer-bar"></span>
               <span className="about-offer-eyebrow">WHAT WE OFFER</span>
             </div>
             <h2 className="about-offer-h2">Electronic Components and Battery Solutions</h2>
@@ -248,7 +246,6 @@ const AboutPage = () => {
           {/* Left Column: Headline and Description */}
           <div className="about-why-left">
             <div className="about-why-eyebrow-wrap">
-              <span className="about-why-bar"></span>
               <span className="about-why-eyebrow">WHY CHOOSE ETOSM TECHNOLOGY?</span>
             </div>
             <h2 className="about-why-h2">We Help You Find What You Need</h2>
@@ -347,7 +344,6 @@ const AboutPage = () => {
           <div className="about-mv-text-col">
             <div className="about-mv-header">
               <div className="about-mv-eyebrow-wrap">
-                <span className="about-mv-bar"></span>
                 <span className="about-mv-eyebrow">OUR MISSION AND VISION</span>
               </div>
               <h2 className="about-mv-h2">Our Mission and Vision</h2>
@@ -392,9 +388,8 @@ const AboutPage = () => {
             {/* SECTION 6: CALL TO ACTION BANNER */}
       <section className="about-cta-section">
         <div className="about-cta-container">
-          {/* Left: Heading with red bar */}
+          {/* Left: Heading without bar */}
           <div className="about-cta-left">
-            <span className="about-cta-bar"></span>
             <h2 className="about-cta-h2">
               Need Electronic Components <br />
               for Your Project?

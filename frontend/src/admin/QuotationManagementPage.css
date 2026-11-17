@@ -147,9 +147,9 @@
 
 .q-kpi-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-  margin-bottom: 28px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
 }
 
 .q-kpi-card {
@@ -1484,19 +1484,178 @@
 
 @media (max-width: 768px) {
   .quotation-page {
-    padding: 16px;
+    padding: 12px 6px 48px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .q-page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+
+  .q-header-title h1 {
+    font-size: 1.5rem;
+  }
+
+  .q-header-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .q-header-actions .q-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 9px 12px;
+    font-size: 12.5px;
+    box-sizing: border-box;
+  }
+
+  .q-header-actions .q-btn.icon-only {
+    grid-column: span 2;
   }
 
   .q-kpi-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  .q-filter-card {
+    padding: 14px 12px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+  }
+
+  .q-filter-top {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .q-search-form {
+    width: 100%;
+  }
+
+  .q-status-tabs {
+    display: flex;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    padding-bottom: 4px;
+    gap: 6px;
+  }
+
+  .q-status-tabs .q-tab {
+    white-space: nowrap;
+    flex-shrink: 0;
   }
 
   .q-card-body.grid-3 {
     grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .builder-bottom-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .summary-sticky-card {
+    position: static;
+    width: 100%;
   }
 
   .sheet-header,
   .sheet-bottom-row {
     grid-template-columns: 1fr;
   }
+}
+
+/* Tax Preference Segmented Switcher & Line Pills */
+.tax-preference-toggle-group {
+  display: inline-flex;
+  align-items: center;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.tax-pref-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  padding: 0 8px;
+  letter-spacing: 0.4px;
+}
+
+.tax-pref-btn {
+  border: none;
+  background: transparent;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tax-pref-btn:hover {
+  color: #0f172a;
+}
+
+.tax-pref-btn.active {
+  background: #ffffff;
+  color: #e3000f;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.tax-mode-pill-btn {
+  border: none;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  cursor: pointer;
+  margin-left: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  transition: all 0.15s ease;
+}
+
+.tax-mode-pill-btn.exclusive {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+.tax-mode-pill-btn.exclusive:hover {
+  background: #e2e8f0;
+}
+
+.tax-mode-pill-btn.inclusive {
+  background: #fef2f2;
+  color: #e3000f;
+  border: 1px solid #fecaca;
+}
+
+.tax-mode-pill-btn.inclusive:hover {
+  background: #fee2e2;
+}
+
+.q-derived-base-hint {
+  display: block;
+  font-size: 10.5px;
+  color: #059669;
+  font-weight: 600;
+  margin-top: 3px;
+  white-space: nowrap;
 }

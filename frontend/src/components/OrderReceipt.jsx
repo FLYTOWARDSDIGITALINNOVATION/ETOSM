@@ -53,6 +53,22 @@ const OrderReceipt = ({ order, items, onClose }) => {
                         <p><strong>Method:</strong> {order.shippingMethod.toUpperCase()}</p>
                     </div>
 
+                    {order.billingAddress && order.billingSameAsShipping === false && (
+                        <div className="receipt-section">
+                            <h3>Billing Details</h3>
+                            <p><strong>Name:</strong> {order.billingAddress.firstName} {order.billingAddress.lastName}</p>
+                            {order.billingAddress.company && <p><strong>Company:</strong> {order.billingAddress.company}</p>}
+                            {order.billingAddress.gstin && <p><strong>GSTIN:</strong> {order.billingAddress.gstin}</p>}
+                            <p><strong>Email:</strong> {order.billingAddress.email || order.shippingAddress.email}</p>
+                            <p><strong>Phone:</strong> {order.billingAddress.phone || order.shippingAddress.phone}</p>
+                            <p><strong>Address:</strong> 
+                                <br />{order.billingAddress.address}{order.billingAddress.apartment ? ` (${order.billingAddress.apartment})` : ''}
+                                {order.billingAddress.locality && <><br />{order.billingAddress.locality}</>}
+                                <br />{[order.billingAddress.city, order.billingAddress.state, order.billingAddress.postalCode].filter(Boolean).join(', ')}
+                            </p>
+                        </div>
+                    )}
+
                     <div className="receipt-section">
                         <h3>Payment Details</h3>
                         <p><strong>Method:</strong> {order.paymentMethod.toUpperCase()}</p>

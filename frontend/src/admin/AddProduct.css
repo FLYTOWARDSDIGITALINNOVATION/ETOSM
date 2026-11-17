@@ -7,7 +7,7 @@
 
 .form-header {
   margin-bottom: 24px;
-  padding-right: 55px; /* Leaves clear space for top-right hamburger icon on mobile */
+  padding-right: 0;
 }
 
 .form-header h1 {
@@ -338,7 +338,7 @@
 
   .form-header {
     margin-bottom: 18px;
-    padding-right: 55px;
+    padding-right: 0;
   }
 
   .form-header h1 {

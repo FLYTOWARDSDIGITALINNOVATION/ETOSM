@@ -22,7 +22,9 @@ import {
   DollarSign,
   ArrowRight,
   RefreshCw,
-  Tag
+  Tag,
+  Edit3,
+  ShieldCheck
 } from "lucide-react";
 import jsPDF from "jspdf";
 import { generateEtosmCreditNotePdf, printEtosmCreditNotePdf } from "../utils/invoicePdfGenerator";
@@ -38,6 +40,12 @@ const CREDIT_REASONS = [
   "Warranty Credit",
   "Other"
 ];
+
+// Helper to sanitize and clean linked invoice number (BUG-001)
+const formatLinkedInvoice = (invNum) => {
+  if (!invNum) return "";
+  return String(invNum).replace(/^INV-26-27-0001-(2026-\d+)/i, "INV-$1");
+};
 
 const CreditNotesPage = () => {
   const navigate = useNavigate();
@@ -66,6 +74,27 @@ const CreditNotesPage = () => {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [previewCN, setPreviewCN] = useState(null);
   const [statusModalCN, setStatusModalCN] = useState(null);
+
+  // Credit Eligibility State (BUG-023: Over-credit Prevention)
+  const [creditEligibility, setCreditEligibility] = useState(null);
+
+  // Revision Modal State (BUG-022: In-place Credit Note Revision)
+  const [revisionModalOpen, setRevisionModalOpen] = useState(false);
+  const [revisionCN, setRevisionCN] = useState(null);
+  const [revisionForm, setRevisionForm] = useState({
+    customerName: "",
+    customerPhone: "",
+    customerEmail: "",
+    customerCompany: "",
+    customerAddress: "",
+    customerGstin: "",
+    reason: "Goods Returned",
+    notes: "",
+    refundMode: "Bank Transfer",
+    refundReference: "",
+    revisionReason: ""
+  });
+  const [savingRevision, setSavingRevision] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -208,38 +237,78 @@ const CreditNotesPage = () => {
       refundReference: "",
       notes: "Credit note issued subject to standard return policy."
     });
+    setCreditEligibility(null);
     setCreateModalOpen(true);
   };
 
-  // Select Linked Invoice
-  const handleSelectInvoice = (invId) => {
+  // Select Linked Invoice (with BUG-023 Credit Eligibility & Over-credit tracking)
+  const handleSelectInvoice = async (invId) => {
     const inv = availableInvoices.find((i) => i._id === invId);
     if (!inv) return;
 
-    setFormData((prev) => ({
-      ...prev,
-      invoiceId: inv._id,
-      invoiceNumber: inv.invoiceNumber,
-      customerId: inv.customerId || "",
-      customerName: inv.customerName || "",
-      customerEmail: inv.customerEmail || "",
-      customerPhone: inv.customerPhone || "",
-      customerCompany: inv.customerCompany || "",
-      customerAddress: inv.customerAddress || "",
-      customerGstin: inv.customerGstin || "",
-      placeOfSupply: inv.placeOfSupply || "Tamil Nadu (33)",
-      items: Array.isArray(inv.items) && inv.items.length > 0
-        ? inv.items.map((i) => ({
-            name: i.name,
-            description: i.description || "",
-            sku: i.sku || "",
-            quantity: 1,
-            unitPrice: i.unitPrice || 0,
-            gstPercent: i.gstPercent || 18
-          }))
-        : prev.items
-    }));
-    showToast(`Loaded invoice details for #${inv.invoiceNumber}`);
+    let eligibleList = null;
+    try {
+      const elRes = await fetch(`${API_BASE_URL}/admin/invoices/${inv._id}/credit-eligibility`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (elRes.ok) {
+        const elData = await elRes.json();
+        setCreditEligibility(elData);
+        eligibleList = elData.eligibleItems;
+        if (elData.isFullyCredited) {
+          showToast(`Warning: Invoice #${inv.invoiceNumber} is already fully credited (₹${elData.totalPreviouslyCredited.toLocaleString("en-IN")})!`, "error");
+        }
+      }
+    } catch (err) {
+      console.error("Eligibility check error:", err);
+    }
+
+    setFormData((prev) => {
+      let finalItems = [];
+      if (eligibleList && eligibleList.length > 0) {
+        finalItems = eligibleList.map((item) => ({
+          name: item.name,
+          description: item.description || "",
+          sku: item.sku || "",
+          quantity: Math.max(1, item.remainingEligibleQuantity > 0 ? item.remainingEligibleQuantity : 1),
+          maxEligibleQty: item.remainingEligibleQuantity,
+          originalQty: item.originalQuantity,
+          alreadyCreditedQty: item.alreadyCreditedQuantity,
+          unitPrice: Math.max(0, Number(item.unitPrice) || 0),
+          gstPercent: Number(item.gstPercent) >= 0 ? Number(item.gstPercent) : 18
+        }));
+      } else if (Array.isArray(inv.items) && inv.items.length > 0) {
+        finalItems = inv.items.map((i) => ({
+          name: i.name,
+          description: i.description || "",
+          sku: i.sku || "",
+          quantity: Math.max(1, Number(i.quantity) || 1),
+          maxEligibleQty: Number(i.quantity) || 1,
+          originalQty: Number(i.quantity) || 1,
+          alreadyCreditedQty: 0,
+          unitPrice: Math.max(0, Number(i.unitPrice) || 0),
+          gstPercent: Number(i.gstPercent) >= 0 ? Number(i.gstPercent) : 18
+        }));
+      } else {
+        finalItems = prev.items;
+      }
+
+      return {
+        ...prev,
+        invoiceId: inv._id,
+        invoiceNumber: inv.invoiceNumber,
+        customerId: inv.customerId || "",
+        customerName: inv.customerName || "",
+        customerEmail: inv.customerEmail || "",
+        customerPhone: inv.customerPhone || "",
+        customerCompany: inv.customerCompany || "",
+        customerAddress: inv.customerAddress || "",
+        customerGstin: inv.customerGstin || "",
+        placeOfSupply: inv.placeOfSupply || "Tamil Nadu (33)",
+        items: finalItems
+      };
+    });
+    showToast(`Loaded invoice #${inv.invoiceNumber} with eligible quantities`);
   };
 
   // Select Saved Customer
@@ -350,6 +419,14 @@ const CreditNotesPage = () => {
       return;
     }
 
+    // BUG-023: Over-credit validation check against remaining eligible quantity
+    for (const it of formData.items) {
+      if (it.maxEligibleQty !== undefined && Number(it.quantity) > Number(it.maxEligibleQty)) {
+        showToast(`Over-credit error: "${it.name}" has only ${it.maxEligibleQty} remaining eligible unit(s).`, "error");
+        return;
+      }
+    }
+
     setSubmitting(true);
     try {
       const payload = {
@@ -410,8 +487,12 @@ const CreditNotesPage = () => {
     }
   };
 
-  // Delete Credit Note
+  // Delete Credit Note (Statutory Safe)
   const handleDeleteCreditNote = async (cn) => {
+    if (cn.status !== "Cancelled" && cn.status !== "Draft") {
+      showToast("Statutory Compliance: Issued credit notes cannot be destructively deleted. Mark status as Cancelled instead.", "error");
+      return;
+    }
     if (!window.confirm(`Are you sure you want to delete Credit Note #${cn.creditNoteNumber}?`)) {
       return;
     }
@@ -421,16 +502,69 @@ const CreditNotesPage = () => {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
       });
-
+      const data = await res.json();
       if (res.ok) {
         showToast(`Credit Note #${cn.creditNoteNumber} deleted`);
         fetchCreditNotes();
         if (previewCN && previewCN._id === cn._id) setPreviewCN(null);
       } else {
-        throw new Error("Failed to delete");
+        showToast(data.message || "Failed to delete credit note", "error");
       }
     } catch (err) {
       showToast(err.message || "Failed to delete credit note", "error");
+    }
+  };
+
+  // BUG-022: Handle In-place Revision of an Issued Credit Note
+  const handleOpenRevisionModal = (cn) => {
+    setRevisionCN(cn);
+    setRevisionForm({
+      customerName: cn.customerName || "",
+      customerPhone: cn.customerPhone || "",
+      customerEmail: cn.customerEmail || "",
+      customerCompany: cn.customerCompany || "",
+      customerAddress: cn.customerAddress || "",
+      customerGstin: cn.customerGstin || "",
+      reason: cn.reason || "Goods Returned",
+      notes: cn.notes || "",
+      refundMode: cn.refundMode || "Bank Transfer",
+      refundReference: cn.refundReference || "",
+      revisionReason: ""
+    });
+    setRevisionModalOpen(true);
+  };
+
+  const handleSaveRevision = async () => {
+    if (!revisionCN) return;
+    if (!revisionForm.revisionReason.trim()) {
+      showToast("Mandatory: Please provide a reason for credit note revision", "error");
+      return;
+    }
+
+    setSavingRevision(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/admin/credit-notes/${revisionCN._id}/revise`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(revisionForm)
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to revise credit note");
+      }
+
+      showToast(`Credit Note #${revisionCN.creditNoteNumber} revised successfully! (Rev ${data.creditNote?.revisionCount || 1})`);
+      setRevisionModalOpen(false);
+      setRevisionCN(null);
+      fetchCreditNotes();
+    } catch (err) {
+      console.error("Revision error:", err);
+      showToast(err.message || "Failed to revise credit note", "error");
+    } finally {
+      setSavingRevision(false);
     }
   };
 
@@ -684,21 +818,28 @@ const CreditNotesPage = () => {
               <table className="cn-table">
                 <thead>
                   <tr>
-                    <th>CREDIT NOTE # & DATE</th>
-                    <th>CUSTOMER & ENTITY</th>
-                    <th>REASON</th>
-                    <th>LINKED INVOICE</th>
-                    <th style={{ textAlign: "right" }}>TAX</th>
-                    <th style={{ textAlign: "right" }}>CREDIT AMOUNT</th>
-                    <th style={{ textAlign: "center" }}>STATUS</th>
-                    <th style={{ textAlign: "center" }}>ACTIONS</th>
+                    <th style={{ width: "210px", minWidth: "200px", whiteSpace: "nowrap" }}>CREDIT NOTE # & DATE</th>
+                    <th style={{ minWidth: "200px" }}>CUSTOMER & ENTITY</th>
+                    <th style={{ width: "150px", minWidth: "140px", whiteSpace: "nowrap" }}>REASON</th>
+                    <th style={{ width: "175px", minWidth: "165px", whiteSpace: "nowrap" }}>LINKED INVOICE</th>
+                    <th style={{ textAlign: "right", width: "110px", minWidth: "100px", whiteSpace: "nowrap" }}>TAX</th>
+                    <th style={{ textAlign: "right", width: "145px", minWidth: "135px", whiteSpace: "nowrap" }}>CREDIT AMOUNT</th>
+                    <th style={{ textAlign: "center", width: "120px", minWidth: "110px", whiteSpace: "nowrap" }}>STATUS</th>
+                    <th style={{ textAlign: "center", width: "140px", minWidth: "130px", whiteSpace: "nowrap" }}>ACTIONS</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredCreditNotes.map((cn) => (
                     <tr key={cn._id}>
-                      <td>
-                        <strong className="cn-number-bold">{cn.creditNoteNumber}</strong>
+                      <td style={{ whiteSpace: "nowrap" }}>
+                        <strong className="cn-number-bold">
+                          {cn.creditNoteNumber}
+                          {Number(cn.revisionCount) > 0 && (
+                            <span className="cn-rev-badge" title={`${cn.revisionCount} revisions recorded`}>
+                              R{cn.revisionCount}
+                            </span>
+                          )}
+                        </strong>
                         <span className="cn-date-sub">
                           {cn.creditNoteDate ? new Date(cn.creditNoteDate).toLocaleDateString("en-IN") : "N/A"}
                         </span>
@@ -716,35 +857,35 @@ const CreditNotesPage = () => {
                         </div>
                       </td>
 
-                      <td>
+                      <td style={{ whiteSpace: "nowrap" }}>
                         <span className="reason-pill">{cn.reason || "Goods Returned"}</span>
                       </td>
 
-                      <td>
+                      <td style={{ whiteSpace: "nowrap" }}>
                         {cn.invoiceNumber ? (
-                          <span className="linked-inv-badge">#{cn.invoiceNumber}</span>
+                          <span className="linked-inv-badge">#{formatLinkedInvoice(cn.invoiceNumber)}</span>
                         ) : (
                           <span className="text-muted">Standalone</span>
                         )}
                       </td>
 
-                      <td style={{ textAlign: "right" }}>
+                      <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
                         <span className="tax-val">₹{Number(cn.totalTax || 0).toLocaleString("en-IN")}</span>
                       </td>
 
-                      <td style={{ textAlign: "right" }}>
+                      <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
                         <strong className="credit-amt-large">
                           ₹{Number(cn.totalCreditAmount || 0).toLocaleString("en-IN")}
                         </strong>
                       </td>
 
-                      <td style={{ textAlign: "center" }}>
+                      <td style={{ textAlign: "center", whiteSpace: "nowrap" }}>
                         <span className={`cn-status-badge ${cn.status?.toLowerCase().replace(/[^a-z]/g, "")}`}>
                           {cn.status || "Issued"}
                         </span>
                       </td>
 
-                      <td>
+                      <td style={{ textAlign: "center", whiteSpace: "nowrap" }}>
                         <div className="table-actions-row">
                           <button
                             className="action-icon view"
@@ -760,6 +901,15 @@ const CreditNotesPage = () => {
                           >
                             <Download size={15} />
                           </button>
+                          {cn.status !== "Cancelled" && (
+                            <button
+                              className="action-icon revise"
+                              onClick={() => handleOpenRevisionModal(cn)}
+                              title="Revise Credit Note (Statutory Safe)"
+                            >
+                              <Edit3 size={15} />
+                            </button>
+                          )}
                           <button
                             className="action-icon status-change"
                             onClick={() => setStatusModalCN(cn)}
@@ -821,6 +971,18 @@ const CreditNotesPage = () => {
                   </div>
                 </div>
 
+                {creditEligibility && (
+                  <div className={`cn-eligibility-summary ${creditEligibility.isFullyCredited ? "full" : "partial"}`} style={{ margin: "0 0 16px 0", padding: "10px 14px", background: creditEligibility.isFullyCredited ? "#fef2f2" : "#f0fdf4", border: `1px solid ${creditEligibility.isFullyCredited ? "#fecaca" : "#bbf7d0"}`, borderRadius: "8px", display: "flex", alignItems: "center", gap: "10px", fontSize: "12px", color: creditEligibility.isFullyCredited ? "#991b1b" : "#166534" }}>
+                    <ShieldCheck size={18} />
+                    <div style={{ flex: 1 }}>
+                      <strong>Credit Eligibility (BUG-023):</strong> Invoiced: ₹{Number(creditEligibility.totalInvoicedAmount || 0).toLocaleString("en-IN")} • Credited so far: ₹{Number(creditEligibility.totalPreviouslyCredited || 0).toLocaleString("en-IN")} ({creditEligibility.priorCreditNotesCount} prior CN) • Remaining Eligible: <strong>₹{Number(creditEligibility.remainingEligibleAmount || 0).toLocaleString("en-IN")}</strong>
+                    </div>
+                    {creditEligibility.isFullyCredited && (
+                      <span style={{ background: "#dc2626", color: "white", padding: "2px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: "700" }}>Fully Credited</span>
+                    )}
+                  </div>
+                )}
+
                 <div className="form-grid-3">
                   <div className="cn-form-group">
                     <label>Credit Note Number *</label>
@@ -854,6 +1016,18 @@ const CreditNotesPage = () => {
                     </select>
                   </div>
                 </div>
+
+                {creditEligibility && (
+                  <div className={`cn-eligibility-summary ${creditEligibility.isFullyCredited ? "full" : "partial"}`} style={{ margin: "0 0 16px 0", padding: "10px 14px", background: creditEligibility.isFullyCredited ? "#fef2f2" : "#f0fdf4", border: `1px solid ${creditEligibility.isFullyCredited ? "#fecaca" : "#bbf7d0"}`, borderRadius: "8px", display: "flex", alignItems: "center", gap: "10px", fontSize: "12px", color: creditEligibility.isFullyCredited ? "#991b1b" : "#166534" }}>
+                    <ShieldCheck size={18} />
+                    <div style={{ flex: 1 }}>
+                      <strong>Credit Eligibility (BUG-023):</strong> Invoiced: ₹{Number(creditEligibility.totalInvoicedAmount || 0).toLocaleString("en-IN")} • Credited so far: ₹{Number(creditEligibility.totalPreviouslyCredited || 0).toLocaleString("en-IN")} ({creditEligibility.priorCreditNotesCount} prior CN) • Remaining Eligible: <strong>₹{Number(creditEligibility.remainingEligibleAmount || 0).toLocaleString("en-IN")}</strong>
+                    </div>
+                    {creditEligibility.isFullyCredited && (
+                      <span style={{ background: "#dc2626", color: "white", padding: "2px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: "700" }}>Fully Credited</span>
+                    )}
+                  </div>
+                )}
 
                 <div className="form-grid-3">
                   <div className="cn-form-group">
@@ -953,10 +1127,16 @@ const CreditNotesPage = () => {
                               <input
                                 type="number"
                                 min="1"
-                                className="item-inp center"
+                                max={item.maxEligibleQty !== undefined ? item.maxEligibleQty : undefined}
+                                className={`item-inp center ${item.maxEligibleQty !== undefined && item.quantity > item.maxEligibleQty ? "over-credit-error" : ""}`}
                                 value={item.quantity}
                                 onChange={(e) => handleItemChange(idx, "quantity", Math.max(1, Number(e.target.value)))}
                               />
+                              {item.maxEligibleQty !== undefined && (
+                                <div style={{ fontSize: "10px", color: "#64748b", marginTop: "2px", textAlign: "center" }} title={`Invoiced: ${item.originalQty || item.quantity}, Credited: ${item.alreadyCreditedQty || 0}`}>
+                                  Max: {item.maxEligibleQty}
+                                </div>
+                              )}
                             </td>
                             <td>
                               <input
@@ -1013,7 +1193,7 @@ const CreditNotesPage = () => {
                           checked={formData.deductFromInvoiceBalance}
                           onChange={(e) => setFormData({ ...formData, deductFromInvoiceBalance: e.target.checked })}
                         />
-                        <span>Automatically deduct this credit note amount from invoice #{formData.invoiceNumber} balance</span>
+                        <span>Automatically deduct this credit note amount from invoice #{formatLinkedInvoice(formData.invoiceNumber)} balance</span>
                       </label>
                     )}
 
@@ -1096,7 +1276,7 @@ const CreditNotesPage = () => {
                   <div className="p-box">
                     <span className="p-label">DOCUMENT DETAILS:</span>
                     <div>Credit Note #: <strong>{previewCN.creditNoteNumber}</strong></div>
-                    <div>Original Invoice #: <strong>{previewCN.invoiceNumber || "Standalone"}</strong></div>
+                    <div>Original Invoice #: <strong>{previewCN.invoiceNumber ? `#${formatLinkedInvoice(previewCN.invoiceNumber)}` : "Standalone"}</strong></div>
                     <div>Reason: <span className="reason-pill">{previewCN.reason}</span></div>
                     <div>Status: <span className="status-pill-small">{previewCN.status}</span></div>
                     {previewCN.refundMode && <div>Refund Method: {previewCN.refundMode}</div>}
@@ -1184,6 +1364,141 @@ const CreditNotesPage = () => {
                     </div>
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* MODAL 4: REVISE CREDIT NOTE MODAL (BUG-022) */}
+        {revisionModalOpen && revisionCN && (
+          <div className="modal-backdrop" onClick={() => setRevisionModalOpen(false)}>
+            <div className="cn-form-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "600px" }}>
+              <div className="modal-header">
+                <div>
+                  <h3 style={{ display: "flex", alignItems: "center", gap: "8px", margin: 0 }}>
+                    <Edit3 size={18} color="#e3000f" />
+                    Revise Credit Note #{revisionCN.creditNoteNumber}
+                  </h3>
+                  <p className="modal-subtitle" style={{ margin: "4px 0 0" }}>
+                    In-place correction preserving Credit Note sequence identifier
+                  </p>
+                </div>
+                <button className="modal-close" onClick={() => setRevisionModalOpen(false)}>
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="modal-body" style={{ padding: "16px 20px" }}>
+                <div style={{ background: "#ecfdf5", border: "1px solid #a7f3d0", padding: "10px 14px", borderRadius: "8px", fontSize: "12px", color: "#065f46", marginBottom: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
+                  <ShieldCheck size={16} />
+                  <span>
+                    Statutory Rule: Credit note identifier <strong>#{revisionCN.creditNoteNumber}</strong> is preserved. Revision count: <strong>Rev {revisionCN.revisionCount || 0}</strong>.
+                  </span>
+                </div>
+
+                <div className="form-grid-2">
+                  <div className="cn-form-group">
+                    <label>Customer Name *</label>
+                    <input
+                      type="text"
+                      value={revisionForm.customerName}
+                      onChange={(e) => setRevisionForm({ ...revisionForm, customerName: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="cn-form-group">
+                    <label>Customer Phone</label>
+                    <input
+                      type="text"
+                      value={revisionForm.customerPhone}
+                      onChange={(e) => setRevisionForm({ ...revisionForm, customerPhone: e.target.value })}
+                    />
+                  </div>
+                  <div className="cn-form-group">
+                    <label>Customer Email</label>
+                    <input
+                      type="email"
+                      value={revisionForm.customerEmail}
+                      onChange={(e) => setRevisionForm({ ...revisionForm, customerEmail: e.target.value })}
+                    />
+                  </div>
+                  <div className="cn-form-group">
+                    <label>Company / Firm</label>
+                    <input
+                      type="text"
+                      value={revisionForm.customerCompany}
+                      onChange={(e) => setRevisionForm({ ...revisionForm, customerCompany: e.target.value })}
+                    />
+                  </div>
+                  <div className="cn-form-group" style={{ gridColumn: "1 / -1" }}>
+                    <label>Customer Address</label>
+                    <textarea
+                      rows={2}
+                      value={revisionForm.customerAddress}
+                      onChange={(e) => setRevisionForm({ ...revisionForm, customerAddress: e.target.value })}
+                    />
+                  </div>
+                  <div className="cn-form-group">
+                    <label>Customer GSTIN</label>
+                    <input
+                      type="text"
+                      value={revisionForm.customerGstin}
+                      onChange={(e) => setRevisionForm({ ...revisionForm, customerGstin: e.target.value.toUpperCase() })}
+                    />
+                  </div>
+                  <div className="cn-form-group">
+                    <label>Credit Reason</label>
+                    <select
+                      value={revisionForm.reason}
+                      onChange={(e) => setRevisionForm({ ...revisionForm, reason: e.target.value })}
+                    >
+                      {CREDIT_REASONS.map((r) => (
+                        <option key={r} value={r}>{r}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="cn-form-group" style={{ marginTop: "12px" }}>
+                  <label>Notes / Terms</label>
+                  <textarea
+                    rows={2}
+                    value={revisionForm.notes}
+                    onChange={(e) => setRevisionForm({ ...revisionForm, notes: e.target.value })}
+                  />
+                </div>
+
+                <div className="cn-form-group" style={{ marginTop: "14px" }}>
+                  <label style={{ color: "#b45309", fontWeight: "700" }}>
+                    Mandatory Revision Reason (Auditor Audit Trail) *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Buyer company GSTIN typo corrected or return reason updated"
+                    value={revisionForm.revisionReason}
+                    onChange={(e) => setRevisionForm({ ...revisionForm, revisionReason: e.target.value })}
+                    style={{ borderColor: "#f59e0b", background: "#fffdf5" }}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="modal-footer" style={{ padding: "14px 20px", display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+                <button
+                  type="button"
+                  className="cn-btn secondary"
+                  onClick={() => setRevisionModalOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="cn-btn primary"
+                  onClick={handleSaveRevision}
+                  disabled={savingRevision || !revisionForm.revisionReason.trim()}
+                >
+                  {savingRevision ? "Saving Revision..." : "Save Revision & Update History"}
+                </button>
               </div>
             </div>
           </div>

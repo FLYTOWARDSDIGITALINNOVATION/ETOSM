@@ -1,37 +1,42 @@
 import API_BASE_URL from "../apiConfig";
-import React, { useEffect, useState, useRef, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Printer,
   Download,
-  Package,
-  Truck,
-  MapPin,
-  QrCode,
-  FileText,
   Search,
+  RefreshCw,
   CheckCircle2,
   AlertCircle,
-  RefreshCw,
-  Plus,
-  Sliders,
-  Maximize2,
-  ArrowRight,
-  ShieldAlert
+  FileText,
+  User,
+  MapPin,
+  Phone,
+  Hash,
+  Sparkles,
+  Info,
+  Check
 } from "lucide-react";
-import jsPDF from "jspdf";
 import AdminLayout from "./AdminLayout";
+import { downloadShippingLabelPdf, splitAddress } from "../utils/shippingLabelPdfGenerator";
 import "./ShippingLabelsPage.css";
 
-const CARRIERS = [
-  "Delhivery Express",
-  "DTDC Express",
-  "India Post Speed Post",
-  "Blue Dart",
-  "Trackon Couriers",
-  "Surface Cargo",
-  "Ecom Express"
-];
+const DEFAULT_LABEL = {
+  documentNumber: "tv100045in",
+  // SENDER
+  senderName: "EToSM Technology",
+  senderAddr1: "2/167, Ramapuram, Tiruchengodu, Namakkal, Tamil Nadu,",
+  senderPincode: "637202",
+  customerId: "1420189578",
+  senderPhone: "8807080216",
+  // RECEIVER
+  receiverName: "Stainless",
+  receiverAddr1: "Bituhar suvani bastraly, Bituhar shailendra chaubey village bituhar",
+  receiverAddr2: "post sothigaw, Madhubani, BIHAR 847240",
+  receiverPhone: "8080001850",
+  // TRACKING
+  trackingNo: "tv100045in"
+};
 
 const ShippingLabelsPage = () => {
   const navigate = useNavigate();
@@ -41,44 +46,12 @@ const ShippingLabelsPage = () => {
   // State
   const [sources, setSources] = useState({ orders: [], invoices: [] });
   const [loading, setLoading] = useState(true);
-  const [selectedSourceType, setSelectedSourceType] = useState("order"); // "order", "invoice", "custom"
+  const [selectedSourceType, setSelectedSourceType] = useState("order"); // "order" | "invoice"
   const [selectedSourceId, setSelectedSourceId] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Label Form Data (defaults to 4" x 6" thermal format)
-  const [labelData, setLabelData] = useState({
-    documentNumber: "ORD-1001",
-    trackingNumber: "ET" + Math.floor(1000000000 + Math.random() * 9000000000),
-    carrier: "Delhivery Express",
-    serviceType: "Business Parcel",
-    shipDate: new Date().toISOString().split("T")[0],
-    isCOD: false,
-    collectAmount: 0,
-    weightKg: "0.50",
-    dimensions: "15 x 10 x 5 cm",
-    packageCount: "1 of 1",
-    // Shipper / Return Address
-    shipperName: "EToSM TECHNOLOGY",
-    shipperAddress: "2/167, Merkukadu, Ramapuram, Tiruchengodu",
-    shipperCity: "Namakkal",
-    shipperState: "Tamil Nadu",
-    shipperPincode: "637202",
-    shipperPhone: "+91 88070 80216",
-    shipperGstin: "33AAACE1234F1Z5",
-    // Recipient Address
-    receiverName: "Senthil Kumar",
-    receiverCompany: "GreenTech Innovations",
-    receiverPhone: "+91 98765 43210",
-    receiverAddress: "45, Anna Nagar Cross Street, Near Bus Stand",
-    receiverCity: "Coimbatore",
-    receiverState: "Tamil Nadu",
-    receiverPincode: "641001",
-    // Box Contents
-    items: [
-      { name: "Li-Ion 18650 Battery Cells 2500mAh", sku: "BAT-18650", quantity: 4 }
-    ],
-    handlingInstructions: "HANDLE WITH CARE • SENSITIVE ELECTRONICS • DO NOT DROP"
-  });
+  // Label Form Data (6" x 4" Official Thermal Format)
+  const [labelData, setLabelData] = useState(DEFAULT_LABEL);
 
   // Toast
   const [toast, setToast] = useState(null);
@@ -87,7 +60,7 @@ const ShippingLabelsPage = () => {
     setTimeout(() => setToast(null), 3500);
   };
 
-  // Auth & Init
+  // Auth & Initial load
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user") || "null");
     if (!token || !user || !user.isAdmin) {
@@ -100,28 +73,35 @@ const ShippingLabelsPage = () => {
   // Check if passed via location state
   useEffect(() => {
     if (location.state && location.state.prefill) {
-      const p = location.state.prefill;
-      applyPrefill(p);
+      applyPrefill(location.state.prefill);
     }
   }, [location.state]);
 
   const applyPrefill = (p) => {
     if (!p) return;
+    const ship = p.shipTo || {};
+    let addr1 = ship.address || "";
+    let addr2 = [ship.city, ship.state, ship.pincode].filter(Boolean).join(", ");
+
+    if (!addr2 && addr1) {
+      const sp = splitAddress(addr1);
+      addr1 = sp.line1;
+      addr2 = sp.line2;
+    }
+
+    const docNo = p.documentNumber || "ORD-1001";
+    const trackNo = p.trackingNumber || ("tv" + Math.floor(100000 + Math.random() * 900000) + "in");
+    const custId = ship.phone ? ship.phone.replace(/\D/g, "") : String(docNo).replace(/\D/g, "") || "1420189578";
+
     setLabelData((prev) => ({
       ...prev,
-      documentNumber: p.documentNumber || prev.documentNumber,
-      trackingNumber: p.trackingNumber || ("ET" + Math.floor(1000000000 + Math.random() * 9000000000)),
-      isCOD: !!p.isCOD,
-      collectAmount: p.collectAmount || 0,
-      carrier: p.carrier || prev.carrier,
-      receiverName: p.shipTo?.name || prev.receiverName,
-      receiverCompany: p.shipTo?.company || "",
-      receiverPhone: p.shipTo?.phone || prev.receiverPhone,
-      receiverAddress: p.shipTo?.address || prev.receiverAddress,
-      receiverCity: p.shipTo?.city || prev.receiverCity,
-      receiverState: p.shipTo?.state || prev.receiverState,
-      receiverPincode: p.shipTo?.pincode || prev.receiverPincode,
-      items: Array.isArray(p.itemsSummary) && p.itemsSummary.length > 0 ? p.itemsSummary : prev.items
+      documentNumber: docNo,
+      customerId: custId,
+      receiverName: ship.name || prev.receiverName,
+      receiverAddr1: addr1 || prev.receiverAddr1,
+      receiverAddr2: addr2 || prev.receiverAddr2,
+      receiverPhone: ship.phone || prev.receiverPhone,
+      trackingNo: trackNo
     }));
   };
 
@@ -139,7 +119,7 @@ const ShippingLabelsPage = () => {
           invoices: Array.isArray(data?.invoices) ? data.invoices : []
         });
 
-        // Preload first order if available
+        // Preload first order if available and not passed via navigation state
         if (data?.orders && data.orders.length > 0 && !location.state?.prefill) {
           applyPrefill(data.orders[0]);
           setSelectedSourceId(data.orders[0].id);
@@ -164,21 +144,20 @@ const ShippingLabelsPage = () => {
     }
   };
 
-  // Direct 4x6 / 6x4 Browser Thermal Print - Strictly 1 Single Page Guarantee
-  const handlePrintThermal = () => {
-    const labelEl = document.getElementById("thermal-label-print");
-    if (!labelEl) {
-      window.print();
-      return;
-    }
+  // Load Official Sample Data
+  const handleLoadSample = () => {
+    setLabelData(DEFAULT_LABEL);
+    setSelectedSourceId("");
+    showToast("Loaded official 6x4 sample template (Stainless / Bituhar)");
+  };
 
-    // Clean up any previously attached print iframe
+  // Direct 6x4 Browser Thermal Print - Single Page Guarantee
+  const handlePrintThermal = () => {
     const oldFrame = document.getElementById("thermal-print-iframe");
     if (oldFrame) {
       oldFrame.remove();
     }
 
-    // Create an isolated hidden print iframe containing only the thermal label
     const printFrame = document.createElement("iframe");
     printFrame.id = "thermal-print-iframe";
     printFrame.style.position = "fixed";
@@ -195,11 +174,11 @@ const ShippingLabelsPage = () => {
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Shipping_Label_${labelData.documentNumber || "EToSM"}</title>
+  <title>Shipping_Label_${labelData.trackingNo || labelData.documentNumber || "EToSM"}</title>
   <style>
     @page {
-      size: 4in 6in;
-      margin: 0mm !important;
+      size: 6in 4in;
+      margin: 0 !important;
     }
     *, *::before, *::after {
       box-sizing: border-box !important;
@@ -210,237 +189,165 @@ const ShippingLabelsPage = () => {
     html, body {
       margin: 0 !important;
       padding: 0 !important;
-      width: 4in !important;
-      height: 6in !important;
-      max-height: 6in !important;
+      width: 6in !important;
+      height: 4in !important;
+      max-height: 4in !important;
       overflow: hidden !important;
       background: #ffffff !important;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, Helvetica, sans-serif;
-      color: #000000;
+      font-family: Helvetica, Arial, sans-serif !important;
+      color: #000000 !important;
     }
     .thermal-label-container {
-      width: 4in !important;
-      height: 6in !important;
-      max-height: 6in !important;
+      width: 6in !important;
+      height: 4in !important;
+      max-height: 4in !important;
       margin: 0 !important;
-      padding: 0.08in !important;
-      border: 2px solid #000000 !important;
-      box-sizing: border-box !important;
+      padding: 0 !important;
+      border: none !important;
       display: flex !important;
       flex-direction: column !important;
-      justify-content: space-between !important;
-      overflow: hidden !important;
+      box-sizing: border-box !important;
       background: #ffffff !important;
-      page-break-before: avoid !important;
-      page-break-after: avoid !important;
+      overflow: hidden !important;
       page-break-inside: avoid !important;
-      break-before: avoid !important;
-      break-after: avoid !important;
       break-inside: avoid !important;
     }
-    .t-carrier-banner {
-      background: #000000 !important;
-      color: #ffffff !important;
-      padding: 6px 10px !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: space-between !important;
-      border-bottom: 2px solid #000000 !important;
+    .t-top-bar {
+      width: 100% !important;
+      height: 0.15in !important;
+      background: #b01a2b !important;
+      flex-shrink: 0 !important;
     }
-    .t-carrier-name {
-      margin: 0 !important;
-      font-size: 16px !important;
-      font-weight: 900 !important;
-      color: #ffffff !important;
-      letter-spacing: 0.03em !important;
-    }
-    .t-service-type {
-      font-size: 9.5px !important;
-      font-weight: 700 !important;
-      display: block !important;
-      color: #f1f5f9 !important;
-    }
-    .t-routing-hub {
+    .t-content {
+      padding: 0.14in 0.24in 0.16in 0.24in !important;
+      flex: 1 !important;
       display: flex !important;
       flex-direction: column !important;
-      align-items: flex-end !important;
-    }
-    .t-hub-label {
-      font-size: 8.5px !important;
-      color: #cbd5e1 !important;
-      font-weight: 700 !important;
-    }
-    .t-hub-val {
-      font-size: 15px !important;
-      font-weight: 900 !important;
-      color: #ffffff !important;
-    }
-    .t-tracking-block {
-      padding: 8px 10px !important;
-      border-bottom: 2px solid #000000 !important;
-      background: #ffffff !important;
-    }
-    .t-tracking-meta {
-      display: flex !important;
       justify-content: space-between !important;
-      align-items: center !important;
-      font-size: 10px !important;
-      font-weight: 800 !important;
-      margin-bottom: 0 !important;
     }
-    .t-ship-to-section {
-      padding: 8px 8px !important;
-      border-bottom: 2px solid #000000 !important;
-      background: #ffffff !important;
+    .t-section-tag {
+      font-size: 9pt !important;
+      font-weight: 700 !important;
+      color: #b01a2b !important;
+      letter-spacing: 0.04em !important;
+      text-transform: uppercase !important;
+      margin-bottom: 2pt !important;
     }
-    .t-section-label {
-      display: block !important;
-      font-size: 8.5px !important;
-      font-weight: 900 !important;
-      letter-spacing: 0.05em !important;
-      color: #000000 !important;
-      margin-bottom: 3px !important;
-    }
-    .t-receiver-name {
-      font-size: 16px !important;
-      font-weight: 900 !important;
-      margin: 0 0 2px 0 !important;
-      color: #000000 !important;
-      line-height: 1.15 !important;
-    }
-    .t-receiver-company {
-      font-size: 11px !important;
+    .t-sender-name {
+      font-size: 12pt !important;
       font-weight: 700 !important;
       color: #000000 !important;
-      margin-bottom: 2px !important;
+      margin: 0 !important;
+      line-height: 1.2 !important;
     }
-    .t-receiver-address {
-      font-size: 11.5px !important;
-      font-weight: 600 !important;
-      color: #000000 !important;
-      margin-bottom: 3px !important;
+    .t-sender-address {
+      font-size: 8pt !important;
+      color: #383838 !important;
       line-height: 1.25 !important;
     }
-    .t-receiver-city-state {
-      font-size: 12px !important;
-      font-weight: 800 !important;
-      color: #000000 !important;
-      margin-bottom: 4px !important;
-    }
-    .t-pincode-phone-row {
+    .t-sender-meta-row {
       display: flex !important;
       align-items: center !important;
       justify-content: space-between !important;
-      margin-top: 3px !important;
+      margin-top: 3pt !important;
     }
-    .t-pincode-highlight {
-      background: #000000 !important;
-      color: #ffffff !important;
-      padding: 3px 8px !important;
-      font-size: 15px !important;
-      font-weight: 900 !important;
-      letter-spacing: 0.05em !important;
+    .cust-id-group {
+      display: flex !important;
+      align-items: center !important;
+      gap: 6pt !important;
+    }
+    .cust-id-label {
+      font-size: 9pt !important;
+      color: #595959 !important;
+    }
+    .cust-id-val {
+      font-size: 11pt !important;
+      font-weight: 700 !important;
+      color: #b01a2b !important;
+    }
+    .sender-phone {
+      font-size: 8pt !important;
+      color: #383838 !important;
+    }
+    .t-divider {
+      height: 0.8pt !important;
+      background: #d1d1d1 !important;
+      margin: 6pt 0 !important;
+      border: none !important;
+      width: 100% !important;
+      flex-shrink: 0 !important;
+    }
+    .t-receiver-name {
+      font-size: 15pt !important;
+      font-weight: 700 !important;
+      color: #000000 !important;
+      margin: 0 0 3pt 0 !important;
+      line-height: 1.2 !important;
+    }
+    .t-receiver-address {
+      font-size: 10pt !important;
+      color: #000000 !important;
+      line-height: 1.35 !important;
     }
     .t-receiver-phone {
-      font-size: 12px !important;
-      font-weight: 900 !important;
+      font-size: 10pt !important;
+      font-weight: 700 !important;
       color: #000000 !important;
+      margin-top: 6pt !important;
     }
-    .t-payment-banner {
-      padding: 6px 8px !important;
-      text-align: center !important;
-      border-bottom: 2px solid #000000 !important;
-    }
-    .t-payment-banner.prepaid {
-      background: #f1f5f9 !important;
-      border-top: 1px solid #000000 !important;
-    }
-    .t-payment-banner.cod {
-      background: #000000 !important;
-      color: #ffffff !important;
-    }
-    .t-pay-title {
-      font-size: 13px !important;
-      font-weight: 900 !important;
-      display: block !important;
+    .t-tracking-label {
+      font-size: 8pt !important;
+      color: #595959 !important;
+      text-transform: uppercase !important;
       letter-spacing: 0.04em !important;
     }
-    .t-payment-banner.cod .t-pay-title,
-    .t-collect-amount {
-      color: #ffffff !important;
-    }
-    .t-collect-amount {
-      font-size: 15px !important;
-      font-weight: 900 !important;
-      display: block !important;
-      margin-top: 2px !important;
-    }
-    .t-bottom-details-grid {
-      display: grid !important;
-      grid-template-columns: 1.4fr 0.8fr !important;
-      border-bottom: 2px solid #000000 !important;
-    }
-    .t-return-block {
-      padding: 6px 6px !important;
-      border-right: 2px solid #000000 !important;
-      font-size: 9px !important;
-    }
-    .t-shipper-name {
-      display: block !important;
-      font-size: 10px !important;
-      font-weight: 900 !important;
-      color: #000000 !important;
-      margin-bottom: 1px !important;
-    }
-    .t-shipper-address {
-      font-size: 8.5px !important;
-      line-height: 1.2 !important;
-      color: #000000 !important;
-    }
-    .t-shipper-contact {
-      font-size: 8.5px !important;
+    .t-tracking-val {
+      font-size: 15pt !important;
       font-weight: 700 !important;
-      margin-top: 2px !important;
-    }
-    .t-package-specs {
-      padding: 6px 6px !important;
-      font-size: 9px !important;
-      display: flex !important;
-      flex-direction: column !important;
-      gap: 1.5px !important;
-    }
-    .t-box-contents-strip {
-      padding: 5px 6px !important;
-      border-bottom: 2px solid #000000 !important;
-      font-size: 9px !important;
-    }
-    .t-items-list {
-      display: flex !important;
-      flex-direction: column !important;
-      gap: 1.5px !important;
-    }
-    .t-item-line {
-      display: flex !important;
-      justify-content: space-between !important;
-      font-size: 8.5px !important;
       color: #000000 !important;
-    }
-    .t-footer-warning {
-      padding: 4px 6px !important;
-      text-align: center !important;
-      font-size: 8px !important;
-      font-weight: 900 !important;
-      color: #000000 !important;
-    }
-    .t-footer-sub {
-      font-size: 7.5px !important;
-      font-weight: normal !important;
-      margin-top: 1px !important;
+      line-height: 1.1 !important;
     }
   </style>
 </head>
 <body>
-  ${labelEl.outerHTML}
+  <div class="thermal-label-container">
+    <div class="t-top-bar"></div>
+    <div class="t-content">
+      <!-- SENDER -->
+      <div class="t-sender-section">
+        <div class="t-section-tag">SENDER</div>
+        <div class="t-sender-name">${labelData.senderName}</div>
+        <div class="t-sender-address">${labelData.senderAddr1}</div>
+        <div class="t-sender-address">${labelData.senderPincode}</div>
+        <div class="t-sender-meta-row">
+          <div class="cust-id-group">
+            <span class="cust-id-label">CUSTOMER ID:</span>
+            <span class="cust-id-val">${labelData.customerId}</span>
+          </div>
+          <span class="sender-phone">Phone: ${labelData.senderPhone}</span>
+        </div>
+      </div>
+
+      <div class="t-divider"></div>
+
+      <!-- RECEIVER -->
+      <div class="t-receiver-section">
+        <div class="t-section-tag">RECEIVER</div>
+        <div class="t-receiver-name">${labelData.receiverName}</div>
+        <div class="t-receiver-address">${labelData.receiverAddr1}</div>
+        ${labelData.receiverAddr2 ? `<div class="t-receiver-address">${labelData.receiverAddr2}</div>` : ""}
+        <div class="t-receiver-phone">PHONE: ${labelData.receiverPhone}</div>
+      </div>
+
+      <div class="t-divider"></div>
+
+      <!-- ARTICLE / TRACKING NO. -->
+      <div class="t-tracking-section">
+        <div class="t-tracking-label">ARTICLE / TRACKING NO.</div>
+        <div class="t-tracking-val">${labelData.trackingNo}</div>
+      </div>
+    </div>
+  </div>
 </body>
 </html>`);
     doc.close();
@@ -450,179 +357,16 @@ const ShippingLabelsPage = () => {
         printFrame.contentWindow.focus();
         printFrame.contentWindow.print();
       } catch (err) {
-        console.error("Iframe print error, falling back to window.print():", err);
-        window.print();
+        console.error("Print thermal error:", err);
       }
     }, 200);
   };
 
-  // Generate 4" x 6" Vector Thermal PDF via jsPDF
+  // Download Exact 6x4 Vector PDF (matching client specification)
   const handleDownloadThermalPDF = () => {
-    // 4 inches wide x 6 inches high (standard 6x4 thermal shipping label)
-    const doc = new jsPDF({
-      orientation: "portrait",
-      unit: "in",
-      format: [4, 6]
-    });
-
-    const d = labelData;
-
-    // Outer Border (crisp pure black for thermal head)
-    doc.setDrawColor(0, 0, 0);
-    doc.setLineWidth(0.02);
-    doc.rect(0.08, 0.08, 3.84, 5.84);
-
-    // 1. CARRIER HEADER BOX
-    doc.setFillColor(0, 0, 0);
-    doc.rect(0.08, 0.08, 3.84, 0.5, "F");
-
-    doc.setTextColor(255, 255, 255);
-    doc.setFont("Helvetica", "bold");
-    doc.setFontSize(14);
-    doc.text(String(d.carrier).toUpperCase(), 0.18, 0.35);
-
-    doc.setFontSize(9);
-    doc.text(String(d.serviceType || "BUSINESS PARCEL").toUpperCase(), 0.18, 0.5);
-
-    doc.setFontSize(11);
-    doc.text(`PIN: ${d.receiverPincode || "637202"}`, 2.8, 0.38);
-
-    // 2. AWB & TRACKING DETAILS (NO BARCODE)
-    doc.setDrawColor(0, 0, 0);
-    doc.line(0.08, 0.58, 3.92, 0.58);
-
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(9.5);
-    doc.setFont("Helvetica", "bold");
-    doc.text(`AWB / TRACKING #: ${d.trackingNumber}`, 0.18, 0.74);
-    doc.setFont("Helvetica", "normal");
-    doc.setFontSize(8.5);
-    doc.text(`Doc Ref: #${d.documentNumber} | Date: ${d.shipDate}`, 0.18, 0.88);
-
-    // Divider after Section 2
-    const sec2Bottom = 0.96;
-    doc.line(0.08, sec2Bottom, 3.92, sec2Bottom);
-
-    // 3. SHIP TO / CONSIGNEE (PRIMARY DELIVERY BLOCK)
-    doc.setFillColor(242, 242, 242);
-    doc.rect(0.08, sec2Bottom, 3.84, 0.22, "F");
-    doc.setFontSize(9);
-    doc.setFont("Helvetica", "bold");
-    doc.text("SHIP TO:", 0.18, sec2Bottom + 0.15);
-
-    // Consignee Name (Big & Bold)
-    doc.setFontSize(14);
-    doc.setFont("Helvetica", "bold");
-    doc.text(String(d.receiverName).toUpperCase(), 0.18, 1.36);
-
-    doc.setFontSize(9.5);
-    doc.setFont("Helvetica", "normal");
-    let shipY = 1.52;
-    if (d.receiverCompany) {
-      doc.text(String(d.receiverCompany), 0.18, shipY);
-      shipY += 0.16;
-    }
-
-    const splitAddr = doc.splitTextToSize(String(d.receiverAddress || "Address"), 3.5);
-    doc.text(splitAddr, 0.18, shipY);
-    shipY += splitAddr.length * 0.15;
-
-    doc.setFont("Helvetica", "bold");
-    doc.text(`${d.receiverCity || ""}, ${d.receiverState || "Tamil Nadu"}`, 0.18, shipY);
-
-    // Large PINCODE Box & Phone
-    doc.setFillColor(0, 0, 0);
-    doc.rect(0.18, 2.02, 1.8, 0.32, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(14);
-    doc.text(`PIN: ${d.receiverPincode}`, 0.25, 2.24);
-
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(10.5);
-    doc.setFont("Helvetica", "bold");
-    doc.text(`PHONE: ${d.receiverPhone}`, 2.15, 2.23);
-
-    const sec3Bottom = 2.45;
-    doc.line(0.08, sec3Bottom, 3.92, sec3Bottom);
-
-    // 4. COD BLOCK (Prepaid banner omitted as requested)
-    let sec4Bottom = sec3Bottom;
-    if (d.isCOD) {
-      const sec4Height = 0.45;
-      doc.setFillColor(0, 0, 0);
-      doc.rect(0.08, sec3Bottom, 3.84, sec4Height, "F");
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(14);
-      doc.setFont("Helvetica", "bold");
-      doc.text("CASH ON DELIVERY (COD)", 0.2, sec3Bottom + 0.26);
-      doc.setFontSize(12.5);
-      doc.text(`COLLECT: INR ${Number(d.collectAmount).toLocaleString("en-IN")}`, 0.2, sec3Bottom + 0.40);
-      sec4Bottom = sec3Bottom + sec4Height;
-      doc.line(0.08, sec4Bottom, 3.92, sec4Bottom);
-    }
-
-    // 5. SHIPPER / RETURN TO & PACKAGE DETAILS
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(8);
-    doc.setFont("Helvetica", "bold");
-    doc.text("RETURN IF UNDELIVERED TO:", 0.18, sec4Bottom + 0.16);
-
-    doc.setFontSize(9.5);
-    doc.text(d.shipperName, 0.18, sec4Bottom + 0.32);
-
-    doc.setFontSize(7.5);
-    doc.setFont("Helvetica", "normal");
-    let retY = sec4Bottom + 0.46;
-    const splitReturn = doc.splitTextToSize(
-      `${d.shipperAddress}, ${d.shipperCity}, ${d.shipperState} - ${d.shipperPincode}`,
-      2.15
-    );
-    doc.text(splitReturn, 0.18, retY);
-    retY += splitReturn.length * 0.13 + 0.04;
-    doc.text(`Phone: ${d.shipperPhone}`, 0.18, retY);
-    retY += 0.13;
-    doc.text(`GST: ${d.shipperGstin}`, 0.18, retY);
-
-    // Package details on Right
-    const sec5Bottom = d.isCOD ? 4.25 : 3.80;
-    doc.line(2.4, sec4Bottom, 2.4, sec5Bottom);
-    doc.setFontSize(8);
-    doc.setFont("Helvetica", "bold");
-    doc.text("PACKAGE DETAILS:", 2.5, sec4Bottom + 0.16);
-    doc.setFont("Helvetica", "normal");
-    doc.text(`Weight: ${d.weightKg} kg`, 2.5, sec4Bottom + 0.34);
-    doc.text(`Dims: ${d.dimensions}`, 2.5, sec4Bottom + 0.50);
-    doc.text(`Packages: ${d.packageCount}`, 2.5, sec4Bottom + 0.66);
-    doc.text(`Order: ${d.documentNumber}`, 2.5, sec4Bottom + 0.82);
-
-    doc.line(0.08, sec5Bottom, 3.92, sec5Bottom);
-
-    // 6. ITEM CONTENTS SUMMARY TABLE
-    doc.setFontSize(8);
-    doc.setFont("Helvetica", "bold");
-    doc.text("BOX CONTENTS / PACKING SLIP:", 0.18, sec5Bottom + 0.18);
-
-    doc.setFont("Helvetica", "normal");
-    doc.setFontSize(7.5);
-    let itemY = sec5Bottom + 0.35;
-    (d.items || []).slice(0, 3).forEach((item, idx) => {
-      const title = `${idx + 1}. ${String(item.name).substring(0, 44)} ${item.sku ? `(${item.sku})` : ""}`;
-      doc.text(title, 0.18, itemY);
-      doc.text(`Qty: ${item.quantity || 1}`, 3.4, itemY);
-      itemY += 0.16;
-    });
-
-    const sec6Bottom = 5.25;
-    doc.line(0.08, sec6Bottom, 3.92, sec6Bottom);
-
-    // 7. FOOTER NOTICE
-    doc.setFontSize(7.5);
-    doc.setFont("Helvetica", "bold");
-    const splitInstr = doc.splitTextToSize(String(d.handlingInstructions), 3.65);
-    doc.text(splitInstr, 0.18, 5.55);
-
-    doc.save(`EToSM_ThermalLabel_6x4_${d.documentNumber}.pdf`);
-    showToast(`Downloaded 6x4 Thermal Shipping Label for #${d.documentNumber}`);
+    const filename = `EToSM_ShippingLabel_6x4_${labelData.trackingNo || labelData.documentNumber || "label"}.pdf`;
+    downloadShippingLabelPdf(labelData, filename);
+    showToast(`Downloaded official 6x4 thermal PDF (${labelData.trackingNo})`);
   };
 
   // Filtered source list
@@ -646,7 +390,7 @@ const ShippingLabelsPage = () => {
         {/* Toast */}
         {toast && (
           <div className={`sl-toast ${toast.type}`}>
-            {toast.type === "success" ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+            {toast.type === "success" ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
             <span>{toast.message}</span>
           </div>
         )}
@@ -655,20 +399,24 @@ const ShippingLabelsPage = () => {
         <div className="sl-page-header no-print">
           <div className="header-title-box">
             <span className="sl-eyebrow">LOGISTICS & DISPATCH</span>
-            <h1>9. Shipping Labels (6*4 Thermal)</h1>
+            <h1>Shipping Labels</h1>
             <p>
-              Standard 6x4 inch (100mm × 150mm) high-contrast thermal shipping labels formatted for roll printers (Rollo, Zebra, Munbyn, TSC, TVS). Direct 1-click thermal printing and vector PDF export.
+              Official thermal shipping label formatted strictly to company template specification. Direct 1-click thermal roll printing and vector PDF export.
             </p>
           </div>
 
           <div className="header-actions-box">
             <button className="sl-btn primary" onClick={handlePrintThermal}>
               <Printer size={16} />
-              <span>Print 6x4 Thermal Label</span>
+              <span>Print Label</span>
             </button>
             <button className="sl-btn secondary" onClick={handleDownloadThermalPDF}>
               <Download size={16} />
-              <span>Download 6x4 PDF</span>
+              <span>Download PDF</span>
+            </button>
+            <button className="sl-btn secondary" onClick={handleLoadSample} title="Load Official PDF Sample">
+              <Sparkles size={16} />
+              <span>Load Sample PDF</span>
             </button>
             <button className="sl-btn icon-only" onClick={fetchSources} title="Refresh Source Orders">
               <RefreshCw size={16} />
@@ -676,228 +424,200 @@ const ShippingLabelsPage = () => {
           </div>
         </div>
 
-        {/* Main 2-Column Workspace: Left Controls / Right 6x4 Thermal Preview */}
+        {/* 1. TOP SOURCE SELECTION BAR (Full Width) */}
+        <div className="sl-card sl-source-bar no-print">
+          <div className="source-bar-header">
+            <div className="source-bar-title-group">
+              <h3>1. Select Source Package</h3>
+              <span className="source-bar-sub">Click any package to auto-fill customer delivery & tracking details</span>
+            </div>
+            <div className="type-toggle-pills">
+              <button
+                className={`toggle-pill ${selectedSourceType === "order" ? "active" : ""}`}
+                onClick={() => setSelectedSourceType("order")}
+              >
+                Online Orders ({sources?.orders?.length || 0})
+              </button>
+              <button
+                className={`toggle-pill ${selectedSourceType === "invoice" ? "active" : ""}`}
+                onClick={() => setSelectedSourceType("invoice")}
+              >
+                Invoices ({sources?.invoices?.length || 0})
+              </button>
+            </div>
+          </div>
+
+          <div className="source-bar-body">
+            <div className="source-search-inline">
+              <Search size={14} className="s-icon" />
+              <input
+                type="text"
+                placeholder={`Search ${selectedSourceType} by ID, name, phone...`}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+
+            <div className="source-chips-container">
+              {(filteredSources || []).slice(0, 10).map((item) => (
+                <div
+                  key={item.id}
+                  className={`source-chip ${selectedSourceId === item.id ? "selected" : ""}`}
+                  onClick={() => handleSelectSource(item.id, selectedSourceType)}
+                >
+                  <strong className="chip-doc">#{item.documentNumber}</strong>
+                  <span className="chip-name">{item.shipTo?.name || "Customer"}</span>
+                  <span className={`chip-badge ${item.isCOD ? "cod" : "prepaid"}`}>
+                    {item.isCOD ? "COD" : "Prepaid"}
+                  </span>
+                </div>
+              ))}
+              {(!filteredSources || filteredSources.length === 0) && (
+                <div style={{ color: "#64748b", fontSize: "12.5px", padding: "6px 8px" }}>
+                  No matching {selectedSourceType === "order" ? "orders" : "invoices"} found.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Main 2-Column Equal Width Workspace */}
         <div className="sl-workspace-grid">
           {/* ========================================================
-              LEFT COLUMN: SOURCE PICKER & CUSTOMIZATION CONTROLS
+              LEFT COLUMN: FORM EDITORS
              ======================================================== */}
           <div className="sl-controls-panel no-print">
-            {/* Source Selection Card */}
+            {/* 2. SENDER Information Card */}
             <div className="sl-card">
-              <div className="card-top-row">
-                <h3>1. Select Source Package</h3>
-                <div className="type-toggle-pills">
-                  <button
-                    className={`toggle-pill ${selectedSourceType === "order" ? "active" : ""}`}
-                    onClick={() => setSelectedSourceType("order")}
-                  >
-                    Online Orders ({sources?.orders?.length || 0})
-                  </button>
-                  <button
-                    className={`toggle-pill ${selectedSourceType === "invoice" ? "active" : ""}`}
-                    onClick={() => setSelectedSourceType("invoice")}
-                  >
-                    Invoices ({sources?.invoices?.length || 0})
-                  </button>
-                </div>
-              </div>
-
-              <div className="source-search-wrap">
-                <Search size={14} className="s-icon" />
-                <input
-                  type="text"
-                  placeholder={`Search ${selectedSourceType} by ID, customer name, phone...`}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-
-              <div className="source-items-list">
-                {(filteredSources || []).slice(0, 5).map((item) => (
-                  <div
-                    key={item.id}
-                    className={`source-item-row ${selectedSourceId === item.id ? "selected" : ""}`}
-                    onClick={() => handleSelectSource(item.id, selectedSourceType)}
-                  >
-                    <div className="item-meta">
-                      <strong className="doc-num">#{item.documentNumber}</strong>
-                      <span className="cust-title">{item.shipTo?.name || "Customer"}</span>
-                      <small className="loc-text">{item.shipTo?.city || item.shipTo?.state || "Tamil Nadu"}</small>
-                    </div>
-                    <div className="item-badge-wrap">
-                      <span className={`cod-tag ${item.isCOD ? "cod" : "prepaid"}`}>
-                        {item.isCOD ? `COD ₹${item.collectAmount}` : "PREPAID"}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-                {(!filteredSources || filteredSources.length === 0) && (
-                  <div style={{ padding: "16px 12px", textAlign: "center", color: "#64748b", fontSize: "13px" }}>
-                    No matching {selectedSourceType === "order" ? "orders" : "invoices"} found.
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Customization Details Card */}
-            <div className="sl-card mt-16">
-              <h3>2. Shipping & Carrier Details</h3>
-
-              <div className="sl-form-grid-2">
-                <div className="sl-field">
-                  <label>Carrier / Logistics</label>
-                  <select
-                    value={labelData.carrier}
-                    onChange={(e) => setLabelData({ ...labelData, carrier: e.target.value })}
-                  >
-                    {CARRIERS.map((c) => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="sl-field">
-                  <label>Service Speed</label>
-                  <input
-                    type="text"
-                    value={labelData.serviceType}
-                    onChange={(e) => setLabelData({ ...labelData, serviceType: e.target.value })}
-                  />
-                </div>
+              <div className="card-header-clean">
+                <span className="card-step-badge">2</span>
+                <h3>SENDER Details</h3>
               </div>
 
               <div className="sl-form-grid-2">
                 <div className="sl-field">
-                  <label>Tracking / AWB Number</label>
+                  <label>Company / Store Name</label>
                   <input
                     type="text"
-                    value={labelData.trackingNumber}
-                    onChange={(e) => setLabelData({ ...labelData, trackingNumber: e.target.value })}
+                    value={labelData.senderName}
+                    onChange={(e) => setLabelData({ ...labelData, senderName: e.target.value })}
+                    placeholder="EToSM Technology"
                   />
                 </div>
-
                 <div className="sl-field">
-                  <label>Order / Doc Reference</label>
+                  <label>Sender Phone</label>
                   <input
                     type="text"
-                    value={labelData.documentNumber}
-                    onChange={(e) => setLabelData({ ...labelData, documentNumber: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <div className="sl-form-grid-3">
-                <div className="sl-field">
-                  <label>Weight (kg)</label>
-                  <input
-                    type="text"
-                    value={labelData.weightKg}
-                    onChange={(e) => setLabelData({ ...labelData, weightKg: e.target.value })}
-                  />
-                </div>
-
-                <div className="sl-field">
-                  <label>Dimensions</label>
-                  <input
-                    type="text"
-                    value={labelData.dimensions}
-                    onChange={(e) => setLabelData({ ...labelData, dimensions: e.target.value })}
-                  />
-                </div>
-
-                <div className="sl-field">
-                  <label>Packages</label>
-                  <input
-                    type="text"
-                    value={labelData.packageCount}
-                    onChange={(e) => setLabelData({ ...labelData, packageCount: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <div className="sl-cod-toggle-box">
-                <label className="toggle-label">
-                  <input
-                    type="checkbox"
-                    checked={labelData.isCOD}
-                    onChange={(e) => setLabelData({ ...labelData, isCOD: e.target.checked })}
-                  />
-                  <span>Cash on Delivery (COD)</span>
-                </label>
-
-                {labelData.isCOD && (
-                  <div className="cod-amount-input">
-                    <label>Collect (₹):</label>
-                    <input
-                      type="number"
-                      value={labelData.collectAmount}
-                      onChange={(e) => setLabelData({ ...labelData, collectAmount: Number(e.target.value) })}
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Consignee Address Card */}
-            <div className="sl-card mt-16">
-              <h3>3. Consignee Delivery Address</h3>
-
-              <div className="sl-form-grid-2">
-                <div className="sl-field">
-                  <label>Receiver Full Name *</label>
-                  <input
-                    type="text"
-                    value={labelData.receiverName}
-                    onChange={(e) => setLabelData({ ...labelData, receiverName: e.target.value })}
-                  />
-                </div>
-
-                <div className="sl-field">
-                  <label>Contact Mobile Number *</label>
-                  <input
-                    type="tel"
-                    value={labelData.receiverPhone}
-                    onChange={(e) => setLabelData({ ...labelData, receiverPhone: e.target.value })}
+                    value={labelData.senderPhone}
+                    onChange={(e) => setLabelData({ ...labelData, senderPhone: e.target.value })}
+                    placeholder="8807080216"
                   />
                 </div>
               </div>
 
               <div className="sl-field">
-                <label>Delivery Street Address *</label>
-                <textarea
-                  rows={2}
-                  value={labelData.receiverAddress}
-                  onChange={(e) => setLabelData({ ...labelData, receiverAddress: e.target.value })}
+                <label>Sender Address Line 1</label>
+                <input
+                  type="text"
+                  value={labelData.senderAddr1}
+                  onChange={(e) => setLabelData({ ...labelData, senderAddr1: e.target.value })}
+                  placeholder="2/167, Ramapuram, Tiruchengodu, Namakkal, Tamil Nadu,"
                 />
               </div>
 
-              <div className="sl-form-grid-3">
+              <div className="sl-form-grid-2">
                 <div className="sl-field">
-                  <label>City / Town</label>
+                  <label>Pincode</label>
                   <input
                     type="text"
-                    value={labelData.receiverCity}
-                    onChange={(e) => setLabelData({ ...labelData, receiverCity: e.target.value })}
+                    value={labelData.senderPincode}
+                    onChange={(e) => setLabelData({ ...labelData, senderPincode: e.target.value })}
+                    placeholder="637202"
                   />
                 </div>
+                <div className="sl-field">
+                  <label>Customer / Ref ID</label>
+                  <input
+                    type="text"
+                    value={labelData.customerId}
+                    onChange={(e) => setLabelData({ ...labelData, customerId: e.target.value })}
+                    placeholder="1420189578"
+                  />
+                </div>
+              </div>
+            </div>
 
-                <div className="sl-field">
-                  <label>State</label>
-                  <input
-                    type="text"
-                    value={labelData.receiverState}
-                    onChange={(e) => setLabelData({ ...labelData, receiverState: e.target.value })}
-                  />
-                </div>
+            {/* 3. RECEIVER & TRACKING Details Card */}
+            <div className="sl-card mt-16">
+              <div className="card-header-clean">
+                <span className="card-step-badge">3</span>
+                <h3>RECEIVER & TRACKING Details</h3>
+              </div>
 
+              <div className="sl-form-grid-2">
                 <div className="sl-field">
-                  <label>Delivery PINCODE *</label>
+                  <label>Customer / Receiver Name</label>
                   <input
                     type="text"
-                    value={labelData.receiverPincode}
-                    onChange={(e) => setLabelData({ ...labelData, receiverPincode: e.target.value })}
+                    value={labelData.receiverName}
+                    onChange={(e) => setLabelData({ ...labelData, receiverName: e.target.value })}
+                    placeholder="Stainless"
                   />
                 </div>
+                <div className="sl-field">
+                  <label>Receiver Phone Number</label>
+                  <input
+                    type="text"
+                    value={labelData.receiverPhone}
+                    onChange={(e) => setLabelData({ ...labelData, receiverPhone: e.target.value })}
+                    placeholder="8080001850"
+                  />
+                </div>
+              </div>
+
+              <div className="sl-field">
+                <label>Receiver Address Line 1 (Street / Village / Area)</label>
+                <input
+                  type="text"
+                  value={labelData.receiverAddr1}
+                  onChange={(e) => setLabelData({ ...labelData, receiverAddr1: e.target.value })}
+                  placeholder="Bituhar suvani bastraly, Bituhar shailendra chaubey village bituhar"
+                />
+              </div>
+
+              <div className="sl-field">
+                <label>Receiver Address Line 2 (Post, District, State & Pincode)</label>
+                <input
+                  type="text"
+                  value={labelData.receiverAddr2}
+                  onChange={(e) => setLabelData({ ...labelData, receiverAddr2: e.target.value })}
+                  placeholder="post sothigaw, Madhubani, BIHAR 847240"
+                />
+              </div>
+
+              <div className="tracking-input-box">
+                <div className="sl-field" style={{ margin: 0, flex: 1, minWidth: 0 }}>
+                  <label>Article / Tracking Number</label>
+                  <input
+                    type="text"
+                    value={labelData.trackingNo}
+                    onChange={(e) => setLabelData({ ...labelData, trackingNo: e.target.value })}
+                    placeholder="tv100045in"
+                    className="tracking-highlight-input"
+                  />
+                </div>
+                <button
+                  type="button"
+                  className="sl-btn secondary small"
+                  onClick={() => {
+                    const newTrack = "tv" + Math.floor(100000 + Math.random() * 900000) + "in";
+                    setLabelData({ ...labelData, trackingNo: newTrack });
+                  }}
+                  title="Generate new Tracking ID"
+                  style={{ alignSelf: "flex-end", height: "38px", flexShrink: 0 }}
+                >
+                  Generate
+                </button>
               </div>
             </div>
           </div>
@@ -908,116 +628,79 @@ const ShippingLabelsPage = () => {
           <div className="sl-preview-panel">
             <div className="preview-top-toolbar no-print">
               <span className="thermal-badge">
-                <Printer size={14} />
-                <span>6" × 4" THERMAL PRINT PREVIEW (100mm × 150mm)</span>
+                <Printer size={15} />
+                <span>Label Preview</span>
               </span>
               <div className="preview-actions">
-                <button className="sl-btn primary small" onClick={handlePrintThermal}>
-                  <Printer size={14} /> Print Thermal
+                <button className="sl-btn primary small" onClick={handlePrintThermal} title="Print 6x4 Thermal Label">
+                  <Printer size={14} /> Print
                 </button>
-                <button className="sl-btn secondary small" onClick={handleDownloadThermalPDF}>
-                  <Download size={14} /> Vector PDF
+                <button className="sl-btn secondary small" onClick={handleDownloadThermalPDF} title="Download Vector PDF">
+                  <Download size={14} /> Download PDF
                 </button>
               </div>
             </div>
 
-            {/* THE THERMAL LABEL CONTAINER (EXACT 4" x 6" ASPECT RATIO) */}
+            {/* THE THERMAL LABEL CONTAINER (EXACT 6" x 4" PROPORTION) */}
             <div className="thermal-label-container print-target" id="thermal-label-print">
-              {/* 1. CARRIER HEADER */}
-              <div className="t-carrier-banner">
-                <div className="t-carrier-info">
-                  <h2 className="t-carrier-name">{(labelData.carrier || "DELIVERY EXPRESS").toUpperCase()}</h2>
-                  <span className="t-service-type">{(labelData.serviceType || "BUSINESS PARCEL").toUpperCase()}</span>
-                </div>
-                <div className="t-routing-hub">
-                  <span className="t-hub-label">HUB / PIN</span>
-                  <strong className="t-hub-val">{labelData.receiverPincode || "637202"}</strong>
-                </div>
-              </div>
+              {/* TOP RED BAR (11pt / #b01a2b) */}
+              <div className="t-top-bar"></div>
 
-              {/* 2. TRACKING BLOCK */}
-              <div className="t-tracking-block">
-                <div className="t-tracking-meta">
-                  <span className="t-track-bold">AWB / TRACKING #: {labelData.trackingNumber || "N/A"}</span>
-                  <span className="t-doc-ref">DOC: #{labelData.documentNumber || "N/A"} | DATE: {labelData.shipDate || ""}</span>
-                </div>
-              </div>
-
-              {/* 3. PRIMARY SHIP-TO CONSIGNEE SECTION */}
-              <div className="t-ship-to-section">
-                <span className="t-section-label">SHIP TO:</span>
-                <h3 className="t-receiver-name">{(labelData.receiverName || "CUSTOMER").toUpperCase()}</h3>
-
-                {labelData.receiverCompany && (
-                  <div className="t-receiver-company">{labelData.receiverCompany}</div>
-                )}
-
-                <div className="t-receiver-address">
-                  {labelData.receiverAddress || "Address"}
-                </div>
-
-                <div className="t-receiver-city-state">
-                  <strong>{labelData.receiverCity || ""}{labelData.receiverState ? `, ${labelData.receiverState}` : ""}</strong>
-                </div>
-
-                <div className="t-pincode-phone-row">
-                  <div className="t-pincode-highlight">
-                    PIN: {labelData.receiverPincode || "637202"}
-                  </div>
-                  <div className="t-receiver-phone">
-                    PHONE: {labelData.receiverPhone || "N/A"}
-                  </div>
-                </div>
-              </div>
-
-              {/* 4. COD BANNER (Prepaid banner omitted as requested) */}
-              {labelData.isCOD && (
-                <div className="t-payment-banner cod">
-                  <div className="t-cod-content">
-                    <span className="t-pay-title">CASH ON DELIVERY (COD)</span>
-                    <strong className="t-collect-amount">COLLECT: ₹{Number(labelData.collectAmount).toLocaleString("en-IN")}</strong>
-                  </div>
-                </div>
-              )}
-
-              {/* 5. RETURN SENDER INFO & PACKAGE SPECS */}
-              <div className="t-bottom-details-grid">
-                <div className="t-return-block">
-                  <span className="t-section-label">RETURN IF UNDELIVERED TO:</span>
-                  <strong className="t-shipper-name">{labelData.shipperName}</strong>
-                  <div className="t-shipper-address">
-                    {labelData.shipperAddress}, {labelData.shipperCity}, {labelData.shipperState} - {labelData.shipperPincode}
-                  </div>
-                  <div className="t-shipper-contact">
-                    Ph: {labelData.shipperPhone} | GST: {labelData.shipperGstin}
-                  </div>
-                </div>
-
-                <div className="t-package-specs">
-                  <span className="t-section-label">SPECS:</span>
-                  <div><strong>WT:</strong> {labelData.weightKg} kg</div>
-                  <div><strong>DIMS:</strong> {labelData.dimensions}</div>
-                  <div><strong>PKG:</strong> {labelData.packageCount}</div>
-                  <div><strong>REF:</strong> #{labelData.documentNumber}</div>
-                </div>
-              </div>
-
-              {/* 6. BOX PACKING LIST ITEMS */}
-              <div className="t-box-contents-strip">
-                <span className="t-section-label">BOX CONTENTS:</span>
-                <div className="t-items-list">
-                  {(labelData.items || []).slice(0, 3).map((it, idx) => (
-                    <div key={idx} className="t-item-line">
-                      <span>{idx + 1}. {it.name} {it.sku ? `(${it.sku})` : ""}</span>
-                      <strong>x{it.quantity || 1}</strong>
+              {/* LABEL BODY CONTENT */}
+              <div className="t-content">
+                {/* 1. SENDER SECTION */}
+                <div className="t-sender-section">
+                  <span className="t-section-tag">SENDER</span>
+                  <h2 className="t-sender-name">{labelData.senderName}</h2>
+                  <div className="t-sender-address">{labelData.senderAddr1}</div>
+                  <div className="t-sender-address">{labelData.senderPincode}</div>
+                  <div className="t-sender-meta-row">
+                    <div className="cust-id-group">
+                      <span className="cust-id-label">CUSTOMER ID:</span>
+                      <strong className="cust-id-val">{labelData.customerId}</strong>
                     </div>
-                  ))}
+                    <span className="sender-phone">Phone: {labelData.senderPhone}</span>
+                  </div>
+                </div>
+
+                {/* DIVIDER 1 */}
+                <div className="t-divider"></div>
+
+                {/* 2. RECEIVER SECTION */}
+                <div className="t-receiver-section">
+                  <span className="t-section-tag">RECEIVER</span>
+                  <h3 className="t-receiver-name">{labelData.receiverName}</h3>
+                  <div className="t-receiver-address">{labelData.receiverAddr1}</div>
+                  {labelData.receiverAddr2 && (
+                    <div className="t-receiver-address">{labelData.receiverAddr2}</div>
+                  )}
+                  <div className="t-receiver-phone">PHONE: {labelData.receiverPhone}</div>
+                </div>
+
+                {/* DIVIDER 2 */}
+                <div className="t-divider"></div>
+
+                {/* 3. ARTICLE / TRACKING NO. SECTION */}
+                <div className="t-tracking-section">
+                  <span className="t-tracking-label">ARTICLE / TRACKING NO.</span>
+                  <div className="t-tracking-val">{labelData.trackingNo}</div>
                 </div>
               </div>
+            </div>
 
-              {/* 7. THERMAL FOOTER WARNING */}
-              <div className="t-footer-warning">
-                <strong>{labelData.handlingInstructions}</strong>
+            {/* Printer Specifications Guide Card */}
+            <div className="thermal-spec-card no-print">
+              <div className="spec-item">
+                <Info size={14} className="spec-icon" />
+                <span><strong>Format:</strong> 6" × 4" (152mm × 102mm) Landscape</span>
+              </div>
+              <div className="spec-item">
+                <Check size={14} className="spec-icon green" />
+                <span><strong>Resolution:</strong> 100% Vector PDF (203 / 300 DPI Thermal Heads)</span>
+              </div>
+              <div className="spec-item">
+                <Printer size={14} className="spec-icon" />
+                <span><strong>Printers:</strong> TVS, TSC, Rollo, Zebra, Munbyn, India Post Speed Post</span>
               </div>
             </div>
           </div>
