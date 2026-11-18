@@ -9,12 +9,11 @@
   min-height: calc(100vh - 122px);
   height: auto;
   background-color: #ffffff;
-  background-image: 
-    linear-gradient(to right, #ffffff 0%, #ffffff 42%, rgba(255, 255, 255, 0.94) 54%, rgba(255, 255, 255, 0.4) 68%, rgba(255, 255, 255, 0) 80%),
-    url('/hero-bg.png');
-  background-size: 100% 100%, cover;
-  background-position: left center, right center;
-  background-repeat: no-repeat, no-repeat;
+  background-image: url('/hero-bg.png');
+  background-size: cover;
+  background-position: right center;
+  background-repeat: no-repeat;
+  image-rendering: -webkit-optimize-contrast;
   display: flex;
   align-items: center;
   padding: 30px 0;
@@ -250,11 +249,11 @@
     min-height: calc(100vh - 112px);
     height: auto;
     padding: 24px 0;
-    background-image: 
-      linear-gradient(to right, #ffffff 0%, #ffffff 46%, rgba(255, 255, 255, 0.96) 57%, rgba(255, 255, 255, 0.25) 72%, rgba(255, 255, 255, 0) 84%),
-      url('/hero-bg.png');
-    background-size: 100% 100%, auto 90%;
-    background-position: left center, calc(100% + 25px) center;
+    background-image: url('/hero-bg.png');
+    background-size: cover;
+    background-position: right center;
+    background-repeat: no-repeat;
+    image-rendering: -webkit-optimize-contrast;
   }
 
   .hero-content-wrapper {
@@ -330,11 +329,11 @@
   .etosm-hero {
     margin-top: 104px;
     min-height: calc(100vh - 104px);
-    background-image: 
-      linear-gradient(to right, #ffffff 0%, #ffffff 50%, rgba(255, 255, 255, 0.96) 62%, rgba(255, 255, 255, 0.3) 76%, rgba(255, 255, 255, 0) 88%),
-      url('/hero-bg.png');
-    background-size: 100% 100%, auto 84%;
-    background-position: left center, calc(100% + 50px) center;
+    background-image: url('/hero-bg.png');
+    background-size: cover;
+    background-position: calc(100% + 40px) center;
+    background-repeat: no-repeat;
+    image-rendering: -webkit-optimize-contrast;
   }
 
   .hero-left-col {
