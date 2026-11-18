@@ -73,6 +73,12 @@ app.use((req, res, next) => {
 const dns = require("dns");
 dns.setServers(["8.8.8.8", "1.1.1.1"]);
 
+if (!process.env.MONGO_URI) {
+  console.error("\n❌ ERROR: MONGO_URI is missing in backend/.env!");
+  console.error("👉 Please create 'backend/.env' (copy from backend/.env.example) and add your MongoDB connection string:\n   MONGO_URI=mongodb+srv://...\n");
+  process.exit(1);
+}
+
 mongoose
   .connect(process.env.MONGO_URI)
   .then(async () => {
@@ -859,7 +865,6 @@ const quotationSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 quotationSchema.index({ createdAt: -1 });
-quotationSchema.index({ quotationNumber: 1 });
 const Quotation = mongoose.model("Quotation", quotationSchema);
 
 // INVOICE SCHEMA (Admin Module 2: Create Invoice & Billing)
@@ -973,7 +978,6 @@ const invoiceSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 invoiceSchema.index({ createdAt: -1 });
-invoiceSchema.index({ invoiceNumber: 1 });
 const Invoice = mongoose.model("Invoice", invoiceSchema);
 
 // CREDIT NOTE SCHEMA (Admin Module 8: Credit Notes)
@@ -1050,7 +1054,6 @@ const creditNoteSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now }
 });
 creditNoteSchema.index({ createdAt: -1 });
-creditNoteSchema.index({ creditNoteNumber: 1 });
 const CreditNote = mongoose.model("CreditNote", creditNoteSchema);
 
 

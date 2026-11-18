@@ -226,8 +226,8 @@ const CategoryProducts = () => {
               ) : filteredProducts.length === 0 ? (
                 <p className="no-products-message">No products found in this subcategory</p>
               ) : (
-                paginatedProducts.map(product => (
-                  <ProductCard key={product._id} product={product} />
+                paginatedProducts.map((product, idx) => (
+                  <ProductCard key={product._id} product={product} variant="catalog" index={idx} />
                 ))
               )}
             </div>
@@ -242,8 +242,8 @@ const CategoryProducts = () => {
               ) : products.length === 0 ? (
                 <p>No products found</p>
               ) : (
-                paginatedProducts.map(product => (
-                  <ProductCard key={product._id} product={product} />
+                paginatedProducts.map((product, idx) => (
+                  <ProductCard key={product._id} product={product} variant="catalog" index={idx} />
                 ))
               )}
             </div>
