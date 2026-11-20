@@ -5,7 +5,6 @@ import {
   Box,
   RefreshCw,
   LayoutGrid,
-  List,
   BatteryCharging,
   Cpu,
   Layers,
@@ -54,9 +53,9 @@ const AllProductsPage = () => {
   const [products, setProducts] = useState(() => cacheGet("all_products_catalog") || []);
   const [categories, setCategories] = useState(() => cacheGet("all_categories_catalog") || []);
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedSubcategory, setSelectedSubcategory] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("default");
-  const [viewMode, setViewMode] = useState("grid"); // "grid" | "list"
   const [loading, setLoading] = useState(() => !(cacheGet("all_products_catalog") && cacheGet("all_products_catalog").length > 0));
   const location = useLocation();
 
@@ -64,6 +63,8 @@ const AllProductsPage = () => {
     const params = new URLSearchParams(location.search);
     const catParam = params.get("category");
     if (catParam) setSelectedCategory(catParam);
+    const subcatParam = params.get("subcategory");
+    if (subcatParam) setSelectedSubcategory(subcatParam);
     const searchParam = params.get("search");
     if (searchParam) setSearchTerm(searchParam);
 
@@ -141,17 +142,74 @@ const AllProductsPage = () => {
       (prodCatNorm && normSelected && (prodCatNorm === normSelected || prodCatNorm.includes(normSelected) || normSelected.includes(prodCatNorm))) ||
       (prodSubNorm && normSelected && (prodSubNorm === normSelected || prodSubNorm.includes(normSelected)));
 
+    if (!matchesCategory) return false;
+
+    // Subcategory match
+    if (selectedSubcategory) {
+      const normSelectedSub = selectedSubcategory.toLowerCase().replace(/[^a-z0-9]/g, "");
+      const normProdSub = (product.subcategory || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+      const normProdName = (product.name || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+
+      let matchesSubcategory = false;
+      if (normSelectedSub.includes("lithiumion") || normSelectedSub.includes("lithium")) {
+        matchesSubcategory =
+          normProdSub.includes("lithiumion") ||
+          normProdName.includes("lithiumion") ||
+          normProdName.includes("liion") ||
+          (normProdName.includes("lithium") && !normProdSub.includes("lifepo4") && !normProdSub.includes("accessori") && !normProdName.includes("holder"));
+      } else if (normSelectedSub.includes("lifepo4") || normSelectedSub.includes("lfp")) {
+        matchesSubcategory =
+          normProdSub.includes("lifepo4") ||
+          normProdSub.includes("lfp") ||
+          normProdName.includes("lifepo4") ||
+          normProdName.includes("lfp");
+      } else if (normSelectedSub.includes("accessori")) {
+        matchesSubcategory =
+          normProdSub.includes("accessori") ||
+          normProdName.includes("holder") ||
+          normProdName.includes("balancer");
+      } else {
+        matchesSubcategory =
+          normProdSub === normSelectedSub ||
+          normProdSub.includes(normSelectedSub) ||
+          normSelectedSub.includes(normProdSub);
+      }
+      if (!matchesSubcategory) return false;
+    }
+
     if (!searchTerm) {
-      return matchesCategory;
+      return true;
     }
 
     const cleanTerm = searchTerm.toLowerCase().trim();
+    const cleanTermNorm = cleanTerm.replace(/[-_]+/g, " ").replace(/\s+/g, " ");
+    const cleanTermNoPunct = cleanTerm.replace(/[^a-z0-9]/g, "");
     const skuDigits = cleanTerm.replace(/[^0-9]/g, "");
     const skuOnlyTerm = cleanTerm.replace(/^(sku|item|code)[\s:\-_#]*/i, "").trim();
 
-    const nameMatch = product.name?.toLowerCase().includes(cleanTerm);
-    const catMatch = product.category?.toLowerCase().includes(cleanTerm);
-    const subcatMatch = product.subcategory?.toLowerCase().includes(cleanTerm);
+    const prodNameNorm = (product.name || "").toLowerCase().replace(/[-_]+/g, " ");
+    const prodNameNoPunct = (product.name || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+
+    const prodSubcatNorm = (product.subcategory || "").toLowerCase().replace(/[-_]+/g, " ");
+    const prodSubcatNoPunct = (product.subcategory || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+
+    const prodCatNorm2 = (product.category || "").toLowerCase().replace(/[-_]+/g, " ");
+    const prodCatNoPunct2 = (product.category || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+
+    const nameMatch =
+      product.name?.toLowerCase().includes(cleanTerm) ||
+      prodNameNorm.includes(cleanTermNorm) ||
+      (cleanTermNoPunct.length >= 3 && prodNameNoPunct.includes(cleanTermNoPunct));
+
+    const catMatch =
+      product.category?.toLowerCase().includes(cleanTerm) ||
+      prodCatNorm2.includes(cleanTermNorm) ||
+      (cleanTermNoPunct.length >= 3 && prodCatNoPunct2.includes(cleanTermNoPunct));
+
+    const subcatMatch =
+      product.subcategory?.toLowerCase().includes(cleanTerm) ||
+      prodSubcatNorm.includes(cleanTermNorm) ||
+      (cleanTermNoPunct.length >= 3 && prodSubcatNoPunct.includes(cleanTermNoPunct));
 
     let skuMatch = false;
     if (product.sku != null && product.sku !== "") {
@@ -168,7 +226,7 @@ const AllProductsPage = () => {
       );
     }
 
-    return skuMatch || ((nameMatch || catMatch || subcatMatch) && matchesCategory);
+    return skuMatch || nameMatch || catMatch || subcatMatch;
   });
 
   // Sorting
@@ -241,7 +299,10 @@ const AllProductsPage = () => {
                 <button
                   key={cat.key}
                   className={`cat-pill-btn ${isActive ? "active" : ""}`}
-                  onClick={() => setSelectedCategory(cat.key)}
+                  onClick={() => {
+                    setSelectedCategory(cat.key);
+                    setSelectedSubcategory("");
+                  }}
                   title={cat.name}
                 >
                   <div className="cat-pill-circle">
@@ -289,33 +350,38 @@ const AllProductsPage = () => {
           {selectedCategory !== "All" && (
             <span className="cat-active-chip">
               {selectedCategory}
-              <button onClick={() => setSelectedCategory("All")} title="Clear filter">
+              <button
+                onClick={() => {
+                  setSelectedCategory("All");
+                  setSelectedSubcategory("");
+                }}
+                title="Clear filter"
+              >
+                <X size={12} />
+              </button>
+            </span>
+          )}
+          {selectedSubcategory && (
+            <span className="cat-active-chip subcat-chip">
+              {selectedSubcategory}
+              <button onClick={() => setSelectedSubcategory("")} title="Clear subcategory filter">
+                <X size={12} />
+              </button>
+            </span>
+          )}
+          {searchTerm && (
+            <span className="cat-active-chip search-chip">
+              "{searchTerm}"
+              <button onClick={() => setSearchTerm("")} title="Clear search">
                 <X size={12} />
               </button>
             </span>
           )}
         </div>
-
-        <div className="catalog-view-modes">
-          <button
-            className={`cat-view-btn ${viewMode === "grid" ? "active" : ""}`}
-            onClick={() => setViewMode("grid")}
-            title="Grid View"
-          >
-            <LayoutGrid size={16} />
-          </button>
-          <button
-            className={`cat-view-btn ${viewMode === "list" ? "active" : ""}`}
-            onClick={() => setViewMode("list")}
-            title="List View"
-          >
-            <List size={16} />
-          </button>
-        </div>
       </div>
 
       {/* =========================================================
-          SECTION 4: PRODUCT CARDS LISTING (GRID OR LIST)
+          SECTION 4: PRODUCT CARDS LISTING (GRID)
           ========================================================= */}
       <main className="catalog-content-container">
         {loading ? (
@@ -332,6 +398,7 @@ const AllProductsPage = () => {
               className="cat-reset-btn"
               onClick={() => {
                 setSelectedCategory("All");
+                setSelectedSubcategory("");
                 setSearchTerm("");
               }}
             >
@@ -339,7 +406,7 @@ const AllProductsPage = () => {
             </button>
           </div>
         ) : (
-          <div className={viewMode === "grid" ? "catalog-products-grid" : "catalog-products-list"}>
+          <div className="catalog-products-grid">
             {sortedProducts.map((product, idx) => (
               <ProductCard
                 key={product._id || idx}

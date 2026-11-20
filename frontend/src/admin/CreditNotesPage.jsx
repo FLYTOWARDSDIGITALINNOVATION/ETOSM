@@ -66,9 +66,10 @@ const CreditNotesPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  // Available Invoices & Customers for Auto-fill
+  // Available Invoices & Customers for Auto-fill (BUG-010: Searchable Invoice Selection)
   const [availableInvoices, setAvailableInvoices] = useState([]);
   const [availableCustomers, setAvailableCustomers] = useState([]);
+  const [invoiceSearchFilter, setInvoiceSearchFilter] = useState("");
 
   // Modals
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -238,6 +239,7 @@ const CreditNotesPage = () => {
       notes: "Credit note issued subject to standard return policy."
     });
     setCreditEligibility(null);
+    setInvoiceSearchFilter("");
     setCreateModalOpen(true);
   };
 
@@ -610,6 +612,18 @@ const CreditNotesPage = () => {
     });
   }, [creditNotes, statusFilter, searchTerm]);
 
+  // BUG-010: Searchable Invoice Selection for Credit Notes
+  const filteredAvailableInvoices = useMemo(() => {
+    if (!invoiceSearchFilter.trim()) return availableInvoices;
+    const term = invoiceSearchFilter.toLowerCase().trim();
+    return availableInvoices.filter((inv) => {
+      const invNum = String(inv.invoiceNumber || "").toLowerCase();
+      const custName = String(inv.customerName || "").toLowerCase();
+      const orderId = String(inv.sourceOrderNumber || inv.orderId || inv.amazonOrderId || "").toLowerCase();
+      return invNum.includes(term) || custName.includes(term) || orderId.includes(term);
+    });
+  }, [availableInvoices, invoiceSearchFilter]);
+
   // Export CSV
   const handleExportCSV = () => {
     if (filteredCreditNotes.length === 0) {
@@ -952,18 +966,54 @@ const CreditNotesPage = () => {
               </div>
 
               <form onSubmit={handleSaveCreditNote} className="cn-form-body">
-                {/* Invoice Auto-Fill Selector */}
+                {/* Invoice Auto-Fill Selector (BUG-010: Searchable invoice selection) */}
                 <div className="quick-import-card">
                   <div className="import-row">
                     <label>⚡ Quick Link to Existing Invoice (Auto-Fills Client & Items):</label>
+                    <div style={{ display: "flex", gap: "8px", marginBottom: "8px", width: "100%" }}>
+                      <input
+                        type="text"
+                        placeholder="🔍 Search by Invoice #, Customer, or Amazon/Order ID..."
+                        value={invoiceSearchFilter}
+                        onChange={(e) => setInvoiceSearchFilter(e.target.value)}
+                        style={{
+                          flex: 1,
+                          padding: "8px 12px",
+                          borderRadius: "6px",
+                          border: "1px solid #cbd5e1",
+                          fontSize: "12.5px"
+                        }}
+                      />
+                      {invoiceSearchFilter && (
+                        <button
+                          type="button"
+                          onClick={() => setInvoiceSearchFilter("")}
+                          style={{
+                            padding: "6px 12px",
+                            borderRadius: "6px",
+                            border: "1px solid #cbd5e1",
+                            background: "#f1f5f9",
+                            fontSize: "12px",
+                            cursor: "pointer"
+                          }}
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
                     <select
                       value={formData.invoiceId}
                       onChange={(e) => handleSelectInvoice(e.target.value)}
                     >
-                      <option value="">-- Choose an Invoice to credit against --</option>
-                      {availableInvoices.map((inv) => (
+                      <option value="">
+                        {filteredAvailableInvoices.length === 0
+                          ? "-- No matching invoice found --"
+                          : `-- Choose an Invoice to credit against (${filteredAvailableInvoices.length} available) --`}
+                      </option>
+                      {filteredAvailableInvoices.map((inv) => (
                         <option key={inv._id} value={inv._id}>
-                          #{inv.invoiceNumber} - {inv.customerName} (₹{Number(inv.grandTotal).toLocaleString("en-IN")})
+                          #{inv.invoiceNumber}
+                          {inv.sourceOrderNumber ? ` [Order: ${inv.sourceOrderNumber}]` : ""} - {inv.customerName} (₹{Number(inv.grandTotal).toLocaleString("en-IN")})
                           {Number(inv.balanceAmount) > 0 ? ` [Balance Due: ₹${inv.balanceAmount}]` : " [Paid]"}
                         </option>
                       ))}

@@ -309,7 +309,7 @@
 
 .footer-bottom p {
   font-size: 0.8rem;
-  color: #666;
+  color: #ffffff;
   letter-spacing: 1px;
 }
 
@@ -1406,8 +1406,69 @@
   .standards-left {
     text-align: left;
   }
+  .final-cta-section {
+    padding: 24px 0 32px;
+  }
   .final-cta-card {
-    padding: 40px 24px;
+    padding: 20px 16px;
+    border-radius: 12px;
+    gap: 14px;
+  }
+  .final-cta-title {
+    font-size: 1.15rem;
+    line-height: 1.25;
+    margin: 0 0 6px 0;
+  }
+  .final-cta-desc {
+    font-size: 0.82rem;
+    line-height: 1.45;
+  }
+  .final-cta-right {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-top: 2px;
+  }
+  .final-cta-pill-btn {
+    padding: 8px 22px;
+    font-size: 0.84rem;
+    gap: 8px;
+    margin: 0 auto;
+  }
+  .final-cta-pill-btn svg {
+    width: 15px;
+    height: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .final-cta-section {
+    padding: 16px 0 24px;
+  }
+  .final-cta-card {
+    padding: 16px 14px;
+    border-radius: 10px;
+    gap: 12px;
+  }
+  .final-cta-title {
+    font-size: 1.05rem;
+    line-height: 1.25;
+    margin: 0 0 5px 0;
+  }
+  .final-cta-desc {
+    font-size: 0.78rem;
+    line-height: 1.4;
+  }
+  .final-cta-right {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-top: 2px;
+  }
+  .final-cta-pill-btn {
+    padding: 8px 18px;
+    font-size: 0.8rem;
+    margin: 0 auto;
   }
 }
 

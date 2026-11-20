@@ -1,0 +1,263 @@
+/* ==========================================================================
+   SubcategoryProductsPage.css - Dedicated Subcategory Collection Page
+   ========================================================================== */
+
+.subcat-page-wrapper {
+  background: #f8fafc;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding-top: 145px; /* Offset for fixed header + top announcement ticker */
+}
+
+.subcat-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Breadcrumb Navigation */
+.subcat-breadcrumb-nav {
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 12px 0;
+  width: 100%;
+}
+
+.subcat-breadcrumb-content {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.subcat-breadcrumb-content::-webkit-scrollbar {
+  display: none;
+}
+
+.subcat-breadcrumb-trail {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.84rem;
+  color: #64748b;
+  line-height: 1.4;
+  white-space: nowrap;
+  width: max-content;
+}
+
+.subcat-breadcrumb-trail li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.subcat-breadcrumb-trail a {
+  color: #64748b;
+  text-decoration: none;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: color 0.15s ease;
+}
+
+.subcat-breadcrumb-trail a:hover {
+  color: var(--primary-color, #e3000f);
+}
+
+.subcat-breadcrumb-trail .breadcrumb-separator {
+  color: #94a3b8;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.subcat-breadcrumb-trail li.active {
+  color: #0f172a;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Catalog Section */
+.subcat-catalog-section {
+  padding: 24px 0 60px 0;
+  flex-grow: 1;
+}
+
+/* Products Grid */
+.subcat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.subcat-loading-box,
+.subcat-empty-box {
+  background: #ffffff;
+  border: 1.5px dashed #cbd5e1;
+  border-radius: 16px;
+  padding: 60px 20px;
+  text-align: center;
+  color: #64748b;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.subcat-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3.5px solid #fee2e2;
+  border-top-color: var(--primary-color, #e3000f);
+  border-radius: 50%;
+  animation: subcatSpin 0.7s linear infinite;
+}
+
+@keyframes subcatSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.subcat-empty-box .empty-icon {
+  color: #94a3b8;
+}
+
+.subcat-empty-box h3 {
+  font-size: 1.25rem;
+  font-weight: 750;
+  color: #0f172a;
+  margin: 0;
+}
+
+.subcat-empty-box p {
+  font-size: 0.92rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.subcat-back-home-btn {
+  margin-top: 12px;
+  background: var(--primary-color, #e3000f);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 22px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.subcat-back-home-btn:hover {
+  background: #b91c1c;
+  transform: translateY(-2px);
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+  .subcat-page-wrapper {
+    padding-top: 125px;
+  }
+  .subcat-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+}
+
+@media (max-width: 640px) {
+  .subcat-page-wrapper {
+    padding-top: 105px;
+  }
+
+  .subcat-container {
+    padding: 0 12px;
+  }
+
+  .subcat-breadcrumb-nav {
+    padding: 10px 0;
+  }
+
+  .subcat-breadcrumb-trail {
+    font-size: 0.78rem;
+    gap: 4px;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+  }
+
+  .subcat-breadcrumb-trail li {
+    gap: 4px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .subcat-catalog-section {
+    padding: 14px 0 36px 0;
+  }
+
+  .subcat-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  /* Single-line Add to Cart Button */
+  .cat-card-actions-row {
+    gap: 4px !important;
+  }
+
+  .cat-card-add-btn {
+    padding: 7px 5px !important;
+    font-size: 10.5px !important;
+    gap: 3px !important;
+    white-space: nowrap !important;
+  }
+
+  .cat-card-add-btn span {
+    white-space: nowrap !important;
+  }
+
+  .cat-card-add-btn svg {
+    width: 10px !important;
+    height: 10px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .cat-card-wish-btn {
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .cat-card-wish-btn svg {
+    width: 11px !important;
+    height: 11px !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .subcat-container {
+    padding: 0 8px;
+  }
+
+  .subcat-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .cat-card-add-btn {
+    font-size: 9.5px !important;
+    padding: 6px 3px !important;
+  }
+}

@@ -356,38 +356,6 @@
   padding: 0;
 }
 
-.catalog-view-modes {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.cat-view-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  background: #ffffff;
-  color: #64748b;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.cat-view-btn:hover {
-  border-color: #e3000f;
-  color: #e3000f;
-}
-
-.cat-view-btn.active {
-  background: #e3000f; /* Brand Red */
-  color: #ffffff;
-  border-color: #e3000f;
-  box-shadow: 0 3px 10px rgba(227, 0, 15, 0.25);
-}
-
 /* =========================================================
    SECTION 4: PRODUCT CARDS LISTING (GRID & LIST)
    ========================================================= */
@@ -865,29 +833,37 @@
   }
 
   .cat-card-actions-row {
-    gap: 6px;
-  }
-
-  .cat-card-add-btn {
-    padding: 7px 8px;
-    font-size: 11px;
     gap: 4px;
   }
 
+  .cat-card-add-btn {
+    padding: 7px 5px;
+    font-size: 10.5px;
+    gap: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  .cat-card-add-btn span {
+    white-space: nowrap;
+  }
+
   .cat-card-add-btn svg {
-    width: 11px;
-    height: 11px;
+    width: 10px;
+    height: 10px;
+    flex-shrink: 0;
   }
 
   .cat-card-wish-btn {
-    width: 32px;
-    height: 32px;
-    min-width: 32px;
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
     border-radius: 50%;
+    flex-shrink: 0;
   }
 
   .cat-card-wish-btn svg {
-    width: 12px;
-    height: 12px;
+    width: 11px;
+    height: 11px;
   }
 }

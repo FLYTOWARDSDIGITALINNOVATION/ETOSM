@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import API_BASE_URL from "../apiConfig";
+import { categoryToSlug } from "../utils/categorySlug";
 
 export default function Footer() {
   const [categories, setCategories] = useState([]);
@@ -44,7 +45,7 @@ export default function Footer() {
                 .filter(cat => (cat.name || "").trim() !== "BATTERY PACKS")
                 .map(cat => (
                 <li key={cat._id}>
-                  <Link to={`/category/${cat.name}`}>{cat.name}</Link>
+                  <Link to={`/category/${categoryToSlug(cat.name)}`}>{cat.name}</Link>
                 </li>
               ))
             ) : (
@@ -64,7 +65,7 @@ export default function Footer() {
       </div>
 
       <div className="footer-bottom">
-        <p>Copyright © 2026 EToSM Technology. All Rights Reserved.</p>
+        <p style={{ color: '#ffffff' }}>Copyright © 2026 EToSM Technology. All Rights Reserved.</p>
       </div>
     </footer>
   );

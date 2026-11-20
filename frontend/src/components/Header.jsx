@@ -6,6 +6,7 @@ import "./Header.css";
 
 import { useWishlist } from "../context/WishlistContext";
 import { useCart } from "../context/CartContext";
+import { categoryToSlug } from "../utils/categorySlug";
 
 const Header = ({ onSearch }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -156,7 +157,7 @@ const Header = ({ onSearch }) => {
                   .filter(cat => cat.name !== "BATTERY PACKS") // capital letters BATTERY PACKS commented out
                   .map(cat => (
                   <li key={cat._id}>
-                    <Link to={`/category/${cat.name}`} className="dropdown-item">
+                    <Link to={`/category/${categoryToSlug(cat.name)}`} className="dropdown-item">
                       <span className="item-dot"></span> {cat.name}
                     </Link>
                   </li>
@@ -191,7 +192,7 @@ const Header = ({ onSearch }) => {
                   .filter(cat => cat.name !== "BATTERY PACKS") // capital letters BATTERY PACKS commented out
                   .map(cat => (
                     <li key={cat._id}>
-                      <Link to={`/category/${cat.name}`} className="dropdown-item">
+                      <Link to={`/category/${categoryToSlug(cat.name)}`} className="dropdown-item">
                         <span className="item-dot"></span> {cat.name}
                       </Link>
                     </li>

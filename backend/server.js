@@ -4923,13 +4923,48 @@ app.get("/products/all", async (req, res) => {
 
 app.get("/products/category/:category", async (req, res) => {
   try {
-    const rawCategory = decodeURIComponent(req.params.category || "");
-    const escapedCategory = escapeRegex(rawCategory.trim());
+    const rawCategory = decodeURIComponent(req.params.category || "").trim();
+    if (!rawCategory) return res.json([]);
 
-    // Match category case-insensitively.
+    // Normalize slug: strip trailing "-products" or "products" and convert hyphens to spaces
+    let cleanSlug = rawCategory
+      .toLowerCase()
+      .replace(/-products$/i, "")
+      .replace(/products$/i, "")
+      .trim();
+    const cleanWithSpaces = cleanSlug.replace(/-/g, " ").trim();
+    const normalizedKey = cleanSlug.replace(/[^a-z0-9]/g, "");
+
+    // Collect candidate category names to match against Product.category
+    const candidateNames = new Set([rawCategory, cleanWithSpaces]);
+
+    // Check DB categories to match any category whose normalized key matches
+    try {
+      const allCategories = await Category.find();
+      for (const cat of allCategories) {
+        const catName = (cat.name || "").trim();
+        const catKey = catName.toLowerCase().replace(/[^a-z0-9]/g, "");
+        if (catKey === normalizedKey || catName.toLowerCase() === cleanWithSpaces) {
+          candidateNames.add(catName);
+        }
+      }
+    } catch (catErr) {
+      console.warn("Could not query Category collection for slug mapping:", catErr.message);
+    }
+
+    // Build regex filters for all candidate names (case-insensitive)
+    const regexList = Array.from(candidateNames)
+      .filter(Boolean)
+      .map(name => new RegExp(`^${escapeRegex(name)}$`, "i"));
+
+    if (cleanWithSpaces) {
+      regexList.push(new RegExp(`^${escapeRegex(cleanWithSpaces)}$`, "i"));
+    }
+
+    // Match category case-insensitively across all candidate variants.
     // isVisible only hides products from the home page – category pages show ALL products.
     const products = await Product.find({
-      category: { $regex: new RegExp(`^${escapedCategory}$`, "i") }
+      category: { $in: regexList }
     });
 
     res.json(products);

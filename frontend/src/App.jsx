@@ -15,6 +15,7 @@ function ScrollToTop() {
 }
 
 import CategoryProducts from "./pages/CategoryProducts";
+import SubcategoryProductsPage from "./pages/SubcategoryProductsPage";
 import EditProductPage from "./admin/EditProductPage";
 
 import HomePage from "./pages/HomePage";
@@ -83,6 +84,9 @@ function App() {
             <Route path="/order-success" element={<OrderSuccess />} />
             <Route path="/product/:id" element={<ProductDetailPage />} />
             <Route path="/category/:category" element={<CategoryProducts />} />
+            <Route path="/category/:category/:subcategory" element={<SubcategoryProductsPage />} />
+            <Route path="/battery-packs-products" element={<Navigate to="/category/battery-packs-products" replace />} />
+            <Route path="/battery-packs" element={<Navigate to="/category/battery-packs-products" replace />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/customer-service" element={<CustomerService />} />
             <Route path="/contact" element={<Contact />} />
